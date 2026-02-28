@@ -1,0 +1,643 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Card } from './Card';
+import { Button } from './Button';
+import { Loader2, AlertCircle, Calendar, Clock, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
+import { getSurveyPublic, submitResponse } from '../../lib/firestore';
+import { SurveyThankYou } from './SurveyThankYou';
+import type { SurveyClient, Question, Answer } from '../../types/survey';
+
+interface SurveyRespondentPageProps {
+    surveyId: string;
+}
+
+export function SurveyRespondentPage({ surveyId }: SurveyRespondentPageProps) {
+    const [survey, setSurvey] = useState<SurveyClient | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [notFound, setNotFound] = useState(false);
+    const [answers, setAnswers] = useState<Record<string, any>>({});
+    const [submitting, setSubmitting] = useState(false);
+    const [submitted, setSubmitted] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
+
+    // Derive settings
+    const settings = survey?.settings;
+    const fontFamily = settings?.fontFamily || 'Inter';
+    const accentColor = settings?.accentColor || '#E2F380';
+    const bgColor = settings?.background && settings.background.startsWith('#') ? settings.background : undefined;
+    const showProgress = settings?.showProgressBar !== false;
+
+    // Load Google Font
+    useEffect(() => {
+        if (fontFamily && fontFamily !== 'Inter') {
+            const id = `gfont-${fontFamily.replace(/\s/g, '-')}`;
+            if (!document.getElementById(id)) {
+                const link = document.createElement('link');
+                link.id = id;
+                link.rel = 'stylesheet';
+                link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontFamily)}:wght@400;500;600;700&display=swap`;
+                document.head.appendChild(link);
+            }
+        }
+    }, [fontFamily]);
+
+    // Load the survey
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const data = await getSurveyPublic(surveyId);
+                if (cancelled) return;
+                if (!data) {
+                    setNotFound(true);
+                } else {
+                    setSurvey(data);
+                }
+            } catch (err) {
+                console.error('[SurveyGo] Error loading survey:', err);
+                setNotFound(true);
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        })();
+        return () => { cancelled = true; };
+    }, [surveyId]);
+
+    // Set an answer value
+    const setAnswer = (questionId: string, value: any) => {
+        setAnswers((prev) => ({ ...prev, [questionId]: value }));
+        if (errors[questionId]) {
+            setErrors((prev) => { const next = { ...prev }; delete next[questionId]; return next; });
+        }
+    };
+
+    // Toggle a checkbox value
+    const toggleCheckbox = (questionId: string, choice: string) => {
+        setAnswers((prev) => {
+            const current = (prev[questionId] as string[]) || [];
+            return {
+                ...prev,
+                [questionId]: current.includes(choice)
+                    ? current.filter((c: string) => c !== choice)
+                    : [...current, choice],
+            };
+        });
+        if (errors[questionId]) {
+            setErrors((prev) => { const next = { ...prev }; delete next[questionId]; return next; });
+        }
+    };
+
+    // Set grid answer
+    const setGridAnswer = (questionId: string, rowLabel: string, value: string | string[], isCheckbox: boolean) => {
+        setAnswers((prev) => {
+            const grid = { ...(prev[questionId] as Record<string, any> || {}) };
+            if (isCheckbox) {
+                const current = (grid[rowLabel] as string[]) || [];
+                const choice = value as string;
+                grid[rowLabel] = current.includes(choice)
+                    ? current.filter((c: string) => c !== choice)
+                    : [...current, choice];
+            } else {
+                grid[rowLabel] = value;
+            }
+            return { ...prev, [questionId]: grid };
+        });
+        if (errors[questionId]) {
+            setErrors((prev) => { const next = { ...prev }; delete next[questionId]; return next; });
+        }
+    };
+
+    // Validate required fields
+    const validate = (): boolean => {
+        if (!survey) return false;
+        const newErrors: Record<string, string> = {};
+        for (const q of survey.questions) {
+            if (!q.required) continue;
+            const val = answers[q.id];
+            if (val === undefined || val === '' || (Array.isArray(val) && val.length === 0)) {
+                newErrors[q.id] = 'This question is required';
+            }
+            // Grid validation
+            if ((q.type === 'grid_multiple' || q.type === 'grid_checkbox') && q.options?.rows) {
+                const grid = val as Record<string, any> || {};
+                const unanswered = q.options.rows.some((row) => !grid[row] || (Array.isArray(grid[row]) && grid[row].length === 0));
+                if (unanswered) {
+                    newErrors[q.id] = 'Please answer all rows';
+                }
+            }
+        }
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    // Submit the response
+    const handleSubmit = async () => {
+        if (!survey || !validate()) return;
+        setSubmitting(true);
+        try {
+            const formattedAnswers: Answer[] = survey.questions
+                .filter((q) => answers[q.id] !== undefined && answers[q.id] !== '')
+                .map((q) => ({
+                    questionId: q.id,
+                    value: answers[q.id],
+                }));
+
+            await submitResponse({ surveyId, answers: formattedAnswers });
+            setSubmitted(true);
+        } catch (err) {
+            console.error('[SurveyGo] Error submitting response:', err);
+            alert('Failed to submit response. Please try again.');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    // --- States ---
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-background">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+        );
+    }
+
+    if (notFound) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-background px-4">
+                <Card className="max-w-md w-full p-10 text-center">
+                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <AlertCircle className="w-8 h-8 text-red-500" />
+                    </div>
+                    <h1 className="text-2xl font-bold text-foreground mb-3">Survey Not Found</h1>
+                    <p className="text-gray-500">
+                        This survey doesn't exist or is no longer available.
+                    </p>
+                </Card>
+            </div>
+        );
+    }
+
+    if (survey?.status === 'closed') {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-background px-4">
+                <Card className="max-w-md w-full p-10 text-center">
+                    <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <AlertCircle className="w-8 h-8 text-orange-500" />
+                    </div>
+                    <h1 className="text-2xl font-bold text-foreground mb-3">Form Closed</h1>
+                    <p className="text-gray-500">
+                        The form <span className="font-semibold text-foreground">{survey.title}</span> is no longer accepting responses.
+                    </p>
+                    <p className="text-gray-400 text-sm mt-3">
+                        Try contacting the owner of the form if you think this is a mistake.
+                    </p>
+                </Card>
+            </div>
+        );
+    }
+
+    if (submitted) {
+        return <SurveyThankYou surveyTitle={survey?.title} />;
+    }
+
+    if (!survey) return null;
+
+    // Compute progress
+    const totalQuestions = survey.questions.length;
+    const answeredCount = survey.questions.filter((q) => {
+        const val = answers[q.id];
+        if (val === undefined || val === '' || val === null) return false;
+        if (Array.isArray(val) && val.length === 0) return false;
+        return true;
+    }).length;
+    const progressPct = totalQuestions > 0 ? (answeredCount / totalQuestions) * 100 : 0;
+
+    return (
+        <div
+            className="min-h-screen py-12 px-4"
+            style={{
+                fontFamily: `'${fontFamily}', sans-serif`,
+                backgroundColor: bgColor || undefined,
+                '--color-primary': accentColor,
+            } as React.CSSProperties}
+        >
+            <div className="max-w-2xl mx-auto">
+                {/* Progress Bar */}
+                {showProgress && (
+                    <div className="mb-6">
+                        <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs font-medium text-gray-500">{answeredCount} of {totalQuestions} answered</span>
+                            <span className="text-xs font-medium text-gray-400">{Math.round(progressPct)}%</span>
+                        </div>
+                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div
+                                className="h-full rounded-full transition-all duration-500"
+                                style={{ width: `${progressPct}%`, backgroundColor: accentColor }}
+                            />
+                        </div>
+                    </div>
+                )}
+
+                {/* Header Image */}
+                {survey.headerImageUrl && (
+                    <div className="mb-6 rounded-xl overflow-hidden">
+                        <img src={survey.headerImageUrl} alt="" className="w-full h-48 object-cover" />
+                    </div>
+                )}
+
+                {/* Survey Header */}
+                <div className="text-center mb-8">
+                    <h1 className="text-3xl font-bold text-foreground mb-3">{survey.title}</h1>
+                    {survey.description && (
+                        <p className="text-gray-500 text-lg">{survey.description}</p>
+                    )}
+                </div>
+
+                {/* Questions */}
+                <div className="space-y-6">
+                    {survey.questions.map((question, idx) => (
+                        <Card key={question.id} className="p-6">
+                            <div className="mb-4">
+                                <div className="flex items-start gap-3">
+                                    <span className="text-sm font-medium text-gray-400 leading-6 flex-shrink-0">{idx + 1}.</span>
+                                    <div className="flex-1 min-w-0">
+                                        {question.options?.imageUrl && (
+                                            <img src={question.options.imageUrl} alt="" className="w-full h-40 object-cover rounded-lg mb-3" />
+                                        )}
+                                        <h3 className="font-medium text-foreground break-words">
+                                            {question.text}
+                                            {question.required && (
+                                                <span className="text-red-500 ml-1">*</span>
+                                            )}
+                                        </h3>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <QuestionInput
+                                question={question}
+                                value={answers[question.id]}
+                                onChange={(val) => setAnswer(question.id, val)}
+                                onToggleCheckbox={(choice) => toggleCheckbox(question.id, choice)}
+                                onGridChange={(row, val, isCb) => setGridAnswer(question.id, row, val, isCb)}
+                            />
+
+                            {errors[question.id] && (
+                                <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+                                    <AlertCircle className="w-3.5 h-3.5" />
+                                    {errors[question.id]}
+                                </p>
+                            )}
+                        </Card>
+                    ))}
+                </div>
+
+                {/* Submit */}
+                <div className="mt-8 flex justify-center">
+                    <Button
+                        variant="primary"
+                        size="lg"
+                        className="px-12 gap-2"
+                        onClick={handleSubmit}
+                        disabled={submitting}
+                    >
+                        {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
+                        {submitting ? 'Submitting...' : 'Submit Response'}
+                    </Button>
+                </div>
+
+                {/* Branding */}
+                <div className="mt-12 text-center">
+                    <p className="text-xs text-gray-400">
+                        Powered by <span className="font-semibold text-foreground">SurveyGo</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ── Question Input Renderer ─────────────────────
+
+interface QuestionInputProps {
+    question: Question;
+    value: any;
+    onChange: (value: any) => void;
+    onToggleCheckbox: (choice: string) => void;
+    onGridChange: (row: string, value: string | string[], isCheckbox: boolean) => void;
+}
+
+function QuestionInput({ question, value, onChange, onToggleCheckbox, onGridChange }: QuestionInputProps) {
+    switch (question.type) {
+        case 'short': {
+            const charLimit = question.options?.charLimit;
+            const strVal = (value as string) || '';
+            return (
+                <div>
+                    <input
+                        type="text"
+                        value={strVal}
+                        onChange={(e) => onChange(e.target.value)}
+                        maxLength={charLimit || undefined}
+                        placeholder="Your answer..."
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                    />
+                    {charLimit && (
+                        <p className="text-xs text-gray-400 mt-1 text-right">{strVal.length} / {charLimit}</p>
+                    )}
+                </div>
+            );
+        }
+
+        case 'long': {
+            const charLimit = question.options?.charLimit;
+            const strVal = (value as string) || '';
+            return (
+                <div>
+                    <textarea
+                        value={strVal}
+                        onChange={(e) => onChange(e.target.value)}
+                        maxLength={charLimit || undefined}
+                        placeholder="Your answer..."
+                        rows={4}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                    />
+                    {charLimit && (
+                        <p className="text-xs text-gray-400 mt-1 text-right">{strVal.length} / {charLimit}</p>
+                    )}
+                </div>
+            );
+        }
+
+        case 'rating': {
+            const scale = question.options?.scale || 5;
+            const currentRating = (value as number) || 0;
+            const lowLabel = question.options?.lowLabel || '';
+            const highLabel = question.options?.highLabel || '';
+            const displayVal = currentRating || Math.ceil(scale / 2);
+            const pct = scale > 1 ? ((displayVal - 1) / (scale - 1)) * 100 : 0;
+            return (
+                <div className="space-y-1">
+                    <div className="text-center text-sm font-medium text-gray-400">{currentRating > 0 ? currentRating : '\u00A0'}</div>
+                    <div className="relative h-3 rounded-full bg-gray-200 overflow-hidden">
+                        <div className="absolute left-0 top-0 bottom-0 rounded-full bg-primary transition-all" style={{ width: `${currentRating > 0 ? pct : 0}%` }} />
+                        <input
+                            type="range" min={1} max={scale} step={1}
+                            value={currentRating || Math.ceil(scale / 2)}
+                            onChange={(e) => onChange(Number(e.target.value))}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-gray-400">
+                        <span>{lowLabel || 1}</span>
+                        <span>{highLabel || scale}</span>
+                    </div>
+                </div>
+            );
+        }
+
+        case 'multiple': {
+            const choices = question.options?.choices || [];
+            return (
+                <div className="space-y-2">
+                    {choices.map((choice) => (
+                        <label
+                            key={choice}
+                            onClick={() => onChange(choice)}
+                            className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${value === choice
+                                ? 'border-primary bg-primary/5'
+                                : 'border-gray-200 hover:border-gray-300'
+                                }`}
+                        >
+                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${value === choice ? 'border-primary' : 'border-gray-300'}`}>
+                                {value === choice && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                            </div>
+                            <span className="text-sm text-foreground">{choice}</span>
+                        </label>
+                    ))}
+                </div>
+            );
+        }
+
+        case 'checkbox': {
+            const choices = question.options?.choices || [];
+            const selected = (value as string[]) || [];
+            return (
+                <div className="space-y-2">
+                    {choices.map((choice) => {
+                        const checked = selected.includes(choice);
+                        return (
+                            <label
+                                key={choice}
+                                onClick={() => onToggleCheckbox(choice)}
+                                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${checked
+                                    ? 'border-primary bg-primary/5'
+                                    : 'border-gray-200 hover:border-gray-300'
+                                    }`}
+                            >
+                                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${checked ? 'border-primary bg-primary' : 'border-gray-300'}`}>
+                                    {checked && (
+                                        <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none">
+                                            <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                        </svg>
+                                    )}
+                                </div>
+                                <span className="text-sm text-foreground">{choice}</span>
+                            </label>
+                        );
+                    })}
+                </div>
+            );
+        }
+
+        case 'dropdown': {
+            const choices = question.options?.choices || [];
+            const [isOpen, setIsOpen] = useState(false);
+            const dropdownRef = useRef<HTMLDivElement>(null);
+            const selected = (value as string) || '';
+
+            // Close on click outside
+            useEffect(() => {
+                function handleClickOutside(e: MouseEvent) {
+                    if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                        setIsOpen(false);
+                    }
+                }
+                document.addEventListener('mousedown', handleClickOutside);
+                return () => document.removeEventListener('mousedown', handleClickOutside);
+            }, []);
+
+            return (
+                <div ref={dropdownRef} className="relative max-w-sm">
+                    <button
+                        type="button"
+                        onClick={() => setIsOpen(!isOpen)}
+                        className="w-full flex items-center justify-between px-4 py-3 border border-gray-200 rounded-lg text-sm bg-white hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                    >
+                        <span className={selected ? 'text-foreground' : 'text-gray-400'}>
+                            {selected || 'Choose an option...'}
+                        </span>
+                        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                    {isOpen && (
+                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-30 py-1 max-h-60 overflow-y-auto">
+                            {choices.map((c, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => { onChange(c); setIsOpen(false); }}
+                                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${selected === c ? 'bg-primary/10 text-foreground font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                                >
+                                    {c}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        case 'grid_multiple':
+        case 'grid_checkbox': {
+            const rows = question.options?.rows || [];
+            const columns = question.options?.columns || [];
+            const grid = (value as Record<string, any>) || {};
+            const isCheckbox = question.type === 'grid_checkbox';
+            return (
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                        <thead>
+                            <tr>
+                                <th className="p-2 text-left text-gray-500 font-medium"></th>
+                                {columns.map((col, i) => (
+                                    <th key={i} className="p-2 text-center text-gray-500 font-medium text-xs">{col}</th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {rows.map((row, ri) => (
+                                <tr key={ri} className="border-t border-gray-100">
+                                    <td className="p-2 text-gray-700 font-medium">{row}</td>
+                                    {columns.map((col, ci) => {
+                                        if (isCheckbox) {
+                                            const selected = (grid[row] as string[]) || [];
+                                            const checked = selected.includes(col);
+                                            return (
+                                                <td key={ci} className="p-2 text-center">
+                                                    <button
+                                                        onClick={() => onGridChange(row, col, true)}
+                                                        className={`w-5 h-5 mx-auto rounded border-2 flex items-center justify-center transition-colors ${checked ? 'border-primary bg-primary' : 'border-gray-300'}`}
+                                                    >
+                                                        {checked && (
+                                                            <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none">
+                                                                <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                                            </svg>
+                                                        )}
+                                                    </button>
+                                                </td>
+                                            );
+                                        } else {
+                                            const selected = grid[row] === col;
+                                            return (
+                                                <td key={ci} className="p-2 text-center">
+                                                    <button
+                                                        onClick={() => onGridChange(row, col, false)}
+                                                        className={`w-5 h-5 mx-auto rounded-full border-2 flex items-center justify-center transition-colors ${selected ? 'border-primary' : 'border-gray-300'}`}
+                                                    >
+                                                        {selected && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                                                    </button>
+                                                </td>
+                                            );
+                                        }
+                                    })}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            );
+        }
+
+        case 'date': {
+            const [showCalendar, setShowCalendar] = useState(false);
+            const [calendarDate, setCalendarDate] = useState(() => {
+                if (value) return new Date(value as string);
+                return new Date();
+            });
+            const strVal = (value as string) || '';
+
+            const daysInMonth = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 0).getDate();
+            const firstDay = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 1).getDay();
+            const monthName = calendarDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+            return (
+                <div className="relative max-w-xs">
+                    <div className="relative">
+                        <input
+                            type="text"
+                            value={strVal}
+                            onChange={(e) => onChange(e.target.value)}
+                            placeholder="mm/dd/yyyy"
+                            className="w-full px-4 py-3 pr-10 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                        />
+                        <button
+                            onClick={() => setShowCalendar(!showCalendar)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-foreground"
+                        >
+                            <Calendar className="w-4 h-4" />
+                        </button>
+                    </div>
+                    {showCalendar && (
+                        <div className="absolute top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-10 w-72">
+                            <div className="flex items-center justify-between mb-3">
+                                <button onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1))} className="p-1 hover:bg-gray-100 rounded">
+                                    <ChevronLeft className="w-4 h-4" />
+                                </button>
+                                <span className="text-sm font-medium">{monthName}</span>
+                                <button onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1))} className="p-1 hover:bg-gray-100 rounded">
+                                    <ChevronRight className="w-4 h-4" />
+                                </button>
+                            </div>
+                            <div className="grid grid-cols-7 gap-1 text-center text-xs">
+                                {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
+                                    <div key={d} className="text-gray-400 font-medium py-1">{d}</div>
+                                ))}
+                                {Array.from({ length: firstDay }).map((_, i) => (
+                                    <div key={`empty-${i}`} />
+                                ))}
+                                {Array.from({ length: daysInMonth }, (_, i) => {
+                                    const day = i + 1;
+                                    const dateStr = `${String(calendarDate.getMonth() + 1).padStart(2, '0')}/${String(day).padStart(2, '0')}/${calendarDate.getFullYear()}`;
+                                    const isSelected = strVal === dateStr;
+                                    return (
+                                        <button
+                                            key={day}
+                                            onClick={() => { onChange(dateStr); setShowCalendar(false); }}
+                                            className={`py-1.5 rounded text-sm transition-all ${isSelected ? 'bg-primary text-foreground font-medium' : 'hover:bg-gray-100 text-gray-700'}`}
+                                        >
+                                            {day}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        case 'time': {
+            return (
+                <div className="max-w-xs">
+                    <input
+                        type="time"
+                        value={(value as string) || ''}
+                        onChange={(e) => onChange(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                    />
+                </div>
+            );
+        }
+
+        default:
+            return <p className="text-gray-500 text-sm">Unsupported question type</p>;
+    }
+}

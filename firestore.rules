@@ -1,0 +1,48 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helper functions ──────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // ─── Users collection ──────────────────────
+    // Users can only read/write their own profile
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // ─── Surveys collection ────────────────────
+    match /surveys/{surveyId} {
+      // Anyone can read a survey (needed for public respondent page)
+      allow read: if true;
+
+      // Only authenticated users can create surveys
+      allow create: if isSignedIn()
+                    && request.resource.data.createdBy == request.auth.uid;
+
+      // Only the survey owner can update or delete
+      allow update, delete: if isSignedIn()
+                            && resource.data.createdBy == request.auth.uid;
+    }
+
+    // ─── Responses collection ──────────────────
+    match /responses/{responseId} {
+      // Anyone can submit a response (public, no auth)
+      allow create: if true;
+
+      // Only authenticated users can read responses
+      // (the survey owner will read these via the analytics page)
+      allow read: if isSignedIn();
+
+      // Responses cannot be updated or deleted
+      allow update, delete: if false;
+    }
+  }
+}

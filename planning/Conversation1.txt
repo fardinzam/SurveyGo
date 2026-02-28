@@ -1,0 +1,1351 @@
+Let’s make a plan for an AI customer feedback survey tool. The goal is to automate the creation, distribution, and analysis of feedback to identify sentiments, themes, and urgent issues from open-ended responses. Let’s work on fleshing out the features first:
+Features:
+* Survey Creation
+   * AI-Assisted Question Generation
+   * Question Types
+   * Branching Logic
+   * Templates Library
+   * Multi-Language Support
+   * Preview Mode
+   * Branding CustomizationDistribution
+ Multi-Channel DistributionAudience SegmentationSchedulingAutomated RemindersResponse QuotasAnonymous vs IdentifiedAPI TriggersAI-Powered Analysis
+ Sentiment Analysis
+ Real-Time Sentiment ScoringEmotion DetectionTrend TrackingTheme Extraction
+ Automatic Topic ClusteringKeyword ExtractionTheme EvolutionCustom CategoriesUrgent Issue Detection
+ Priority FlaggingEscalation AlertsResponse RoutingSLA TrackingAdditional AI Capabilities
+ Summary GenerationActionable InsightsComparative AnalysisAnomaly DetectionReporting & Dashboard
+ Real-time DashboardVisual AnalyticsCustom ReportsScheduled ReportsExport OptionsRole-based ViewsBenchmark ComparisonsResponse Management
+ Response FeedSearch and FilterTagging SystemNotes and CommentsFollow-Up ActionsResponse ExportShow lessDec 31, 2025This is an excellent foundation for an AI-powered customer feedback survey tool! Let me help you flesh out these features with more specific details and considerations. I'll expand on each section with concrete capabilities and implementation notes.
+Survey Creation
+AI-Assisted Question Generation
+
+Context-aware suggestions: AI recommends questions based on industry, goal (NPS, satisfaction, product feedback), and customer journey stage
+Question optimization: AI rewrites questions to reduce bias, improve clarity, and increase response rates
+Smart follow-ups: Automatically suggest conditional follow-up questions based on initial responses
+Question quality scoring: Rate questions on clarity, neutrality, and likelihood to yield actionable insights
+A/B testing recommendations: Suggest question variations for testing
+
+Question Types
+
+Rating scales: Likert, star ratings, NPS, CSAT, CES scores
+Open-ended: Short text, long text, comment boxes
+Multiple choice: Single select, multi-select, dropdown
+Matrix/grid: Multiple questions with same rating scale
+Ranking: Drag-and-drop priority ordering
+Slider: Numeric or satisfaction sliders
+File upload: For visual feedback, screenshots
+Date/time: For scheduling or time-based feedback
+
+Branching Logic
+
+Conditional routing: Show/hide questions based on previous answers
+Skip logic: Jump to specific sections
+Display logic: Show content conditionally without navigation
+Piping: Insert previous answers into subsequent questions
+Score-based branching: Route based on cumulative scores
+Logic templates: Pre-built logic patterns for common scenarios
+
+Templates Library
+
+Industry-specific: Retail, SaaS, Healthcare, Financial Services, Hospitality
+Use-case templates: Post-purchase, onboarding, churn prevention, support satisfaction, event feedback
+Methodology templates: NPS surveys, CSAT, CES, Voice of Customer (VoC)
+Custom template saving: Save and share team templates
+Template marketplace: Community-contributed templates
+AI template builder: Generate complete surveys from brief descriptions
+
+Multi-Language Support
+
+Automated translation: AI-powered translation with context preservation
+Language detection: Auto-detect respondent language
+RTL support: Right-to-left language formatting
+Localization: Currency, date formats, cultural adaptations
+Translation memory: Consistent terminology across surveys
+Multi-language reporting: Analyze cross-language responses together
+
+Preview Mode
+
+Multi-device preview: Desktop, tablet, mobile views
+Logic flow visualization: See all branching paths
+Test mode: Complete survey without recording responses
+Accessibility checker: WCAG compliance validation
+Load time estimates: Predict completion time
+Share preview links: Get stakeholder feedback pre-launch
+
+Branding Customization
+
+Theme builder: Colors, fonts, button styles
+Logo and imagery: Header/footer customization
+Custom CSS: Advanced styling options
+White-labeling: Remove platform branding
+Email templates: Branded invitation and reminder emails
+Thank you pages: Custom completion messages with redirects
+
+
+Distribution
+Multi-Channel Distribution
+
+Email: Direct sends, embedded surveys, email signatures
+SMS/Text: Short surveys with mobile-optimized links
+Web embed: Website popups, slide-ins, embedded forms
+In-app: SDK integration for mobile and web apps
+QR codes: Printable codes for physical locations
+Social media: Shareable links, social posts
+Kiosk mode: Tablet/touchscreen on-site surveys
+API integration: Trigger from CRM, support systems, etc.
+
+Audience Segmentation
+
+Customer attributes: Demographics, purchase history, account type
+Behavioral triggers: Usage patterns, engagement levels, lifecycle stage
+Custom segments: Build complex audience rules
+Dynamic segments: Auto-update based on changing criteria
+Sample size controls: Representative sampling from large populations
+Exclusion rules: Prevent survey fatigue, exclude recent respondents
+CRM sync: Import segments from Salesforce, HubSpot, etc.
+
+Scheduling
+
+One-time sends: Immediate or scheduled launch
+Recurring surveys: Daily, weekly, monthly, quarterly cadences
+Triggered sends: Event-based (post-purchase, support ticket closure)
+Time zone optimization: Send at optimal local times
+Drip campaigns: Staggered distribution over time
+Seasonal scheduling: Holiday-aware sending
+Calendar integration: Visualize all scheduled surveys
+
+Automated Reminders
+
+Reminder cadence: Configure number and timing of reminders
+Partial completion reminders: Target those who started but didn't finish
+Smart reminders: Send only to non-responders
+Escalating urgency: Progressive messaging tone
+Channel switching: Start with email, follow up with SMS
+Reminder limits: Prevent over-communication
+Opt-out management: Honor unsubscribe preferences
+
+Response Quotas
+
+Target quotas: Set desired response counts overall or per segment
+Auto-close: Stop distribution when quota is reached
+Quota monitoring: Real-time progress tracking
+Quota balancing: Ensure proportional representation across segments
+Oversampling controls: Collect extra responses from underrepresented groups
+Quality quotas: Require minimum completion rates or response quality
+
+Anonymous vs Identified
+
+Truly anonymous: No identifying data collected or stored
+Pseudo-anonymous: Trackable internally but anonymous to analysts
+Fully identified: Link to customer records
+Optional identification: Let respondents choose
+Privacy controls: GDPR/CCPA compliance options
+Identifier encryption: Secure PII handling
+Anonymous aggregation: Combine identified responses into anonymous reports
+
+API Triggers
+
+Webhooks: Event-driven survey triggers
+REST API: Programmatic survey distribution
+SDK integration: Native app triggering
+Platform connectors: Zapier, Make, native integrations
+Event mapping: Map business events to survey triggers
+Conditional triggering: Business logic for when to send
+Rate limiting: Prevent trigger storms
+
+
+AI-Powered Analysis
+Sentiment Analysis
+Real-Time Sentiment Scoring
+
+Multi-level scoring: Response-level, question-level, overall survey sentiment
+Granular scale: Beyond positive/negative/neutral (very negative to very positive)
+Confidence scores: Indicate certainty of sentiment classification
+Context-aware: Understand industry-specific terminology and sarcasm
+Mixed sentiment detection: Identify nuanced responses with multiple sentiments
+Sentiment trends: Track changes over time with anomaly alerts
+
+Emotion Detection
+
+Emotional categories: Joy, anger, fear, sadness, surprise, frustration, satisfaction
+Intensity measurement: Degree of emotional expression
+Emotional journey mapping: Track emotion changes through survey
+Tone analysis: Professional, casual, urgent, distressed
+Emoji interpretation: Analyze emotional meaning of emojis
+Cultural sensitivity: Account for emotional expression differences across cultures
+
+Trend Tracking
+
+Sentiment time series: Visualize sentiment over days/weeks/months
+Cohort comparisons: Compare sentiment across customer segments
+Leading indicators: Predict sentiment shifts before they happen
+Correlation analysis: Link sentiment to business metrics (churn, revenue, NPS)
+Baseline establishment: Understand normal sentiment ranges
+Seasonal adjustments: Account for expected fluctuations
+
+Theme Extraction
+Automatic Topic Clustering
+
+Unsupervised learning: Discover themes without predefined categories
+Hierarchical clustering: Group related themes into parent categories
+Dynamic clustering: Themes evolve as new responses arrive
+Cross-question themes: Identify themes spanning multiple questions
+Visual theme maps: Network graphs showing theme relationships
+Theme prevalence: Percentage of responses mentioning each theme
+
+Keyword Extraction
+
+Key phrase identification: Multi-word expressions, not just single words
+Contextual relevance: Weight keywords by importance to meaning
+Product/feature mentions: Automatically tag specific products or features
+Competitor mentions: Flag references to competitors
+Problem indicators: Keywords signaling issues or pain points
+Opportunity keywords: Terms suggesting upsell or feature requests
+
+Theme Evolution
+
+Emerging themes: Detect new topics as they appear
+Declining themes: Identify fading issues
+Theme velocity: Rate of theme growth or decline
+Theme merging: Combine related themes automatically
+Historical theme tracking: See how themes change over months/years
+Predictive theme modeling: Forecast which themes will grow
+
+Custom Categories
+
+Training data: Teach AI custom category systems
+Category hierarchies: Multi-level classification systems
+Auto-categorization: Apply categories to new responses automatically
+Category confidence: Reliability scores for classifications
+Multi-category tagging: Responses can belong to multiple categories
+Category refinement: Improve categories based on user feedback
+
+Urgent Issue Detection
+Priority Flagging
+
+AI urgency scoring: 1-10 or critical/high/medium/low scales
+Multi-factor urgency: Combine sentiment, keywords, customer value, issue type
+Custom urgency rules: Define what makes something urgent for your business
+Auto-prioritization: Sort response queue by urgency
+Urgent theme detection: Flag when many responses mention the same urgent issue
+VIP customer flagging: Prioritize high-value customer issues
+
+Escalation Alerts
+
+Real-time notifications: Instant alerts via email, SMS, Slack, Teams
+Escalation workflows: Route to appropriate team members automatically
+Alert templates: Pre-configured alert types for common scenarios
+Alert throttling: Prevent alert fatigue with smart grouping
+On-call integration: Connect to PagerDuty, Opsgenie, etc.
+Alert tracking: Monitor response time to urgent issues
+
+Response Routing
+
+Smart assignment: Route to team member with right expertise
+Load balancing: Distribute responses evenly across team
+Skills-based routing: Match issues to specialist knowledge
+Geographic routing: Route to regional teams
+Workload awareness: Avoid overwhelming individuals
+Round-robin options: Fair distribution schemes
+
+SLA Tracking
+
+Configurable SLAs: Set response time targets by priority level
+SLA countdowns: Real-time countdown timers
+Breach warnings: Alerts before SLA violations
+SLA reporting: Track compliance rates
+Automatic escalation: Escalate if SLA at risk
+Business hours awareness: SLA clocks pause outside working hours
+
+Additional AI Capabilities
+Summary Generation
+
+Executive summaries: High-level overviews for leadership
+Verbatim summaries: Concise versions of open-ended responses
+Key findings: Bullet-point summaries of main insights
+Narrative reports: AI-written prose summarizing findings
+Comparative summaries: "This month vs last month" summaries
+Length customization: Adjust summary detail level
+
+Actionable Insights
+
+Recommended actions: AI suggests specific steps based on feedback
+Impact prediction: Estimate potential impact of actions
+Effort estimation: Gauge difficulty of implementing suggestions
+Quick wins identification: Flag easy, high-impact opportunities
+Root cause analysis: Drill into underlying issues
+Success metrics: Suggest KPIs to track improvement
+
+Comparative Analysis
+
+Period-over-period: Compare time periods automatically
+Segment comparisons: Contrast different customer groups
+Product comparisons: Compare feedback across product lines
+Benchmark comparisons: Compare to industry standards or competitors
+Statistical significance: Highlight meaningful differences
+Visual comparisons: Side-by-side charts and tables
+
+Anomaly Detection
+
+Statistical outliers: Identify unusual response patterns
+Sentiment spikes: Sudden changes in sentiment
+Volume anomalies: Unexpected response rate changes
+Topic anomalies: New or unusual themes appearing
+Response quality changes: Detect suspicious or bot responses
+Investigation tools: Drill into anomalies to understand causes
+
+
+Reporting & Dashboard
+Real-time Dashboard
+
+Live metrics: Response counts, completion rates, NPS, CSAT updating in real-time
+Sentiment gauge: Current overall sentiment with trend arrows
+Urgent issue feed: Stream of flagged responses needing attention
+Key themes widget: Top 5-10 themes with prevalence
+Response map: Geographic visualization of responses
+Customizable widgets: Drag-and-drop dashboard builder
+Auto-refresh: Configurable update intervals
+Mobile dashboard: Responsive design for monitoring on-the-go
+
+Visual Analytics
+
+Sentiment over time: Line charts with trend lines
+Theme word clouds: Visual representation of topic frequency
+Response distribution: Histograms for rating questions
+Heat maps: Identify patterns across segments or time
+Funnel visualizations: Survey completion and drop-off analysis
+Correlation matrices: Visualize relationships between metrics
+Network graphs: Show theme relationships and connections
+Interactive charts: Click to filter and drill down
+
+Custom Reports
+
+Report builder: Drag-and-drop interface for custom reports
+Saved report templates: Reusable report configurations
+Calculated metrics: Create custom KPIs and formulas
+Cross-tabulation: Analyze relationships between variables
+Verbatim tables: Lists of open-ended responses with filters
+Multi-survey reports: Combine data from multiple surveys
+Annotations: Add context notes to reports
+Branding: Apply company branding to reports
+
+Scheduled Reports
+
+Email delivery: Automated report distribution
+Frequency options: Daily, weekly, monthly, quarterly
+Recipient management: Distribution lists and individual recipients
+Custom scheduling: Specific days/times for delivery
+Conditional sending: Only send if certain conditions met (e.g., minimum responses)
+Format options: PDF, Excel, PowerPoint, interactive HTML
+Report subscriptions: Users can subscribe to reports they want
+
+Export Options
+
+Raw data exports: CSV, Excel, JSON, XML
+Filtered exports: Export only what you need
+SPSS/SAS formats: For advanced statistical analysis
+API access: Programmatic data access
+Incremental exports: Export only new responses since last export
+Automated exports: Schedule exports to cloud storage (S3, Google Drive, Dropbox)
+Data dictionary: Include metadata about fields and values
+
+Role-based Views
+
+Executive view: High-level metrics and trends
+Manager view: Team performance and actionable insights
+Analyst view: Detailed data and exploration tools
+Agent view: Individual response queue and tasks
+Custom roles: Define permissions and views for specific teams
+Data access controls: Restrict sensitive data by role
+Personalized dashboards: Each user sees relevant metrics
+
+Benchmark Comparisons
+
+Industry benchmarks: Compare to sector averages (NPS, CSAT, etc.)
+Historical benchmarks: Compare to your own past performance
+Competitive benchmarking: Compare to specific competitors (if data available)
+Best-in-class targets: Aspirational benchmark goals
+Percentile rankings: See where you rank
+Benchmark alerts: Notify when you exceed or fall below benchmarks
+Custom benchmarks: Set internal targets and goals
+
+
+Response Management
+Response Feed
+
+Unified inbox: All responses in one stream
+List and card views: Toggle between compact and detailed views
+Real-time updates: New responses appear automatically
+Response preview: See full response without clicking
+Batch actions: Act on multiple responses at once
+Saved views: Store custom filter combinations
+Assignment status: See who's working on what
+Reading list: Mark responses to review later
+
+Search and Filter
+
+Full-text search: Search across all open-ended responses
+Advanced filters: Sentiment, theme, date range, segment, completion status, priority
+Saved searches: Quick access to common filter sets
+Boolean operators: Complex search queries (AND, OR, NOT)
+Fuzzy matching: Find similar phrases and synonyms
+Search within results: Progressively narrow results
+Filter combinations: Stack multiple filters
+Quick filters: One-click access to common views (today's responses, urgent only, etc.)
+
+Tagging System
+
+Custom tags: Create unlimited tags for organization
+Auto-tagging: AI suggests relevant tags
+Tag hierarchies: Organize tags into categories
+Color coding: Visual tag differentiation
+Tag-based filtering: Find all responses with specific tags
+Tag analytics: See tag distribution and trends
+Bulk tagging: Apply tags to many responses at once
+Tag permissions: Control who can create/apply tags
+
+Notes and Comments
+
+Internal notes: Team members can annotate responses
+@mentions: Tag colleagues for collaboration
+Note threads: Discuss responses within the platform
+Timestamped notes: Track conversation history
+Private vs shared notes: Control note visibility
+Rich text notes: Format notes with lists, links, emphasis
+Attachment support: Add files to notes
+Note search: Find responses by note content
+
+Follow-Up Actions
+
+Action items: Create tasks directly from responses
+Task assignment: Delegate follow-ups to team members
+Due dates: Set deadlines for actions
+Task status tracking: Mark as to-do, in progress, complete
+Integration with task tools: Sync with Asana, Jira, Trello, Monday.com
+Workflow automation: Trigger actions based on response content
+Closed-loop feedback: Track when customer issues are resolved
+Action analytics: Monitor completion rates and bottlenecks
+
+Response Export
+
+Selective export: Choose specific responses to export
+Export formats: CSV, Excel, PDF, Word
+Include metadata: Tags, notes, sentiment scores, etc.
+Anonymization options: Remove PII before export
+Response packaging: Bundle related responses together
+Export history: Track what's been exported and when
+Scheduled exports: Automate regular data extracts
+Compliance exports: Formatted for audit and compliance needs
+
+
+Additional Considerations
+Integration & Ecosystem
+
+CRM integration: Salesforce, HubSpot, Microsoft Dynamics
+Support tools: Zendesk, Intercom, Freshdesk
+Marketing platforms: Mailchimp, Marketo, ActiveCampaign
+Analytics: Google Analytics, Mixpanel, Amplitude
+Data warehouses: Snowflake, BigQuery, Redshift
+BI tools: Tableau, Power BI, Looker
+Communication: Slack, Microsoft Teams, email
+Webhooks and APIs: Two-way data flow
+
+Security & Compliance
+
+Data encryption: At rest and in transit
+GDPR compliance: Data portability, right to deletion, consent management
+CCPA compliance: California privacy requirements
+HIPAA compliance: For healthcare feedback
+SOC 2 certification: Security and availability
+SSO/SAML: Enterprise authentication
+Audit logs: Track all system access and changes
+Data residency: Store data in specific geographic regions
+Role-based access control: Granular permissions
+
+AI Model Management
+
+Model selection: Choose between different AI models for different tasks
+Custom training: Train on your specific domain/industry
+Human-in-the-loop: Review and correct AI classifications
+Model performance monitoring: Track accuracy over time
+Feedback loop: Improve models based on user corrections
+Explainable AI: Understand why AI made specific classifications
+Confidence thresholds: Adjust AI sensitivity based on use case
+A/B testing: Compare different AI models or configurations
+
+
+This comprehensive feature set positions your tool as an enterprise-grade solution that can compete with established players while offering superior AI capabilities. The key differentiators would be the depth of AI analysis, real-time urgent issue detection, and the seamless integration of analysis with action.
+Would you like me to prioritize these features into an MVP vs future releases roadmap, or dive deeper into any specific feature area?great! let's sketch out some user flows, then the technical architecture. optimize for costs and developer speed. i want to use react, supabase, and awsDec 31, 2025Excellent! Let me sketch out the key user flows first, then design a cost-optimized technical architecture using React, Supabase, and AWS.
+Key User Flows
+1. Survey Creation Flow (Survey Admin)
+┌─────────────────────────────────────────────────────────────┐
+│ START: Dashboard → "Create Survey" button                   │
+└─────────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────────┐
+│ Choose Starting Point:                                       │
+│ • Start from scratch                                         │
+│ • Use template (AI shows recommendations)                    │
+│ • AI generate from description                               │
+└─────────────────────────────────────────────────────────────┘
+                          ↓
+        ┌─────────────────┴─────────────────┐
+        ↓ (AI generate)                     ↓ (Scratch/Template)
+┌──────────────────┐              ┌──────────────────────┐
+│ Enter goal/desc  │              │ Survey Builder       │
+│ AI generates     │──────────────→│ • Add questions      │
+│ full survey      │              │ • AI suggests next Q │
+└──────────────────┘              │ • Setup branching    │
+                                  │ • Preview            │
+                                  └──────────────────────┘
+                                           ↓
+                          ┌────────────────────────────┐
+                          │ Configure Settings:        │
+                          │ • Branding                 │
+                          │ • Languages                │
+                          │ • Completion message       │
+                          └────────────────────────────┘
+                                           ↓
+                          ┌────────────────────────────┐
+                          │ Preview & Test             │
+                          │ • Mobile/desktop views     │
+                          │ • Test logic flows         │
+                          │ • Share with team          │
+                          └────────────────────────────┘
+                                           ↓
+                          ┌────────────────────────────┐
+                          │ Setup Distribution:        │
+                          │ • Choose channels          │
+                          │ • Select audience          │
+                          │ • Schedule/trigger         │
+                          └────────────────────────────┘
+                                           ↓
+                          ┌────────────────────────────┐
+                          │ Launch Survey              │
+                          │ • Confirm & activate       │
+                          │ → Redirects to Dashboard   │
+                          └────────────────────────────┘
+2. Response Collection Flow (End User/Customer)
+┌─────────────────────────────────────────────────────────────┐
+│ Entry Point:                                                 │
+│ • Email link → Landing page                                  │
+│ • SMS link → Mobile-optimized landing                        │
+│ • Website embed → Modal or inline                            │
+│ • In-app trigger → Native survey view                        │
+└─────────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────────┐
+│ Welcome Screen                                               │
+│ • Branding                                                   │
+│ • Estimated time                                             │
+│ • Privacy notice                                             │
+│ • [Start Survey] button                                      │
+└─────────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────────┐
+│ Question Flow (with auto-save after each answer)             │
+│ • Progress bar                                               │
+│ • Current question                                           │
+│ • Conditional next questions (branching logic)               │
+│ • [Back] [Next] buttons                                      │
+└─────────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────────┐
+│ Completion Screen                                            │
+│ • Thank you message                                          │
+│ • Optional: Incentive/next steps                             │
+│ • Background: Trigger AI analysis                            │
+└─────────────────────────────────────────────────────────────┘
+                          ↓
+                  [AI Analysis Pipeline]
+                  • Sentiment scoring
+                  • Theme extraction
+                  • Urgency detection
+                  • Update dashboard
+3. Real-Time Monitoring Flow (Manager/Analyst)
+┌─────────────────────────────────────────────────────────────┐
+│ Dashboard Landing (auto-refreshes)                           │
+│ ┌───────────────────────────────────────────────────────┐   │
+│ │ Key Metrics (live)        │ Sentiment Gauge           │   │
+│ │ • 247 responses today     │ • Overall: 7.2/10        │   │
+│ │ • 78% completion rate     │ • Trending: ↑ +0.3       │   │
+│ └───────────────────────────────────────────────────────┘   │
+│ ┌───────────────────────────────────────────────────────┐   │
+│ │ 🚨 Urgent Issues (3)      │ Top Themes Today          │   │
+│ │ • Checkout bug mentioned  │ 1. Shipping delays (45%)  │   │
+│ │ • Angry customer (VIP)    │ 2. Pricing confusion (32%)│   │
+│ └───────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+                          ↓
+           User clicks urgent issue notification
+                          ↓
+┌─────────────────────────────────────────────────────────────┐
+│ Response Detail View                                         │
+│ ┌───────────────────────────────────────────────────────┐   │
+│ │ Customer: John Doe (john@example.com)                 │   │
+│ │ Urgency: 🔴 Critical | Sentiment: Very Negative       │   │
+│ │ Themes: Bug, Payment, Frustration                     │   │
+│ ├───────────────────────────────────────────────────────┤   │
+│ │ "I've tried checking out 5 times and keep getting    │   │
+│ │  an error. This is unacceptable for a premium         │   │
+│ │  service. Considering switching to [competitor]."     │   │
+│ ├───────────────────────────────────────────────────────┤   │
+│ │ AI Insights:                                          │   │
+│ │ • Checkout flow issue detected (mentioned 12x today)  │   │
+│ │ • High churn risk customer                            │   │
+│ │ • Recommended: Immediate escalation to tech team      │   │
+│ └───────────────────────────────────────────────────────┘   │
+│                                                              │
+│ Actions:                                                     │
+│ [Create Ticket] [Assign to Team] [Add to Report]            │
+│ [Contact Customer]                                           │
+└─────────────────────────────────────────────────────────────┘
+                          ↓
+                  User creates ticket
+                          ↓
+┌─────────────────────────────────────────────────────────────┐
+│ • Task created in issue tracker                              │
+│ • Customer added to follow-up list                           │
+│ • Alert sent to tech team via Slack                          │
+│ • Response marked as "In Progress"                           │
+└─────────────────────────────────────────────────────────────┘
+4. AI Analysis & Reporting Flow (Analyst)
+┌─────────────────────────────────────────────────────────────┐
+│ Analytics View                                               │
+│ Tabs: [Overview] [Themes] [Sentiment] [Responses]           │
+└─────────────────────────────────────────────────────────────┘
+                          ↓
+                  Click "Themes" tab
+                          ↓
+┌─────────────────────────────────────────────────────────────┐
+│ Theme Analysis (Auto-generated clusters)                     │
+│ ┌───────────────────────────────────────────────────────┐   │
+│ │ Top Themes (This Week):                               │   │
+│ │                                                        │   │
+│ │ 1. ⚠️ Shipping Delays (342 mentions, ↑127%)           │   │
+│ │    Sub-themes: International shipping, tracking       │   │
+│ │    Sentiment: Negative (-2.3)                         │   │
+│ │    [View Responses] [Create Report]                   │   │
+│ │                                                        │   │
+│ │ 2. ✨ Easy Checkout (289 mentions, ↑15%)              │   │
+│ │    Sub-themes: One-click, saved cards                 │   │
+│ │    Sentiment: Positive (+4.1)                         │   │
+│ │    [View Responses] [Share Insight]                   │   │
+│ └───────────────────────────────────────────────────────┘   │
+│                                                              │
+│ [Export Analysis] [Schedule Report] [Compare Periods]       │
+└─────────────────────────────────────────────────────────────┘
+                          ↓
+            Click "Shipping Delays" theme
+                          ↓
+┌─────────────────────────────────────────────────────────────┐
+│ Theme Deep Dive: Shipping Delays                             │
+│ ┌───────────────────────────────────────────────────────┐   │
+│ │ Timeline: [Chart showing mentions over time]          │   │
+│ │ • Spike detected on Dec 15                            │   │
+│ │ • Correlated with: Holiday rush                       │   │
+│ └───────────────────────────────────────────────────────┘   │
+│ ┌───────────────────────────────────────────────────────┐   │
+│ │ AI-Generated Summary:                                 │   │
+│ │ "Customer frustration with shipping has increased     │   │
+│ │  significantly due to holiday delays. Main issues:    │   │
+│ │  • International orders delayed 5-7 days              │   │
+│ │  • Poor tracking visibility                           │   │
+│ │  • Customer service unresponsive on shipping Qs       │   │
+│ │                                                        │   │
+│ │ Recommended Actions:                                  │   │
+│ │  1. Add shipping status updates to email flow         │   │
+│ │  2. Update delivery estimates on product pages        │   │
+│ │  3. Train support team on shipping escalations"       │   │
+│ └───────────────────────────────────────────────────────┘   │
+│                                                              │
+│ Sample Responses: [Shows 5-10 representative verbatims]     │
+│                                                              │
+│ [Generate Exec Report] [Create Action Items] [Export Data]  │
+└─────────────────────────────────────────────────────────────┘
+
+Technical Architecture
+Architecture Overview
+┌─────────────────────────────────────────────────────────────────┐
+│                         CLIENT LAYER                             │
+│  ┌────────────────────────────────────────────────────────┐     │
+│  │ React SPA (Vite)                                       │     │
+│  │ • Survey Builder UI                                    │     │
+│  │ • Dashboard & Analytics                                │     │
+│  │ • Response Management                                  │     │
+│  │ Libraries: TanStack Query, Zustand, Recharts,          │     │
+│  │            TailwindCSS, Radix UI                       │     │
+│  └────────────────────────────────────────────────────────┘     │
+│  ┌────────────────────────────────────────────────────────┐     │
+│  │ Survey Response UI (Separate lightweight build)        │     │
+│  │ • Minimal bundle size for fast loading                 │     │
+│  │ • Optimized for mobile                                 │     │
+│  └────────────────────────────────────────────────────────┘     │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+                    HTTPS (CloudFront CDN)
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                      BACKEND LAYER                               │
+│  ┌────────────────────────────────────────────────────────┐     │
+│  │ Supabase (Managed PostgreSQL + Realtime + Auth)       │     │
+│  │ • PostgreSQL database                                  │     │
+│  │ • Row Level Security (RLS)                             │     │
+│  │ • Realtime subscriptions (for live dashboard)          │     │
+│  │ • Built-in Auth (email, OAuth, SSO)                    │     │
+│  │ • Storage (for file uploads, exports)                  │     │
+│  │ • Edge Functions (lightweight API endpoints)           │     │
+│  └────────────────────────────────────────────────────────┘     │
+│                                                                  │
+│  ┌────────────────────────────────────────────────────────┐     │
+│  │ AWS Lambda Functions (Node.js)                         │     │
+│  │ • Heavy AI processing                                  │     │
+│  │ • Scheduled jobs (reminders, reports)                  │     │
+│  │ • Email/SMS sending                                    │     │
+│  │ • Data exports                                         │     │
+│  │ • Integration webhooks                                 │     │
+│  └────────────────────────────────────────────────────────┘     │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                       AI/ML LAYER                                │
+│  ┌────────────────────────────────────────────────────────┐     │
+│  │ AWS Bedrock (Claude Sonnet for analysis)              │     │
+│  │ • Sentiment analysis                                   │     │
+│  │ • Theme extraction                                     │     │
+│  │ • Summary generation                                   │     │
+│  │ • Urgency detection                                    │     │
+│  │ • Question generation                                  │     │
+│  └────────────────────────────────────────────────────────┘     │
+│                                                                  │
+│  ┌────────────────────────────────────────────────────────┐     │
+│  │ AWS Comprehend (Optional - for batch analysis)         │     │
+│  │ • High-volume sentiment scoring                        │     │
+│  │ • Entity extraction                                    │     │
+│  │ • Language detection                                   │     │
+│  └────────────────────────────────────────────────────────┘     │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                    SUPPORTING SERVICES                           │
+│  • Amazon SES (Email sending - $0.10/1000 emails)               │
+│  • Amazon SNS (Push notifications, SMS)                          │
+│  • Amazon SQS (Job queues for async processing)                 │
+│  • CloudWatch (Logging, monitoring, alarms)                     │
+│  • S3 (File storage, exports, backups)                          │
+│  • CloudFront (CDN for global delivery)                         │
+│  • EventBridge (Scheduled tasks, event routing)                 │
+└─────────────────────────────────────────────────────────────────┘
+
+Detailed Component Architecture
+1. Frontend (React)
+src/
+├── apps/
+│   ├── admin/                 # Main dashboard app
+│   │   ├── main.tsx
+│   │   ├── App.tsx
+│   │   └── routes/
+│   │       ├── dashboard/
+│   │       ├── surveys/
+│   │       ├── responses/
+│   │       └── analytics/
+│   └── survey/                # Lightweight survey response app
+│       ├── main.tsx
+│       └── SurveyRenderer.tsx
+│
+├── features/
+│   ├── auth/
+│   ├── survey-builder/
+│   │   ├── components/
+│   │   │   ├── QuestionEditor.tsx
+│   │   │   ├── LogicBuilder.tsx
+│   │   │   └── AIQuestionSuggester.tsx
+│   │   ├── hooks/
+│   │   └── stores/
+│   ├── analytics/
+│   │   ├── components/
+│   │   │   ├── SentimentChart.tsx
+│   │   │   ├── ThemeCloud.tsx
+│   │   │   └── UrgentIssueFeed.tsx
+│   │   └── hooks/
+│   └── responses/
+│       ├── components/
+│       └── hooks/
+│
+├── shared/
+│   ├── components/           # Reusable UI components
+│   │   ├── ui/              # shadcn/ui components
+│   │   ├── charts/
+│   │   └── forms/
+│   ├── hooks/
+│   ├── lib/
+│   │   ├── supabase.ts      # Supabase client
+│   │   ├── api.ts           # API helpers
+│   │   └── utils.ts
+│   └── types/
+│
+└── config/
+Key Libraries:
+
+Vite: Fast build tool
+TanStack Query (React Query): Server state management, caching
+Zustand: Lightweight client state management
+TailwindCSS: Styling
+Radix UI / shadcn/ui: Accessible component primitives
+Recharts: Data visualization
+React Hook Form: Form handling
+Zod: Schema validation
+
+
+2. Database Schema (Supabase PostgreSQL)
+sql-- Organizations
+CREATE TABLE organizations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  plan TEXT DEFAULT 'free', -- free, pro, enterprise
+  settings JSONB DEFAULT '{}',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Users (managed by Supabase Auth, extended profile)
+CREATE TABLE user_profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id),
+  organization_id UUID REFERENCES organizations(id),
+  role TEXT DEFAULT 'member', -- admin, manager, analyst, member
+  preferences JSONB DEFAULT '{}',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Surveys
+CREATE TABLE surveys (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  organization_id UUID REFERENCES organizations(id),
+  created_by UUID REFERENCES user_profiles(id),
+  title TEXT NOT NULL,
+  description TEXT,
+  status TEXT DEFAULT 'draft', -- draft, active, paused, closed
+  
+  -- Survey configuration
+  questions JSONB NOT NULL, -- Array of question objects
+  logic JSONB DEFAULT '[]', -- Branching logic rules
+  settings JSONB DEFAULT '{}', -- Branding, languages, etc.
+  
+  -- Distribution
+  distribution_config JSONB DEFAULT '{}',
+  
+  -- Metadata
+  response_count INT DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  published_at TIMESTAMPTZ,
+  closed_at TIMESTAMPTZ
+);
+
+CREATE INDEX idx_surveys_org ON surveys(organization_id);
+CREATE INDEX idx_surveys_status ON surveys(status);
+
+-- Responses
+CREATE TABLE responses (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  survey_id UUID REFERENCES surveys(id) ON DELETE CASCADE,
+  
+  -- Respondent info (optional based on anonymous setting)
+  respondent_id TEXT, -- External ID from CRM/email
+  respondent_email TEXT,
+  respondent_metadata JSONB DEFAULT '{}',
+  
+  -- Response data
+  answers JSONB NOT NULL, -- { question_id: answer_value }
+  
+  -- Completion tracking
+  status TEXT DEFAULT 'in_progress', -- in_progress, completed, abandoned
+  started_at TIMESTAMPTZ DEFAULT NOW(),
+  completed_at TIMESTAMPTZ,
+  
+  -- AI analysis results (populated async)
+  sentiment_score DECIMAL(3,2), -- -1.00 to 1.00
+  sentiment_label TEXT, -- very_negative, negative, neutral, positive, very_positive
+  emotions JSONB DEFAULT '[]', -- Array of detected emotions
+  themes JSONB DEFAULT '[]', -- Array of theme IDs
+  urgency_score INT, -- 0-10
+  is_urgent BOOLEAN DEFAULT FALSE,
+  
+  -- Metadata
+  source TEXT, -- email, sms, web, api, etc.
+  device_type TEXT,
+  language TEXT,
+  ip_address INET,
+  user_agent TEXT,
+  
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_responses_survey ON responses(survey_id);
+CREATE INDEX idx_responses_completed ON responses(completed_at);
+CREATE INDEX idx_responses_urgent ON responses(is_urgent) WHERE is_urgent = TRUE;
+CREATE INDEX idx_responses_sentiment ON responses(sentiment_score);
+CREATE INDEX idx_responses_respondent ON responses(respondent_id);
+
+-- Themes (auto-generated clusters)
+CREATE TABLE themes (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  survey_id UUID REFERENCES surveys(id) ON DELETE CASCADE,
+  organization_id UUID REFERENCES organizations(id),
+  
+  name TEXT NOT NULL,
+  description TEXT,
+  keywords TEXT[], -- Array of associated keywords
+  
+  -- Stats
+  mention_count INT DEFAULT 0,
+  avg_sentiment DECIMAL(3,2),
+  
+  -- Hierarchy
+  parent_theme_id UUID REFERENCES themes(id),
+  
+  -- AI-generated
+  is_auto_generated BOOLEAN DEFAULT TRUE,
+  
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_themes_survey ON themes(survey_id);
+CREATE INDEX idx_themes_org ON themes(organization_id);
+
+-- Response Themes (many-to-many)
+CREATE TABLE response_themes (
+  response_id UUID REFERENCES responses(id) ON DELETE CASCADE,
+  theme_id UUID REFERENCES themes(id) ON DELETE CASCADE,
+  confidence DECIMAL(3,2), -- 0.00 to 1.00
+  PRIMARY KEY (response_id, theme_id)
+);
+
+-- Actions/Tasks
+CREATE TABLE response_actions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  response_id UUID REFERENCES responses(id) ON DELETE CASCADE,
+  
+  action_type TEXT NOT NULL, -- follow_up, escalate, tag, note, ticket
+  assigned_to UUID REFERENCES user_profiles(id),
+  status TEXT DEFAULT 'pending', -- pending, in_progress, completed
+  
+  details JSONB DEFAULT '{}',
+  
+  created_by UUID REFERENCES user_profiles(id),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  completed_at TIMESTAMPTZ
+);
+
+-- Distribution Queue (for scheduled sends)
+CREATE TABLE distribution_queue (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  survey_id UUID REFERENCES surveys(id) ON DELETE CASCADE,
+  
+  recipient_email TEXT,
+  recipient_phone TEXT,
+  recipient_metadata JSONB DEFAULT '{}',
+  
+  channel TEXT NOT NULL, -- email, sms, webhook
+  status TEXT DEFAULT 'pending', -- pending, sent, failed, bounced
+  
+  scheduled_for TIMESTAMPTZ NOT NULL,
+  sent_at TIMESTAMPTZ,
+  
+  error_message TEXT,
+  
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_distribution_pending ON distribution_queue(scheduled_for) 
+  WHERE status = 'pending';
+
+-- Analytics Cache (pre-computed aggregations)
+CREATE TABLE analytics_cache (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  survey_id UUID REFERENCES surveys(id) ON DELETE CASCADE,
+  
+  metric_type TEXT NOT NULL, -- daily_sentiment, theme_distribution, etc.
+  time_bucket TIMESTAMPTZ NOT NULL, -- For time-series data
+  
+  data JSONB NOT NULL,
+  
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  
+  UNIQUE(survey_id, metric_type, time_bucket)
+);
+
+CREATE INDEX idx_analytics_survey ON analytics_cache(survey_id, metric_type, time_bucket);
+
+-- Exports
+CREATE TABLE exports (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  organization_id UUID REFERENCES organizations(id),
+  created_by UUID REFERENCES user_profiles(id),
+  
+  export_type TEXT NOT NULL, -- responses, report, analytics
+  filters JSONB DEFAULT '{}',
+  format TEXT NOT NULL, -- csv, xlsx, pdf
+  
+  status TEXT DEFAULT 'pending', -- pending, processing, completed, failed
+  file_url TEXT,
+  
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  completed_at TIMESTAMPTZ
+);
+Row Level Security (RLS) Examples:
+sql-- Users can only see their organization's data
+ALTER TABLE surveys ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY surveys_org_isolation ON surveys
+  FOR ALL
+  USING (organization_id IN (
+    SELECT organization_id FROM user_profiles WHERE id = auth.uid()
+  ));
+
+-- Similar policies for responses, themes, etc.
+```
+
+---
+
+### **3. Backend Functions**
+
+#### **Supabase Edge Functions** (for lightweight operations)
+```
+supabase/functions/
+├── submit-response/          # Handle survey submissions
+├── get-ai-suggestions/       # Quick AI question suggestions
+└── realtime-stats/           # Real-time dashboard aggregations
+Example: Submit Response
+typescript// supabase/functions/submit-response/index.ts
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+serve(async (req) => {
+  const { survey_id, answers, respondent_id } = await req.json()
+  
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  )
+  
+  // Insert response
+  const { data: response, error } = await supabase
+    .from('responses')
+    .insert({
+      survey_id,
+      answers,
+      respondent_id,
+      status: 'completed',
+      completed_at: new Date().toISOString()
+    })
+    .select()
+    .single()
+  
+  if (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    })
+  }
+  
+  // Trigger async AI analysis (via SQS)
+  await triggerAIAnalysis(response.id)
+  
+  return new Response(JSON.stringify({ success: true, response_id: response.id }), {
+    headers: { 'Content-Type': 'application/json' }
+  })
+})
+```
+
+#### **AWS Lambda Functions** (for heavy operations)
+```
+lambda/
+├── ai-analysis/
+│   ├── sentiment-analyzer.ts    # Batch sentiment analysis
+│   ├── theme-extractor.ts       # Extract themes from responses
+│   └── urgency-detector.ts      # Detect urgent issues
+├── distribution/
+│   ├── email-sender.ts          # Send survey emails via SES
+│   ├── sms-sender.ts            # Send SMS via SNS
+│   └── reminder-scheduler.ts    # Schedule reminders
+├── exports/
+│   └── generate-export.ts       # Generate CSV/PDF exports
+└── scheduled/
+    ├── daily-digest.ts          # Daily summary emails
+    └── analytics-aggregator.ts  # Pre-compute analytics
+Example: AI Sentiment Analysis
+typescript// lambda/ai-analysis/sentiment-analyzer.ts
+import { SQSHandler } from 'aws-lambda'
+import { createClient } from '@supabase/supabase-js'
+import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime'
+
+const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!)
+const bedrock = new BedrockRuntimeClient({ region: 'us-east-1' })
+
+export const handler: SQSHandler = async (event) => {
+  for (const record of event.Records) {
+    const { response_id } = JSON.parse(record.body)
+    
+    // Get response from database
+    const { data: response } = await supabase
+      .from('responses')
+      .select('*, survey:surveys(*)')
+      .eq('id', response_id)
+      .single()
+    
+    if (!response) continue
+    
+    // Extract open-ended text from answers
+    const openEndedText = extractOpenEndedAnswers(response.answers, response.survey.questions)
+    
+    if (!openEndedText) continue
+    
+    // Call Claude via Bedrock for analysis
+    const prompt = `Analyze the following customer feedback and provide:
+1. Overall sentiment score (-1.0 to 1.0)
+2. Sentiment label (very_negative, negative, neutral, positive, very_positive)
+3. Detected emotions (array)
+4. Main themes (array)
+5. Urgency score (0-10)
+6. Whether this requires urgent attention (boolean)
+
+Feedback: "${openEndedText}"
+
+Respond in JSON format only.`
+
+    const command = new InvokeModelCommand({
+      modelId: 'anthropic.claude-3-5-sonnet-20241022-v2:0',
+      body: JSON.stringify({
+        anthropic_version: 'bedrock-2023-05-31',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    })
+    
+    const bedrockResponse = await bedrock.send(command)
+    const aiResult = JSON.parse(new TextDecoder().decode(bedrockResponse.body))
+    const analysis = JSON.parse(aiResult.content[0].text)
+    
+    // Update response with AI analysis
+    await supabase
+      .from('responses')
+      .update({
+        sentiment_score: analysis.sentiment_score,
+        sentiment_label: analysis.sentiment_label,
+        emotions: analysis.emotions,
+        urgency_score: analysis.urgency_score,
+        is_urgent: analysis.is_urgent,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', response_id)
+    
+    // Extract and save themes
+    await processThemes(response_id, response.survey_id, analysis.themes)
+    
+    // Send alerts if urgent
+    if (analysis.is_urgent) {
+      await sendUrgentAlert(response)
+    }
+  }
+}
+
+4. Infrastructure as Code (AWS CDK or Terraform)
+Cost-Optimized Lambda Configuration:
+typescript// cdk/lib/lambda-stack.ts
+import * as cdk from 'aws-cdk-lib'
+import * as lambda from 'aws-cdk-lib/aws-lambda'
+import * as sqs from 'aws-cdk-lib/aws-sqs'
+
+export class AIAnalysisStack extends cdk.Stack {
+  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+    super(scope, id, props)
+    
+    // SQS Queue for async processing
+    const analysisQueue = new sqs.Queue(this, 'AnalysisQueue', {
+      visibilityTimeout: cdk.Duration.seconds(300),
+      retentionPeriod: cdk.Duration.days(4)
+    })
+    
+    // Lambda function with cost optimization
+    const sentimentAnalyzer = new lambda.Function(this, 'SentimentAnalyzer', {
+      runtime: lambda.Runtime.NODEJS_20_X,
+      code: lambda.Code.fromAsset('lambda/ai-analysis'),
+      handler: 'sentiment-analyzer.handler',
+      timeout: cdk.Duration.seconds(60),
+      memorySize: 512, // Optimize based on actual needs
+      
+      // Reserve concurrency to control costs
+      reservedConcurrentExecutions: 10,
+      
+      environment: {
+        SUPABASE_URL: process.env.SUPABASE_URL!,
+        SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY!
+      },
+      
+      events: [
+        new lambdaEventSources.SqsEventSource(analysisQueue, {
+          batchSize: 10 // Process multiple responses at once
+        })
+      ]
+    })
+    
+    // Grant Bedrock access
+    sentimentAnalyzer.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['bedrock:InvokeModel'],
+      resources: ['*']
+    }))
+  }
+}
+```
+
+---
+
+### **5. Data Flow for AI Analysis**
+```
+Response Submitted
+       ↓
+Supabase Edge Function
+       ↓
+Insert to responses table
+       ↓
+Send message to SQS queue
+       ↓
+Lambda triggered (batch of 10)
+       ↓
+For each response:
+  1. Fetch from Supabase
+  2. Call Bedrock (Claude) for analysis
+  3. Update response with analysis
+  4. Extract/update themes
+  5. Check urgency → send alerts if needed
+       ↓
+Update real-time dashboard (Supabase Realtime)
+```
+
+---
+
+### **6. Cost Optimization Strategies**
+
+#### **Database (Supabase)**
+- **Free tier**: Up to 500MB database, 1GB file storage, 2GB bandwidth
+- **Pro tier** ($25/mo): 8GB database, 100GB file storage, 50GB bandwidth
+- **Optimization**:
+  - Use JSONB for flexible schema (avoid excessive tables)
+  - Implement proper indexes
+  - Archive old responses to S3 (cheap storage)
+  - Use Supabase's built-in connection pooling
+
+#### **AI/ML (AWS Bedrock)**
+- **Claude Sonnet pricing**: ~$3 per 1M input tokens, ~$15 per 1M output tokens
+- **Optimization**:
+  - Batch process responses (analyze 10-20 at once)
+  - Use smaller prompts (be concise)
+  - Cache common analysis results
+  - Use AWS Comprehend for simple sentiment ($0.0001 per unit) and Bedrock for complex analysis
+  - Implement request throttling to control costs
+
+#### **Lambda**
+- **Free tier**: 1M requests/month, 400,000 GB-seconds
+- **Optimization**:
+  - Use ARM architecture (20% cheaper)
+  - Right-size memory (512MB is often sufficient)
+  - Reserve concurrency to prevent runaway costs
+  - Use SQS for batching (process 10 responses per invocation)
+
+#### **Email/SMS (SES/SNS)**
+- **SES**: $0.10 per 1,000 emails
+- **SNS**: $0.00645 per SMS (US)
+- **Optimization**:
+  - Use SES for transactional emails (much cheaper than SendGrid)
+  - Implement smart reminder logic (don't spam)
+  - Use email for most communications, SMS only for critical
+
+#### **Storage (S3)**
+- **Standard**: $0.023 per GB/month
+- **Optimization**:
+  - Use S3 Intelligent-Tiering for exports
+  - Set lifecycle policies (delete old exports after 30 days)
+  - Use CloudFront CDN (cheaper egress)
+
+#### **Estimated Monthly Costs (Early Stage)**
+```
+Base Infrastructure:
+- Supabase Pro: $25
+- AWS Lambda (beyond free tier): $5-20
+- Bedrock (1000 responses analyzed): $2-5
+- SES (5000 emails): $0.50
+- S3/CloudFront: $5
+- CloudWatch: $2
+
+TOTAL: ~$40-60/month for first 1,000 survey responses
+
+7. Development Workflow
+bash# Project structure
+survey-tool/
+├── frontend/              # React app
+│   ├── apps/
+│   ├── features/
+│   └── shared/
+├── supabase/
+│   ├── migrations/        # Database schema
+│   ├── functions/         # Edge functions
+│   └── config.toml
+├── lambda/                # AWS Lambda functions
+├── cdk/                   # Infrastructure as code
+└── shared/
+    └── types/             # Shared TypeScript types
+Development Setup:
+bash# 1. Start Supabase locally
+cd supabase
+supabase start
+
+# 2. Run frontend dev server
+cd frontend
+npm run dev
+
+# 3. Deploy Supabase changes
+supabase db push
+
+# 4. Deploy Lambda functions
+cd lambda
+npm run deploy
+
+# 5. Deploy infrastructure
+cd cdk
+cdk deploy
+
+8. Deployment Strategy
+Frontend (React)
+
+Build with Vite → Deploy to CloudFront + S3
+Use GitHub Actions for CI/CD
+Separate builds for admin app vs survey app
+
+Backend
+
+Supabase migrations via CLI
+Lambda functions via AWS CDK or Serverless Framework
+Use staging + production environments
+
+Environment Variables:
+env# Frontend (.env)
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
+
+# Lambda (AWS Secrets Manager)
+SUPABASE_URL=
+SUPABASE_SERVICE_KEY=
+BEDROCK_REGION=
+
+This architecture gives you:
+
+Low initial costs (~$50/month)
+Fast development (Supabase handles auth, realtime, storage)
+Easy scaling (serverless components scale automatically)
+Cost control (pay-per-use for AI, batching for efficiency)
+Developer-friendly (TypeScript everywhere, modern tooling)
+
+Would you like me to dive deeper into any specific component, or shall we move on to an MVP feature prioritization and development roadmap?

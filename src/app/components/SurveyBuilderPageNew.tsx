@@ -24,26 +24,7 @@ function qid() {
   return `q_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
-// ── Image helpers ──────────────────────────
-const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2 MB
-const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
-function readImageAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    if (!ACCEPTED_TYPES.includes(file.type)) {
-      reject(new Error('Unsupported image type. Use JPEG, PNG, WebP, or GIF.'));
-      return;
-    }
-    if (file.size > MAX_IMAGE_SIZE) {
-      reject(new Error('Image must be under 2 MB.'));
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error('Failed to read file.'));
-    reader.readAsDataURL(file);
-  });
-}
 
 // ── Question type definitions ──────────────
 const questionTypeGroups = [
@@ -112,8 +93,6 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
   const [addQuestionOpen, setAddQuestionOpen] = useState(false);
   const [titleOverflow, setTitleOverflow] = useState<{ left: boolean; right: boolean }>({ left: false, right: false });
   const titleWrapRef = useRef<HTMLDivElement>(null);
-  const [accentPickerOpen, setAccentPickerOpen] = useState(false);
-  const [bgPickerOpen, setBgPickerOpen] = useState(false);
 
   // AI chat state
   const [chatMessages, setChatMessages] = useState([
@@ -185,6 +164,22 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
     saveTimerRef.current = setTimeout(() => { save(); }, 1500);
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
   }, [surveyTitle, surveyDescription, questions, headerImageUrl, surveySettings]);
+
+  // ── Load Google Font ─────────────────────
+  useEffect(() => {
+    if (!surveySettings.fontFamily || surveySettings.fontFamily === 'Inter') return;
+    const fontUrl = `https://fonts.googleapis.com/css2?family=${surveySettings.fontFamily.replace(/ /g, '+')}:wght@400;500;600;700&display=swap`;
+    const existing = document.querySelector('link[data-builder-font]') as HTMLLinkElement;
+    if (existing) {
+      if (existing.href !== fontUrl) existing.href = fontUrl;
+    } else {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = fontUrl;
+      link.setAttribute('data-builder-font', 'true');
+      document.head.appendChild(link);
+    }
+  }, [surveySettings.fontFamily]);
 
   // ── Question manipulation helpers ───────
   const addQuestion = (type: QuestionType) => {
@@ -310,32 +305,7 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
     );
   };
 
-  // ── Image handlers ──────────────────────
-  const handleHeaderImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImageError('');
-    try {
-      const dataUrl = await readImageAsDataUrl(file);
-      setHeaderImageUrl(dataUrl);
-    } catch (err: any) {
-      setImageError(err.message);
-    }
-    e.target.value = '';
-  };
 
-  const handleQuestionImageUpload = async (questionId: string, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImageError('');
-    try {
-      const dataUrl = await readImageAsDataUrl(file);
-      updateQuestionOption(questionId, { imageUrl: dataUrl });
-    } catch (err: any) {
-      setImageError(err.message);
-    }
-    e.target.value = '';
-  };
 
   // ── Save new survey ─────────────────────
   const handleSaveDraft = async () => {
@@ -348,6 +318,8 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
           title: surveyTitle,
           description: surveyDescription,
           questions,
+          headerImageUrl,
+          settings: surveySettings,
         });
         navigate(`/app/surveys/${newId}/edit`, { replace: true });
       }
@@ -399,10 +371,10 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
   return (
     <div className="min-h-screen bg-background">
       {/* Top Bar */}
-      <div className="bg-white border-b border-gray-100 px-6 py-3 fixed top-0 left-0 right-0 z-20">
-        <div className="flex items-center justify-between max-w-full mx-auto">
+      <div className="bg-card border-b border-border px-6 py-3 fixed top-0 left-0 right-0 z-20">
+        <div className="flex items-center justify-between max-w-full mx-auto relative">
           <div className="flex items-center gap-3 min-w-0">
-            <button onClick={() => onNavigate('surveys')} className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0">
+            <button onClick={() => onNavigate('surveys')} className="p-2 hover:bg-muted rounded-lg transition-colors flex-shrink-0">
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div
@@ -421,7 +393,7 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
               )}
               <div
                 className="overflow-x-auto scrollbar-hide"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
                 onScroll={(e) => {
                   const el = e.currentTarget;
                   const sl = el.scrollLeft;
@@ -442,8 +414,8 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
             </div>
           </div>
 
-          {/* Center: breadcrumb stepper */}
-          <div className="flex items-center">
+          {/* Center: breadcrumb stepper — truly centered */}
+          <div className="absolute left-1/2 -translate-x-1/2 flex items-center">
             {steps.map((step, index) => {
               const StepIcon = step.icon;
               const isActive = currentStep === step.id;
@@ -458,15 +430,15 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
                         else if (step.id === 4) onNavigate(`surveys/${surveyId}/results`);
                       }
                     }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${isActive ? 'bg-primary text-foreground shadow-sm' : isCompleted ? 'bg-secondary text-foreground' : 'bg-white text-gray-500 border border-gray-200'}`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${isActive ? 'bg-primary text-foreground shadow-sm' : isCompleted ? 'bg-secondary text-foreground' : 'bg-card text-muted-foreground border border-border'}`}
                   >
-                    <div className={`w-5 h-5 rounded flex items-center justify-center ${isActive ? 'bg-white/30' : isCompleted ? 'bg-white/50' : 'bg-gray-100'}`}>
+                    <div className={`w-5 h-5 rounded flex items-center justify-center ${isActive ? 'bg-white/30' : isCompleted ? 'bg-white/50' : 'bg-muted'}`}>
                       <StepIcon className="w-3 h-3" />
                     </div>
                     <span className="hidden lg:inline">{step.label}</span>
                   </button>
                   {index < steps.length - 1 && (
-                    <div className={`w-8 h-0.5 mx-1 ${isCompleted ? 'bg-secondary' : 'bg-gray-200'}`}></div>
+                    <div className={`w-8 h-0.5 mx-1 ${isCompleted ? 'bg-secondary' : 'bg-border'}`}></div>
                   )}
                 </React.Fragment>
               );
@@ -476,7 +448,7 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
           <div className="flex items-center gap-2 flex-shrink-0">
             {/* Save status icon */}
             <TooltipBelow text={saveIconState === 'saving' ? 'Saving...' : saveIconState === 'saved' ? 'Saved' : 'Auto-save'}>
-              <div className="p-2 rounded-lg text-gray-400">
+              <div className="p-2 rounded-lg text-muted-foreground">
                 {saveIconState === 'saving' ? (
                   <RefreshCw className="w-4 h-4 animate-spin" />
                 ) : saveIconState === 'saved' ? (
@@ -490,7 +462,7 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
             <TooltipBelow text={viewMode === 'editor' ? 'Preview' : 'Back to editor'}>
               <button
                 onClick={() => setViewMode(viewMode === 'editor' ? 'preview' : 'editor')}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-muted rounded-lg transition-colors"
               >
                 {viewMode === 'editor' ? <Eye className="w-4 h-4" /> : <Edit3 className="w-4 h-4" />}
               </button>
@@ -502,26 +474,27 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
         </div>
       </div>
 
-      <div className="pt-16 pb-8 max-w-full px-8">
-
-        {imageError && (
-          <div className="max-w-3xl mx-auto mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600 flex items-center justify-between">
-            <span>{imageError}</span>
-            <button onClick={() => setImageError('')} className="p-1 hover:bg-red-100 rounded"><X className="w-4 h-4" /></button>
-          </div>
-        )}
+      <div
+        className="pt-16 pb-8 max-w-full px-8"
+        style={{
+          '--primary': surveySettings.accentColor,
+          '--ring': surveySettings.accentColor,
+          fontFamily: `'${surveySettings.fontFamily}', sans-serif`,
+          backgroundColor: surveySettings.background.startsWith('#') && surveySettings.background !== '#FFFFFF' ? surveySettings.background : undefined,
+        } as React.CSSProperties}
+      >
 
         {viewMode === 'editor' ? (
           <div className="flex gap-6">
             {/* Left Panel */}
             <div className="w-72 flex-shrink-0">
               <Card className="sticky top-24">
-                <div className="border-b border-gray-200 flex">
+                <div className="border-b border-border flex">
                   {(['build', 'logic', 'settings'] as const).map((tab) => (
                     <button
                       key={tab}
                       onClick={() => setLeftTab(tab)}
-                      className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors capitalize ${leftTab === tab ? 'border-primary text-foreground bg-primary/5' : 'border-transparent text-gray-600 hover:text-foreground'}`}
+                      className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors capitalize ${leftTab === tab ? 'border-primary text-foreground bg-primary/5' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
                     >
                       {tab}
                     </button>
@@ -545,19 +518,19 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
                           <ChevronDown className={`w-4 h-4 transition-transform ${addQuestionOpen ? 'rotate-180' : ''}`} />
                         </button>
                         {addQuestionOpen && (
-                          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-30 py-1 max-h-72 overflow-y-auto">
+                          <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-30 py-1 max-h-72 overflow-y-auto">
                             {questionTypeGroups.map((group) => (
                               <div key={group.label}>
-                                <div className="px-3 py-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">{group.label}</div>
+                                <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{group.label}</div>
                                 {group.types.map((type) => {
                                   const Icon = type.icon;
                                   return (
                                     <button
                                       key={type.id}
                                       onClick={() => { addQuestion(type.id); setAddQuestionOpen(false); }}
-                                      className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                      className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm text-foreground hover:bg-muted transition-colors"
                                     >
-                                      <Icon className="w-4 h-4 text-gray-500" />
+                                      <Icon className="w-4 h-4 text-muted-foreground" />
                                       {type.label}
                                     </button>
                                   );
@@ -569,7 +542,7 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
                       </div>
 
                       {/* Style controls */}
-                      <div className="space-y-4 pt-2 border-t border-gray-100">
+                      <div className="space-y-4 pt-2 border-t border-border">
                         <div>
                           <label className="block text-sm font-medium text-foreground mb-2">Font Family</label>
                           <CustomDropdown
@@ -580,8 +553,8 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-foreground mb-2">Accent Color</label>
-                          <div className="flex flex-wrap gap-2">
-                            {['#E2F380', '#C5EDCE', '#3B82F6', '#A855F7', '#F43F5E'].map((color) => (
+                          <div className="flex gap-2 flex-wrap">
+                            {['#E2F380', '#058ED9', '#E08E45', '#DA627D'].map((color) => (
                               <button
                                 key={color}
                                 onClick={() => updateSettings({ accentColor: color })}
@@ -589,57 +562,45 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
                                 style={{ backgroundColor: color }}
                               />
                             ))}
-                            {/* Color picker */}
-                            <div className="relative">
-                              <button
-                                onClick={() => setAccentPickerOpen(!accentPickerOpen)}
-                                className={`w-9 h-9 rounded-lg border-2 transition-all overflow-hidden ${!['#E2F380', '#C5EDCE', '#3B82F6', '#A855F7', '#F43F5E'].includes(surveySettings.accentColor) ? 'border-gray-800 scale-110' : 'border-gray-200'}`}
-                                style={{ background: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)' }}
+                            <label className={`w-9 h-9 rounded-lg border-2 transition-all cursor-pointer flex items-center justify-center overflow-hidden ${!['#E2F380', '#C5EDCE', '#3B82F6', '#A855F7', '#F43F5E'].includes(surveySettings.accentColor) ? 'border-gray-800 scale-110' : 'border-gray-200'}`}
+                              style={{ background: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)' }}
+                            >
+                              <input
+                                type="color"
+                                value={surveySettings.accentColor}
+                                onChange={(e) => updateSettings({ accentColor: e.target.value })}
+                                className="opacity-0 absolute w-0 h-0"
                               />
-                              {accentPickerOpen && (
-                                <div className="absolute top-full left-0 mt-2 p-3 bg-white border border-gray-200 rounded-lg shadow-lg z-40">
-                                  <input
-                                    type="color"
-                                    value={surveySettings.accentColor}
-                                    onChange={(e) => updateSettings({ accentColor: e.target.value })}
-                                    className="w-32 h-32 cursor-pointer border-none p-0"
-                                  />
-                                  <button onClick={() => setAccentPickerOpen(false)} className="w-full mt-2 text-xs text-gray-500 hover:text-foreground">Done</button>
-                                </div>
-                              )}
-                            </div>
+                            </label>
                           </div>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-foreground mb-2">Background</label>
-                          <div className="flex flex-wrap gap-2">
-                            {['#FFFFFF', '#F9FAFB', '#F3F4F6', '#E5E7EB', '#FEF3C7', '#ECFDF5', '#EFF6FF', '#FDF2F8'].map((color) => (
+                          <div className="flex gap-2 flex-wrap">
+                            {[
+                              { value: '#FFFFFF', label: 'White' },
+                              { value: '#F9FAFB', label: 'Light Gray' },
+                              { value: '#FEF3C7', label: 'Warm' },
+                              { value: '#EDE9FE', label: 'Lavender' },
+                            ].map((bg) => (
                               <button
-                                key={color}
-                                onClick={() => updateSettings({ background: color })}
-                                className={`w-9 h-9 rounded-lg border-2 transition-all ${surveySettings.background === color ? 'border-gray-800 scale-110' : 'border-gray-200'}`}
-                                style={{ backgroundColor: color }}
+                                key={bg.value}
+                                onClick={() => updateSettings({ background: bg.value })}
+                                className={`w-9 h-9 rounded-lg border-2 transition-all ${surveySettings.background === bg.value ? 'border-gray-800 scale-110' : 'border-gray-200'}`}
+                                style={{ backgroundColor: bg.value }}
+                                title={bg.label}
                               />
                             ))}
-                            {/* Color picker */}
-                            <div className="relative">
-                              <button
-                                onClick={() => setBgPickerOpen(!bgPickerOpen)}
-                                className={`w-9 h-9 rounded-lg border-2 transition-all overflow-hidden ${!['#FFFFFF', '#F9FAFB', '#F3F4F6', '#E5E7EB', '#FEF3C7', '#ECFDF5', '#EFF6FF', '#FDF2F8'].includes(surveySettings.background) ? 'border-gray-800 scale-110' : 'border-gray-200'}`}
-                                style={{ background: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)' }}
+                            <label className={`w-9 h-9 rounded-lg border-2 transition-all cursor-pointer flex items-center justify-center overflow-hidden ${!['#FFFFFF', '#F9FAFB', '#F3F4F6', '#FEF3C7', '#EDE9FE'].includes(surveySettings.background) ? 'border-gray-800 scale-110' : 'border-gray-200'}`}
+                              style={{ background: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)' }}
+                            >
+                              <input
+                                type="color"
+                                value={surveySettings.background.startsWith('#') ? surveySettings.background : '#FFFFFF'}
+                                onChange={(e) => updateSettings({ background: e.target.value })}
+                                className="opacity-0 absolute w-0 h-0"
                               />
-                              {bgPickerOpen && (
-                                <div className="absolute top-full left-0 mt-2 p-3 bg-white border border-gray-200 rounded-lg shadow-lg z-40">
-                                  <input
-                                    type="color"
-                                    value={surveySettings.background.startsWith('#') ? surveySettings.background : '#FFFFFF'}
-                                    onChange={(e) => updateSettings({ background: e.target.value })}
-                                    className="w-32 h-32 cursor-pointer border-none p-0"
-                                  />
-                                  <button onClick={() => setBgPickerOpen(false)} className="w-full mt-2 text-xs text-gray-500 hover:text-foreground">Done</button>
-                                </div>
-                              )}
-                            </div>
+                            </label>
                           </div>
                         </div>
                       </div>
@@ -656,17 +617,17 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
                         checked={surveySettings.shuffleQuestions}
                         onChange={(v) => updateSettings({ shuffleQuestions: v })}
                       />
-                      <div className="pt-4 border-t border-gray-200">
+                      <div className="pt-4 border-t border-border">
                         <div className="font-medium text-foreground text-sm mb-2">Skip Logic Rules</div>
-                        <p className="text-xs text-gray-400 mb-2">Coming soon</p>
-                        <button disabled className="w-full px-4 py-3 border-2 border-dashed border-gray-200 rounded-lg text-sm text-gray-300 cursor-not-allowed">
+                        <p className="text-xs text-muted-foreground mb-2">Coming soon</p>
+                        <button disabled className="w-full px-4 py-3 border-2 border-dashed border-border rounded-lg text-sm text-muted-foreground cursor-not-allowed">
                           + Add Skip Logic Rule
                         </button>
                       </div>
-                      <div className="pt-4 border-t border-gray-200">
+                      <div className="pt-4 border-t border-border">
                         <div className="font-medium text-foreground text-sm mb-2">Branching Logic</div>
-                        <p className="text-xs text-gray-400 mb-2">Coming soon</p>
-                        <button disabled className="w-full px-4 py-3 border-2 border-dashed border-gray-200 rounded-lg text-sm text-gray-300 cursor-not-allowed">
+                        <p className="text-xs text-muted-foreground mb-2">Coming soon</p>
+                        <button disabled className="w-full px-4 py-3 border-2 border-dashed border-border rounded-lg text-sm text-muted-foreground cursor-not-allowed">
                           + Add Branch
                         </button>
                       </div>
@@ -691,27 +652,10 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
                           <ToggleSetting label="Limit to 1 response" description="One response per person" checked={surveySettings.limitOneResponse} onChange={(v) => updateSettings({ limitOneResponse: v })} />
                         </div>
                       </div>
-                      <div className="pt-4 border-t border-gray-200">
+                      <div className="pt-4 border-t border-border">
                         <h3 className="font-semibold text-foreground mb-3">Presentation</h3>
                         <div className="space-y-4">
                           <ToggleSetting label="Show progress bar" description="Display completion progress" checked={surveySettings.showProgressBar} onChange={(v) => updateSettings({ showProgressBar: v })} />
-                          <ToggleSetting
-                            label="Confirmation message"
-                            description="Show message after submit"
-                            checked={showConfirmationInput}
-                            onChange={(v) => { setShowConfirmationInput(v); if (!v) updateSettings({ confirmationMessage: '' }); }}
-                          />
-                          {showConfirmationInput && (
-                            <div className="mt-2 pl-4 border-l-2 border-primary">
-                              <textarea
-                                value={surveySettings.confirmationMessage}
-                                onChange={(e) => updateSettings({ confirmationMessage: e.target.value })}
-                                placeholder="Thank you for completing our survey!"
-                                rows={3}
-                                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-                              />
-                            </div>
-                          )}
                         </div>
                       </div>
                     </div>
@@ -721,34 +665,13 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
             </div>
 
             {/* Center Panel — Survey Canvas */}
-            <div className="flex-1 max-w-3xl mx-auto mt-8">
+            <div className="flex-1 max-w-3xl mx-auto pt-8">
               {/* Header Card */}
               <Card
                 ref={(el) => { cardRefs.current['header'] = el; }}
                 className={`p-8 mb-6 cursor-pointer transition-all ${selectedId === 'header' ? 'ring-2 ring-primary' : 'hover:shadow-md'}`}
                 onClick={() => setSelectedId('header')}
               >
-                {/* Header Image */}
-                {headerImageUrl ? (
-                  <div className="relative mb-4 rounded-lg overflow-hidden">
-                    <img src={headerImageUrl} alt="Header" className="w-full h-48 object-cover rounded-lg" />
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setHeaderImageUrl(''); }}
-                      className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); headerImageInputRef.current?.click(); }}
-                    className="w-full mb-4 px-4 py-3 border-2 border-dashed border-gray-200 rounded-lg text-sm text-gray-400 hover:border-primary hover:text-foreground transition-colors flex items-center justify-center gap-2"
-                  >
-                    <ImageIcon className="w-4 h-4" /> Add header image
-                  </button>
-                )}
-                <input ref={headerImageInputRef} type="file" accept="image/*" className="hidden" onChange={handleHeaderImageUpload} />
-
                 <Input label="Survey Title" value={surveyTitle} onChange={(e) => setSurveyTitle(e.target.value)} className="text-xl font-semibold mb-4" />
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">Description</label>
@@ -757,7 +680,7 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
                     value={surveyDescription}
                     onChange={(e) => setSurveyDescription(e.target.value)}
                     rows={3}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-white text-foreground placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none"
+                    className="w-full px-4 py-3 rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none"
                   />
                 </div>
               </Card>
@@ -786,67 +709,48 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
                     >
                       <div className="flex-1">
                         {/* Top toolbar row */}
-                        <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center justify-between mb-4 relative">
                           <div className="flex items-center gap-2">
                             {/* Question number */}
-                            <span className="text-sm font-semibold text-gray-400">{qIdx + 1}.</span>
+                            <span className="text-sm font-semibold text-muted-foreground">{qIdx + 1}.</span>
                             {/* Type icon badge */}
                             <Tooltip text={getQuestionTypeLabel(question.type)}>
                               <span className="flex items-center justify-center w-8 h-8 bg-gray-100 rounded-lg">
-                                <TypeIcon className="w-4 h-4 text-gray-500" />
+                                <TypeIcon className="w-4 h-4 text-muted-foreground" />
                               </span>
                             </Tooltip>
                           </div>
 
-                          {/* Action buttons — center: drag, right: actions */}
-                          <div className="flex items-center">
-                            {/* Drag handle - centered */}
-                            <button className="p-1 text-gray-300 hover:text-gray-500 cursor-grab opacity-0 group-hover:opacity-100 transition-opacity mx-2">
-                              <GripHorizontal className="w-5 h-5" />
-                            </button>
-                          </div>
+                          {/* Drag handle — absolute center */}
+                          <button className="absolute left-1/2 -translate-x-1/2 p-1 text-muted-foreground hover:text-foreground cursor-grab opacity-0 group-hover:opacity-100 transition-opacity">
+                            <GripHorizontal className="w-5 h-5" />
+                          </button>
 
                           {/* Action buttons — always visible when selected, hover otherwise */}
                           <div className={`flex items-center gap-0.5 transition-opacity ${selectedId === question.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                             <Tooltip text={question.required ? 'Remove required' : 'Mark required'}>
                               <button
                                 onClick={(e) => { e.stopPropagation(); updateQuestion(question.id, { required: !question.required }); }}
-                                className={`p-2 rounded-lg transition-all ${question.required ? 'text-red-500 bg-red-50' : 'text-gray-400 hover:text-foreground hover:bg-gray-100'}`}
+                                className={`p-2 rounded-lg transition-all ${question.required ? 'text-red-500 bg-red-50 dark:bg-red-950/30' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
                               >
                                 <Asterisk className="w-4 h-4" style={question.required ? { fill: 'currentColor' } : undefined} />
                               </button>
                             </Tooltip>
-                            <Tooltip text="Add image">
-                              <label className="p-2 text-gray-400 hover:text-foreground hover:bg-gray-100 rounded-lg transition-all cursor-pointer">
-                                <ImageIcon className="w-4 h-4" />
-                                <input type="file" accept="image/*" className="hidden" onChange={(e) => handleQuestionImageUpload(question.id, e)} />
-                              </label>
-                            </Tooltip>
+
                             <Tooltip text="Duplicate">
-                              <button onClick={(e) => { e.stopPropagation(); duplicateQuestion(question); }} className="p-2 text-gray-400 hover:text-foreground hover:bg-gray-100 rounded-lg transition-all">
+                              <button onClick={(e) => { e.stopPropagation(); duplicateQuestion(question); }} className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-all">
                                 <Copy className="w-4 h-4" />
                               </button>
                             </Tooltip>
                             <Tooltip text="Delete">
-                              <button onClick={(e) => { e.stopPropagation(); removeQuestion(question.id); }} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
+                              <button onClick={(e) => { e.stopPropagation(); removeQuestion(question.id); }} className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-all">
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </Tooltip>
                           </div>
                         </div>
 
-                        {/* Question image */}
-                        {question.options?.imageUrl && (
-                          <div className="relative mb-4 rounded-lg overflow-hidden">
-                            <img src={question.options.imageUrl} alt="" className="w-full h-40 object-cover rounded-lg" />
-                            <button
-                              onClick={(e) => { e.stopPropagation(); updateQuestionOption(question.id, { imageUrl: undefined }); }}
-                              className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        )}
+
 
                         <Input value={question.text} onChange={(e) => updateQuestion(question.id, { text: e.target.value })} className="font-medium mb-4" placeholder="Enter your question..." />
 
@@ -873,8 +777,8 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
                 })}
 
                 {/* Add Question Placeholder */}
-                <Card className="p-12 border-2 border-dashed border-gray-200 bg-gray-50/50 text-center hover:border-primary hover:bg-white transition-all cursor-pointer">
-                  <p className="text-gray-500">Click a question type on the left to add to your survey</p>
+                <Card className="p-12 border-2 border-dashed border-border bg-muted/50 text-center hover:border-primary hover:bg-card transition-all cursor-pointer">
+                  <p className="text-muted-foreground">Click a question type on the left to add to your survey</p>
                 </Card>
               </div>
             </div>
@@ -882,7 +786,7 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
             {/* Right Panel — AI Chatbot */}
             <div className="w-72 flex-shrink-0">
               <Card className="sticky top-24 flex flex-col" style={{ height: 'calc(100vh - 140px)' }}>
-                <div className="p-4 border-b border-gray-200 flex items-center gap-3">
+                <div className="p-4 border-b border-border flex items-center gap-3">
                   <div className="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center">
                     <Sparkles className="w-4 h-4 text-foreground" />
                   </div>
@@ -898,23 +802,23 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
                       )}
                       {message.sender === 'user' && (
                         <div className="w-7 h-7 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <User className="w-3.5 h-3.5 text-gray-600" />
+                          <User className="w-3.5 h-3.5 text-muted-foreground" />
                         </div>
                       )}
-                      <div className={`flex-1 px-3 py-2 rounded-lg text-sm ${message.sender === 'ai' ? 'bg-gray-100 text-gray-800' : 'bg-primary text-foreground'}`}>
+                      <div className={`flex-1 px-3 py-2 rounded-lg text-sm ${message.sender === 'ai' ? 'bg-muted text-foreground' : 'bg-primary text-foreground'}`}>
                         {message.text}
                       </div>
                     </div>
                   ))}
                 </div>
-                <div className="p-4 border-t border-gray-200">
+                <div className="p-4 border-t border-border">
                   <div className="flex gap-2">
                     <input
                       type="text" value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                       placeholder="Ask AI to help..."
-                      className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="flex-1 px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-card"
                     />
                     <button onClick={handleSendMessage} className="w-9 h-9 bg-primary hover:bg-primary/90 rounded-lg flex items-center justify-center transition-colors flex-shrink-0">
                       <Send className="w-4 h-4 text-foreground" />
@@ -932,6 +836,7 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
             questions={questions}
             headerImageUrl={headerImageUrl}
             getQuestionTypeLabel={getQuestionTypeLabel}
+            settings={surveySettings}
           />
         )}
       </div>
@@ -1116,17 +1021,27 @@ function QuestionEditor({
 
 // ── Preview Mode ──────────────────────────
 function PreviewMode({
-  surveyTitle, surveyDescription, questions, headerImageUrl, getQuestionTypeLabel,
+  surveyTitle, surveyDescription, questions, headerImageUrl, getQuestionTypeLabel, settings,
 }: {
   surveyTitle: string;
   surveyDescription: string;
   questions: Question[];
   headerImageUrl: string;
   getQuestionTypeLabel: (t: string) => string;
+  settings?: SurveySettings;
 }) {
+  const fontFamily = settings?.fontFamily ? `'${settings.fontFamily}', sans-serif` : undefined;
+  const bgColor = settings?.background?.startsWith('#') && settings.background !== '#FFFFFF' ? settings.background : undefined;
   return (
-    <div className="max-w-3xl mx-auto">
-      <Card className="p-8">
+    <div
+      className="max-w-3xl mx-auto"
+      style={{
+        fontFamily,
+        '--primary': settings?.accentColor,
+        '--ring': settings?.accentColor,
+      } as React.CSSProperties}
+    >
+      <Card className="p-8" style={{ backgroundColor: bgColor }}>
         {headerImageUrl && (
           <img src={headerImageUrl} alt="Header" className="w-full h-48 object-cover rounded-lg mb-6" />
         )}

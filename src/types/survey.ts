@@ -147,6 +147,8 @@ export const CreateSurveySchema = z.object({
     title: z.string().min(1, 'Title is required'),
     description: z.string().default(''),
     questions: z.array(QuestionSchema).default([]),
+    headerImageUrl: z.string().optional(),
+    settings: z.any().optional(),
 });
 
 export type CreateSurveyInput = z.infer<typeof CreateSurveySchema>;

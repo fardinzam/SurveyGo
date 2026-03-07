@@ -62,13 +62,12 @@ export function SignUpPage({ onNavigate }: SignUpPageProps) {
     setError('');
     setLoading(true);
     try {
+      // signInWithRedirect navigates away from the page;
+      // auth state is handled on return by useAuth's onAuthStateChanged
       await signInWithGoogle();
-      navigate('/app/dashboard', { replace: true });
     } catch (err: any) {
-      if (err.code !== 'auth/popup-closed-by-user') {
-        setError('Google sign-up failed. Please try again.');
-      }
-    } finally {
+      console.error('Google sign-up error:', err);
+      setError('Google sign-up failed. Please try again.');
       setLoading(false);
     }
   };
@@ -76,7 +75,7 @@ export function SignUpPage({ onNavigate }: SignUpPageProps) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-6">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-lg p-8" style={{ boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)' }}>
+        <div className="bg-card rounded-2xl shadow-lg p-8" style={{ boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)' }}>
           {/* Logo */}
           <div className="flex justify-center mb-6">
             <div className="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center">
@@ -87,7 +86,7 @@ export function SignUpPage({ onNavigate }: SignUpPageProps) {
           {/* Heading */}
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-foreground mb-2">Create your account</h1>
-            <p className="text-gray-500">Start collecting feedback today</p>
+            <p className="text-muted-foreground">Start collecting feedback today</p>
           </div>
 
           {/* Error */}
@@ -116,10 +115,10 @@ export function SignUpPage({ onNavigate }: SignUpPageProps) {
           {/* Divider */}
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200"></div>
+              <div className="w-full border-t border-border"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white text-gray-500">Or continue with</span>
+              <span className="px-4 bg-card text-muted-foreground">Or continue with</span>
             </div>
           </div>
 
@@ -158,12 +157,12 @@ export function SignUpPage({ onNavigate }: SignUpPageProps) {
                     {[1, 2, 3].map((level) => (
                       <div
                         key={level}
-                        className={`h-1 flex-1 rounded-full ${level <= strength.strength ? strength.color : 'bg-gray-200'
+                        className={`h-1 flex-1 rounded-full ${level <= strength.strength ? strength.color : 'bg-muted'
                           }`}
                       />
                     ))}
                   </div>
-                  <p className="text-xs text-gray-600">Password strength: {strength.label}</p>
+                  <p className="text-xs text-muted-foreground">Password strength: {strength.label}</p>
                 </div>
               )}
             </div>
@@ -178,8 +177,8 @@ export function SignUpPage({ onNavigate }: SignUpPageProps) {
             />
 
             <div className="pt-2">
-              <label className="flex items-start gap-2 cursor-pointer text-sm text-gray-600">
-                <input type="checkbox" className="mt-0.5 rounded border-gray-300" required />
+              <label className="flex items-start gap-2 cursor-pointer text-sm text-muted-foreground">
+                <input type="checkbox" className="mt-0.5 rounded border-border" required />
                 <span>
                   I agree to the{' '}
                   <button type="button" className="text-foreground font-medium hover:text-primary">
@@ -199,7 +198,7 @@ export function SignUpPage({ onNavigate }: SignUpPageProps) {
           </form>
 
           {/* Footer */}
-          <p className="text-center text-sm text-gray-600 mt-6">
+          <p className="text-center text-sm text-muted-foreground mt-6">
             Already have an account?{' '}
             <button
               onClick={() => onNavigate('login')}

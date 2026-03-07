@@ -12,6 +12,11 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == uid;
     }
 
+    function isSurveyOwner(surveyId) {
+      return isSignedIn()
+             && get(/databases/$(database)/documents/surveys/$(surveyId)).data.createdBy == request.auth.uid;
+    }
+
     // ─── Users collection ──────────────────────
     // Users can only read/write their own profile
     match /users/{userId} {
@@ -37,9 +42,8 @@ service cloud.firestore {
       // Anyone can submit a response (public, no auth)
       allow create: if true;
 
-      // Only authenticated users can read responses
-      // (the survey owner will read these via the analytics page)
-      allow read: if isSignedIn();
+      // Only the survey owner can read responses
+      allow read: if isSurveyOwner(resource.data.surveyId);
 
       // Responses cannot be updated or deleted
       allow update, delete: if false;

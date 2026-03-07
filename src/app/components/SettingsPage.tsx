@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card } from './Card';
 import { Button } from './Button';
 import { Input } from './Input';
-import { User, Building2, Bell, CreditCard, Loader2, Check, AlertCircle, ArrowRight } from 'lucide-react';
+import { User, Bell, CreditCard, Loader2, Check, AlertCircle, ArrowRight } from 'lucide-react';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { updateProfile, updatePassword, deleteAccount } from '../../lib/auth';
 import { EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
@@ -86,7 +86,6 @@ export function SettingsPage({ onNavigate }: SettingsPageProps) {
   const tabs = [
     { id: 'account', label: 'General', icon: User },
     { id: 'billing', label: 'Billing', icon: CreditCard },
-    { id: 'workspace', label: 'Workspace', icon: Building2 },
     { id: 'notifications', label: 'Notifications', icon: Bell },
   ];
 
@@ -94,7 +93,7 @@ export function SettingsPage({ onNavigate }: SettingsPageProps) {
     <div className="p-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-foreground mb-2">Settings</h1>
-        <p className="text-gray-500">Manage your account and preferences</p>
+        <p className="text-muted-foreground">Manage your account and preferences</p>
       </div>
 
       <div className="flex gap-8">
@@ -110,7 +109,7 @@ export function SettingsPage({ onNavigate }: SettingsPageProps) {
                     onClick={() => setActiveTab(tab.id)}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left ${activeTab === tab.id
                       ? 'bg-secondary text-foreground font-medium'
-                      : 'text-gray-600 hover:bg-gray-50'
+                      : 'text-muted-foreground hover:bg-muted'
                       }`}
                   >
                     <Icon className="w-5 h-5" />
@@ -140,7 +139,7 @@ export function SettingsPage({ onNavigate }: SettingsPageProps) {
                     </div>
                     <div>
                       <p className="font-medium text-foreground">{user?.displayName ?? 'User'}</p>
-                      <p className="text-sm text-gray-500">{user?.email}</p>
+                      <p className="text-sm text-muted-foreground">{user?.email}</p>
                     </div>
                   </div>
 
@@ -215,9 +214,9 @@ export function SettingsPage({ onNavigate }: SettingsPageProps) {
               )}
 
               {isGoogleOnly && (
-                <Card className="p-6 bg-gray-50">
+                <Card className="p-6 bg-muted">
                   <h2 className="text-xl font-semibold text-foreground mb-2">Password</h2>
-                  <p className="text-gray-500 text-sm">
+                  <p className="text-muted-foreground text-sm">
                     You signed in with Google. Password management is handled through your Google account.
                   </p>
                 </Card>
@@ -226,7 +225,7 @@ export function SettingsPage({ onNavigate }: SettingsPageProps) {
               {/* Danger Zone */}
               <Card className="p-6 border-2 border-red-100">
                 <h2 className="text-xl font-semibold text-red-600 mb-4">Danger Zone</h2>
-                <p className="text-gray-600 mb-4">
+                <p className="text-muted-foreground mb-4">
                   Once you delete your account, there is no going back. Please be certain.
                 </p>
                 <Button variant="destructive" onClick={() => setShowDeleteConfirm(true)} disabled={deleting}>
@@ -242,44 +241,17 @@ export function SettingsPage({ onNavigate }: SettingsPageProps) {
             </div>
           )}
 
-          {activeTab === 'workspace' && (
-            <Card className="p-6">
-              <h2 className="text-xl font-semibold text-foreground mb-6">Workspace Settings</h2>
-              <div className="space-y-4">
-                <Input
-                  label="Workspace Name"
-                  defaultValue="My Workspace"
-                />
 
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Workspace Plan
-                  </label>
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div>
-                      <div className="font-semibold text-foreground">Free Plan</div>
-                      <div className="text-sm text-gray-500">Up to 5 surveys, 100 responses/month</div>
-                    </div>
-                    <Button variant="primary" size="sm">Upgrade</Button>
-                  </div>
-                </div>
-
-                <div className="pt-4">
-                  <Button variant="primary">Save Changes</Button>
-                </div>
-              </div>
-            </Card>
-          )}
 
           {activeTab === 'billing' && (
             <div className="space-y-6">
               {/* Current Plan */}
               <Card className="p-6">
                 <h2 className="text-xl font-semibold text-foreground mb-6">Current Plan</h2>
-                <div className="flex items-center justify-between p-5 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200">
+                <div className="flex items-center justify-between p-5 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-border">
                   <div>
-                    <div className="text-lg font-bold text-foreground">Basic Plan</div>
-                    <div className="text-sm text-gray-500 mt-1">Free — Up to 3 surveys, 100 responses each</div>
+                    <div className="text-lg font-bold text-gray-900">Basic Plan</div>
+                    <div className="text-sm text-gray-600 mt-1">Free — Up to 3 surveys, 100 responses each</div>
                   </div>
                   <Button
                     variant="primary"
@@ -297,8 +269,8 @@ export function SettingsPage({ onNavigate }: SettingsPageProps) {
               <Card className="p-6">
                 <h2 className="text-xl font-semibold text-foreground mb-6">Transaction History</h2>
                 <div className="text-center py-8">
-                  <p className="text-gray-500 text-sm">No transactions yet.</p>
-                  <p className="text-gray-400 text-xs mt-1">Your billing history will appear here once you upgrade.</p>
+                  <p className="text-muted-foreground text-sm">No transactions yet.</p>
+                  <p className="text-muted-foreground text-xs mt-1">Your billing history will appear here once you upgrade.</p>
                 </div>
               </Card>
 
@@ -306,8 +278,8 @@ export function SettingsPage({ onNavigate }: SettingsPageProps) {
               <Card className="p-6">
                 <h2 className="text-xl font-semibold text-foreground mb-6">Payment Method</h2>
                 <div className="text-center py-8">
-                  <p className="text-gray-500 text-sm">No payment method on file.</p>
-                  <p className="text-gray-400 text-xs mt-1">Add a payment method when you upgrade your plan.</p>
+                  <p className="text-muted-foreground text-sm">No payment method on file.</p>
+                  <p className="text-muted-foreground text-xs mt-1">Add a payment method when you upgrade your plan.</p>
                 </div>
               </Card>
             </div>
@@ -324,12 +296,12 @@ export function SettingsPage({ onNavigate }: SettingsPageProps) {
                   { label: 'Team activity updates', checked: false },
                   { label: 'Product updates and news', checked: false },
                 ].map((item, index) => (
-                  <label key={index} className="flex items-center justify-between p-4 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors">
+                  <label key={index} className="flex items-center justify-between p-4 hover:bg-muted rounded-lg cursor-pointer transition-colors">
                     <span className="text-foreground">{item.label}</span>
                     <input
                       type="checkbox"
                       defaultChecked={item.checked}
-                      className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
+                      className="w-5 h-5 rounded border-border text-primary focus:ring-primary"
                     />
                   </label>
                 ))}

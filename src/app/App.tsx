@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useNavigate, useLocation, useParams } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from 'next-themes';
 import { AuthProvider } from '../contexts/AuthContext';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { CollapsibleSidebar } from './components/CollapsibleSidebar';
-import { ProfileDropdown, type ThemeMode } from './components/ProfileDropdown';
+import { ProfileDropdown } from './components/ProfileDropdown';
 import { LoginPage } from './components/LoginPage';
 import { SignUpPage } from './components/SignUpPage';
 import { DashboardPage } from './components/DashboardPage';
@@ -141,7 +142,6 @@ function ScreenNavigator() {
 function AppLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-  const [themeMode, setThemeMode] = useState<ThemeMode>('light');
   const onNavigate = useOnNavigate();
   const location = useLocation();
   const activePage = routeToPage[location.pathname] || 'dashboard';
@@ -165,8 +165,6 @@ function AppLayout() {
         onClose={() => setProfileDropdownOpen(false)}
         onNavigate={onNavigate}
         collapsed={sidebarCollapsed}
-        themeMode={themeMode}
-        onSetTheme={setThemeMode}
       />
     </div>
   );
@@ -272,42 +270,44 @@ function App() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <BrowserRouter>
-            <Routes>
-              {/* Public pages (no sidebar) */}
-              <Route path="/" element={<><LandingRoute /><ScreenNavigator /></>} />
-              <Route path="/auth/login" element={<><LoginRoute /><ScreenNavigator /></>} />
-              <Route path="/auth/signup" element={<><SignUpRoute /><ScreenNavigator /></>} />
-              {/* Public survey respondent page (no auth, no sidebar) */}
-              <Route path="/s/:id" element={<RespondentRoute />} />
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+          <AuthProvider>
+            <BrowserRouter>
+              <Routes>
+                {/* Public pages (no sidebar) */}
+                <Route path="/" element={<><LandingRoute />{import.meta.env.DEV && <ScreenNavigator />}</>} />
+                <Route path="/auth/login" element={<><LoginRoute />{import.meta.env.DEV && <ScreenNavigator />}</>} />
+                <Route path="/auth/signup" element={<><SignUpRoute />{import.meta.env.DEV && <ScreenNavigator />}</>} />
+                {/* Public survey respondent page (no auth, no sidebar) */}
+                <Route path="/s/:id" element={<RespondentRoute />} />
 
-              {/* Builder & Publish (custom layout, no sidebar, protected) */}
-              <Route path="/app/surveys/new" element={<ProtectedRoute><BuilderRoute /><ScreenNavigator /></ProtectedRoute>} />
-              <Route path="/app/surveys/:id/edit" element={<ProtectedRoute><BuilderEditRoute /><ScreenNavigator /></ProtectedRoute>} />
-              <Route path="/app/surveys/:id/publish" element={<ProtectedRoute><PublishEditRoute /><ScreenNavigator /></ProtectedRoute>} />
-              <Route path="/app/surveys/:id/connect" element={<ProtectedRoute><ConnectAppsRoute /><ScreenNavigator /></ProtectedRoute>} />
-              <Route path="/app/surveys/:id/results" element={<ProtectedRoute><SurveyResultsEditRoute /><ScreenNavigator /></ProtectedRoute>} />
+                {/* Builder & Publish (custom layout, no sidebar, protected) */}
+                <Route path="/app/surveys/new" element={<ProtectedRoute><BuilderRoute />{import.meta.env.DEV && <ScreenNavigator />}</ProtectedRoute>} />
+                <Route path="/app/surveys/:id/edit" element={<ProtectedRoute><BuilderEditRoute />{import.meta.env.DEV && <ScreenNavigator />}</ProtectedRoute>} />
+                <Route path="/app/surveys/:id/publish" element={<ProtectedRoute><PublishEditRoute />{import.meta.env.DEV && <ScreenNavigator />}</ProtectedRoute>} />
+                <Route path="/app/surveys/:id/connect" element={<ProtectedRoute><ConnectAppsRoute />{import.meta.env.DEV && <ScreenNavigator />}</ProtectedRoute>} />
+                <Route path="/app/surveys/:id/results" element={<ProtectedRoute><SurveyResultsEditRoute />{import.meta.env.DEV && <ScreenNavigator />}</ProtectedRoute>} />
 
-              {/* App pages (with sidebar, protected) */}
-              <Route path="/app" element={<ProtectedRoute><AppLayout /><ScreenNavigator /></ProtectedRoute>}>
-                <Route index element={<Navigate to="/app/dashboard" replace />} />
-                <Route path="dashboard" element={<DashboardRoute />} />
-                <Route path="dashboard/empty" element={<DashboardEmptyRoute />} />
-                <Route path="surveys" element={<SurveysRoute />} />
-                <Route path="surveys/results" element={<SurveyResultsRoute />} />
-                <Route path="templates" element={<TemplatesRoute />} />
-                <Route path="team" element={<TeamRoute />} />
-                <Route path="settings" element={<SettingsRoute />} />
-                <Route path="activity" element={<ActivityRoute />} />
-                <Route path="plans" element={<PlansRoute />} />
-              </Route>
+                {/* App pages (with sidebar, protected) */}
+                <Route path="/app" element={<ProtectedRoute><AppLayout />{import.meta.env.DEV && <ScreenNavigator />}</ProtectedRoute>}>
+                  <Route index element={<Navigate to="/app/dashboard" replace />} />
+                  <Route path="dashboard" element={<DashboardRoute />} />
+                  <Route path="dashboard/empty" element={<DashboardEmptyRoute />} />
+                  <Route path="surveys" element={<SurveysRoute />} />
+                  <Route path="surveys/results" element={<SurveyResultsRoute />} />
+                  <Route path="templates" element={<TemplatesRoute />} />
+                  <Route path="team" element={<TeamRoute />} />
+                  <Route path="settings" element={<SettingsRoute />} />
+                  <Route path="activity" element={<ActivityRoute />} />
+                  <Route path="plans" element={<PlansRoute />} />
+                </Route>
 
-              {/* Fallback */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </BrowserRouter>
-        </AuthProvider>
+                {/* Fallback */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </BrowserRouter>
+          </AuthProvider>
+        </ThemeProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   );

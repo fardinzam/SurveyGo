@@ -70,7 +70,7 @@ export function ActivityPage({ onNavigate }: ActivityPageProps) {
             <div className="mb-8 flex justify-between items-start">
                 <div>
                     <h1 className="text-[28px] font-bold text-foreground mb-2">Activity</h1>
-                    <p className="text-gray-500">
+                    <p className="text-muted-foreground">
                         {unreadSurveys.length > 0
                             ? `You have ${unreadSurveys.length} survey${unreadSurveys.length > 1 ? 's' : ''} with new responses`
                             : 'Recent activity across all your surveys'}
@@ -82,8 +82,8 @@ export function ActivityPage({ onNavigate }: ActivityPageProps) {
                 <div className="space-y-4">
                     {[1, 2, 3].map((i) => (
                         <Card key={i} className="p-5 animate-pulse">
-                            <div className="h-4 bg-gray-200 rounded w-3/4 mb-3"></div>
-                            <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                            <div className="h-4 bg-muted rounded w-3/4 mb-3"></div>
+                            <div className="h-3 bg-muted rounded w-1/2"></div>
                         </Card>
                     ))}
                 </div>
@@ -91,11 +91,11 @@ export function ActivityPage({ onNavigate }: ActivityPageProps) {
 
             {!isLoading && unreadSurveys.length === 0 && (
                 <Card className="p-12 text-center border-dashed">
-                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Inbox className="w-8 h-8 text-gray-400" />
+                    <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Inbox className="w-8 h-8 text-muted-foreground" />
                     </div>
                     <h3 className="font-semibold text-foreground mb-2">All caught up!</h3>
-                    <p className="text-gray-500 text-sm mb-6">
+                    <p className="text-muted-foreground text-sm mb-6">
                         No new responses to review. Activity will appear here when you receive new survey responses.
                     </p>
                     <Button variant="primary" size="sm" onClick={() => onNavigate('surveys')}>
@@ -110,7 +110,7 @@ export function ActivityPage({ onNavigate }: ActivityPageProps) {
                         {paginatedSurveys.map((survey) => {
                             const newResponses = survey.responseCount - (survey.lastReadResponseCount ?? 0);
                             return (
-                                <Card key={survey.id} className="p-5 hover:shadow-sm transition-shadow border-gray-100">
+                                <Card key={survey.id} className="p-5 hover:shadow-sm transition-shadow border-border">
                                     <div className="flex items-start gap-4">
                                         <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
                                             <MessageSquare className="w-5 h-5 text-primary" />
@@ -122,12 +122,12 @@ export function ActivityPage({ onNavigate }: ActivityPageProps) {
                                                     {survey.status}
                                                 </Badge>
                                             </div>
-                                            <p className="text-sm text-gray-700">
+                                            <p className="text-sm text-foreground">
                                                 {newResponses === 1
                                                     ? 'There is 1 new response'
                                                     : `There are ${newResponses} new responses`}
                                             </p>
-                                            <p className="text-xs text-gray-400 mt-1.5">
+                                            <p className="text-xs text-muted-foreground mt-1.5">
                                                 Last updated {timeAgo(survey.updatedAt)} · {survey.responseCount} total responses
                                             </p>
                                         </div>
@@ -135,7 +135,7 @@ export function ActivityPage({ onNavigate }: ActivityPageProps) {
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="gap-1.5 text-gray-500 hover:text-foreground"
+                                                className="gap-1.5 text-muted-foreground hover:text-foreground"
                                                 onClick={() => handleMarkAsRead(survey.id)}
                                                 disabled={markingRead === survey.id}
                                             >
@@ -160,25 +160,25 @@ export function ActivityPage({ onNavigate }: ActivityPageProps) {
 
                     {/* Pagination */}
                     {totalPages > 1 && (
-                        <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
-                            <p className="text-sm text-gray-500">
+                        <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
+                            <p className="text-sm text-muted-foreground">
                                 Showing {(safePage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(safePage * ITEMS_PER_PAGE, unreadSurveys.length)} of {unreadSurveys.length}
                             </p>
                             <div className="flex items-center gap-2">
                                 <button
                                     disabled={safePage <= 1}
                                     onClick={() => setPage(safePage - 1)}
-                                    className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                    className="p-1.5 rounded-lg hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                 >
                                     <ChevronLeft className="w-5 h-5" />
                                 </button>
-                                <span className="text-sm text-gray-600 min-w-[80px] text-center">
+                                <span className="text-sm text-muted-foreground min-w-[80px] text-center">
                                     Page {safePage} of {totalPages}
                                 </span>
                                 <button
                                     disabled={safePage >= totalPages}
                                     onClick={() => setPage(safePage + 1)}
-                                    className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                    className="p-1.5 rounded-lg hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                 >
                                     <ChevronRight className="w-5 h-5" />
                                 </button>

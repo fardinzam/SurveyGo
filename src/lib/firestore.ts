@@ -42,8 +42,8 @@ export async function createSurvey(
         publishedAt: null,
         responseCount: 0,
         lastReadResponseCount: 0,
-        headerImageUrl: '',
-        settings: null,
+        headerImageUrl: input.headerImageUrl ?? '',
+        settings: input.settings ?? null,
     });
     return docRef.id;
 }
@@ -139,6 +139,8 @@ export async function duplicateSurvey(
         title: `${original.title} (Copy)`,
         description: original.description,
         questions: original.questions,
+        headerImageUrl: original.headerImageUrl,
+        settings: original.settings,
     });
 }
 

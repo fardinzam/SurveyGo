@@ -19,10 +19,10 @@ export function TeamPage({ onNavigate }: TeamPageProps) {
         </div>
 
         <h1 className="text-3xl font-bold text-foreground mb-3">Team Collaboration</h1>
-        <p className="text-gray-500 text-lg mb-2">
+        <p className="text-muted-foreground text-lg mb-2">
           Coming Soon
         </p>
-        <p className="text-gray-400 text-sm max-w-md mx-auto mb-8">
+        <p className="text-muted-foreground text-sm max-w-md mx-auto mb-8">
           Invite team members, assign roles, and collaborate on surveys together.
           Team features will be available in a future update.
         </p>
@@ -43,7 +43,7 @@ export function TeamPage({ onNavigate }: TeamPageProps) {
           ].map((feature, i) => (
             <Card key={i} className="p-5 opacity-70">
               <h3 className="font-semibold text-foreground mb-1">{feature.title}</h3>
-              <p className="text-sm text-gray-500">{feature.desc}</p>
+              <p className="text-sm text-muted-foreground">{feature.desc}</p>
             </Card>
           ))}
         </div>

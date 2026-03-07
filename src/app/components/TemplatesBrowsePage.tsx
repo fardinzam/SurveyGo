@@ -196,29 +196,40 @@ export function TemplatesBrowsePage({ onNavigate }: TemplatesBrowsePageProps) {
   return (
     <div className="p-8 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-foreground mb-3">Create Your Survey</h1>
-        <p className="text-gray-500 text-lg">
-          Let AI build it for you, or choose from our expert templates
-        </p>
+      <div className="flex justify-between items-start mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground mb-3">Create Your Survey</h1>
+          <p className="text-muted-foreground text-lg">
+            Let AI build it for you, or choose from our expert templates
+          </p>
+        </div>
+        <Button
+          variant="primary"
+          className="gap-2"
+          onClick={handleCreateBlank}
+          disabled={createSurvey.isPending}
+        >
+          {creatingId === 'blank' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+          Create Blank Survey
+        </Button>
       </div>
 
       {/* AI Input Section */}
-      <Card className="p-8 mb-8 bg-gradient-to-br from-white to-gray-50">
+      <div className="mb-8">
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-foreground" />
+              <Sparkles className="w-5 h-5 text-gray-900" />
             </div>
-            <h2 className="text-xl font-semibold text-foreground">Let AI Build It for You</h2>
+            <h2 className="text-xl font-semibold text-foreground">Build with AI</h2>
           </div>
-          <p className="text-gray-500 mb-4">Describe the survey you need and we'll create it instantly</p>
+          <p className="text-muted-foreground mb-4">Describe the survey you need and we'll create it instantly</p>
           <div className="relative">
             <textarea
               value={aiPrompt}
               onChange={(e) => setAiPrompt(e.target.value)}
               placeholder="e.g. Create a customer satisfaction survey for my SaaS product with questions about usability, support quality, and likelihood to recommend..."
-              className="w-full h-28 px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary transition-all pr-14"
+              className="w-full h-28 px-4 py-3 bg-card border border-border rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary transition-all pr-14"
             />
             <button
               onClick={handleCreateBlank}
@@ -226,19 +237,19 @@ export function TemplatesBrowsePage({ onNavigate }: TemplatesBrowsePageProps) {
               className="absolute bottom-4 right-4 w-10 h-10 bg-primary hover:bg-primary/90 rounded-lg flex items-center justify-center transition-colors disabled:opacity-50"
             >
               {creatingId === 'ai' ? (
-                <Loader2 className="w-5 h-5 text-foreground animate-spin" />
+                <Loader2 className="w-5 h-5 text-gray-900 animate-spin" />
               ) : (
-                <Send className="w-5 h-5 text-foreground" />
+                <Send className="w-5 h-5 text-gray-900" />
               )}
             </button>
           </div>
         </div>
-      </Card>
+      </div>
 
       {/* Browse by Category */}
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-foreground mb-2">Browse by Category</h2>
-        <p className="text-gray-500">Choose from professionally designed templates</p>
+        <p className="text-muted-foreground">Choose from professionally designed templates</p>
       </div>
 
       {/* Template Categories */}
@@ -251,7 +262,7 @@ export function TemplatesBrowsePage({ onNavigate }: TemplatesBrowsePageProps) {
               {/* Category Header */}
               <div className="flex items-center gap-3 mb-6">
                 <div className={`w-12 h-12 bg-gradient-to-br ${category.color} rounded-xl flex items-center justify-center`}>
-                  <CategoryIcon className="w-6 h-6 text-foreground" />
+                  <CategoryIcon className="w-6 h-6 text-gray-900" />
                 </div>
                 <h3 className="text-xl font-semibold text-foreground">{category.category}</h3>
               </div>
@@ -267,7 +278,7 @@ export function TemplatesBrowsePage({ onNavigate }: TemplatesBrowsePageProps) {
                     <h4 className="font-semibold text-foreground mb-2 text-lg group-hover:text-primary transition-colors">
                       {template.name}
                     </h4>
-                    <p className="text-gray-600 mb-4 leading-relaxed text-sm">
+                    <p className="text-muted-foreground mb-4 leading-relaxed text-sm">
                       {template.description}
                     </p>
                     <Button
@@ -290,16 +301,16 @@ export function TemplatesBrowsePage({ onNavigate }: TemplatesBrowsePageProps) {
         })}
       </div>
 
-      {/* Start from Scratch — below categories */}
-      <Card className="p-6 mt-12 bg-gradient-to-br from-white to-gray-50">
+      {/* Start from Scratch — above categories */}
+      <Card className="p-6 mt-12">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center">
-              <Plus className="w-5 h-5 text-foreground" />
+              <Plus className="w-5 h-5 text-gray-900" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-foreground">Start from Scratch</h2>
-              <p className="text-gray-500 text-sm">Create a blank survey and build it exactly how you want</p>
+              <p className="text-muted-foreground text-sm">Create a blank survey and build it exactly how you want</p>
             </div>
           </div>
           <Button

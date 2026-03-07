@@ -96,22 +96,22 @@ export function PlansPage({ onNavigate }: PlansPageProps) {
         <div className="p-8 max-w-6xl mx-auto">
             <div className="text-center mb-10">
                 <h1 className="text-3xl font-bold text-foreground mb-3">Choose Your Plan</h1>
-                <p className="text-gray-500 text-lg mb-6">
+                <p className="text-muted-foreground text-lg mb-6">
                     Scale your feedback collection as your business grows
                 </p>
 
                 {/* Billing Toggle */}
-                <div className="inline-flex bg-gray-100 rounded-xl p-1">
+                <div className="inline-flex bg-muted rounded-xl p-1">
                     <button
                         onClick={() => setBilling('monthly')}
-                        className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${billing === 'monthly' ? 'bg-white text-foreground shadow-sm' : 'text-gray-500'
+                        className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${billing === 'monthly' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'
                             }`}
                     >
                         Monthly
                     </button>
                     <button
                         onClick={() => setBilling('yearly')}
-                        className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${billing === 'yearly' ? 'bg-white text-foreground shadow-sm' : 'text-gray-500'
+                        className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${billing === 'yearly' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'
                             }`}
                     >
                         Yearly
@@ -144,17 +144,17 @@ export function PlansPage({ onNavigate }: PlansPageProps) {
                             )}
 
                             <div className={`w-12 h-12 bg-gradient-to-br ${plan.color} rounded-xl flex items-center justify-center mb-4`}>
-                                <PlanIcon className="w-6 h-6 text-foreground" />
+                                <PlanIcon className="w-6 h-6 text-gray-900" />
                             </div>
 
                             <h3 className="text-xl font-bold text-foreground mb-1">{plan.name}</h3>
-                            <p className="text-sm text-gray-500 mb-4">{plan.description}</p>
+                            <p className="text-sm text-muted-foreground mb-4">{plan.description}</p>
 
                             <div className="mb-6">
                                 <span className="text-4xl font-bold text-foreground">
                                     ${displayPrice}
                                 </span>
-                                <span className="text-gray-500 text-sm">
+                                <span className="text-muted-foreground text-sm">
                                     {plan.price === 0 ? ' forever' : billing === 'yearly' ? '/mo (billed yearly)' : '/month'}
                                 </span>
                             </div>
@@ -172,13 +172,13 @@ export function PlansPage({ onNavigate }: PlansPageProps) {
                                 {plan.features.map((feature, i) => (
                                     <div key={i} className="flex items-start gap-2.5">
                                         <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                                        <span className="text-sm text-gray-700">{feature}</span>
+                                        <span className="text-sm text-foreground">{feature}</span>
                                     </div>
                                 ))}
                                 {plan.limitations.map((limit, i) => (
                                     <div key={`l-${i}`} className="flex items-start gap-2.5">
-                                        <span className="w-4 h-4 text-gray-300 mt-0.5 flex-shrink-0 text-center">—</span>
-                                        <span className="text-sm text-gray-400">{limit}</span>
+                                        <span className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0 text-center">—</span>
+                                        <span className="text-sm text-muted-foreground">{limit}</span>
                                     </div>
                                 ))}
                             </div>
@@ -189,7 +189,7 @@ export function PlansPage({ onNavigate }: PlansPageProps) {
 
             {/* FAQ / Bottom CTA */}
             <div className="text-center mt-12">
-                <p className="text-gray-500 text-sm">
+                <p className="text-muted-foreground text-sm">
                     All plans include a 14-day free trial of Standard features.{' '}
                     <button onClick={() => onNavigate('settings')} className="text-primary font-medium hover:underline">
                         Contact support

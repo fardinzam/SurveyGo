@@ -1,6 +1,45 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { Home, Activity, FileText, LayoutTemplate, Users, Settings, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { useAuthContext } from '../../contexts/AuthContext';
+
+/** Tooltip that uses fixed positioning to escape overflow-hidden parents. */
+function FixedTooltip({ label }: { label: string }) {
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const markerRef = useRef<HTMLSpanElement>(null);
+
+  React.useEffect(() => {
+    const marker = markerRef.current;
+    const li = marker?.closest('li');
+    if (!li) return;
+
+    const onEnter = () => {
+      const rect = li.getBoundingClientRect();
+      setPos({ top: rect.top + rect.height / 2, left: rect.right + 8 });
+    };
+    const onLeave = () => setPos(null);
+
+    li.addEventListener('mouseenter', onEnter);
+    li.addEventListener('mouseleave', onLeave);
+    return () => {
+      li.removeEventListener('mouseenter', onEnter);
+      li.removeEventListener('mouseleave', onLeave);
+    };
+  }, []);
+
+  return (
+    <>
+      <span ref={markerRef} className="hidden" />
+      {pos && (
+        <div
+          className="fixed px-3 py-1.5 bg-foreground text-background text-sm rounded-lg whitespace-nowrap pointer-events-none z-[100]"
+          style={{ top: pos.top, left: pos.left, transform: 'translateY(-50%)' }}
+        >
+          {label}
+        </div>
+      )}
+    </>
+  );
+}
 
 interface CollapsibleSidebarProps {
   activePage: string;
@@ -18,10 +57,12 @@ export function CollapsibleSidebar({
   onToggleCollapse
 }: CollapsibleSidebarProps) {
   const { user } = useAuthContext();
+  const [imgError, setImgError] = useState(false);
 
   const displayName = user?.displayName || user?.email?.split('@')[0] || 'User';
   const email = user?.email || '';
   const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  const showPhoto = user?.photoURL && !imgError;
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
@@ -29,16 +70,15 @@ export function CollapsibleSidebar({
     { id: 'surveys', label: 'My Surveys', icon: FileText },
     { id: 'templates-browse', label: 'Templates', icon: LayoutTemplate },
     { id: 'team', label: 'Team', icon: Users },
-    { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
   return (
     <div
-      className={`bg-white border-r border-gray-100 h-screen flex flex-col fixed left-0 top-0 transition-all duration-300 ${collapsed ? 'w-16' : 'w-60'
+      className={`bg-sidebar border-r border-sidebar-border h-screen flex flex-col fixed left-0 top-0 transition-all duration-300 z-10 ${collapsed ? 'w-16' : 'w-60'
         }`}
     >
       {/* Logo / Brand */}
-      <div className="p-4 border-b border-gray-100 flex items-center justify-between relative">
+      <div className="p-4 border-b border-sidebar-border flex items-center justify-between relative">
         {!collapsed && (
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
@@ -53,46 +93,42 @@ export function CollapsibleSidebar({
           </div>
         )}
 
-        {/* Collapse Button — positioned where notification bell was */}
+        {/* Collapse Button */}
         <button
           onClick={onToggleCollapse}
-          className={`p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-foreground ${collapsed
-            ? 'absolute -right-5 top-1/2 -translate-y-1/2 bg-white border border-gray-200 shadow-sm rounded-r-lg z-10'
-            : ''
+          className={`flex items-center justify-center transition-colors text-muted-foreground hover:text-foreground ${collapsed
+            ? 'absolute -right-4 top-1/2 -translate-y-1/2 w-4 h-8 bg-card border border-l-0 border-border shadow-sm rounded-r-full z-10 hover:bg-muted'
+            : 'p-2 hover:bg-muted rounded-lg'
             }`}
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          {collapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-4 h-4" />}
         </button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-3 overflow-y-auto">
+      <nav className="flex-1 p-3 overflow-y-auto overflow-x-hidden">
         <ul className="space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activePage === item.id;
 
             return (
-              <li key={item.id}>
+              <li key={item.id} className="relative">
                 <button
                   onClick={() => onNavigate(item.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative ${isActive
                     ? 'bg-secondary text-foreground font-medium'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-foreground'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                     } ${collapsed ? 'justify-center' : ''}`}
                   title={collapsed ? item.label : ''}
                 >
                   <Icon className="w-5 h-5 flex-shrink-0" />
                   {!collapsed && <span>{item.label}</span>}
-
-                  {/* Tooltip for collapsed state */}
-                  {collapsed && (
-                    <div className="absolute left-full ml-2 px-3 py-1.5 bg-gray-900 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap pointer-events-none z-50">
-                      {item.label}
-                    </div>
-                  )}
                 </button>
+
+                {/* Fixed-position tooltip for collapsed state — escapes overflow-x-hidden */}
+                {collapsed && <FixedTooltip label={item.label} />}
               </li>
             );
           })}
@@ -107,7 +143,7 @@ export function CollapsibleSidebar({
               <Sparkles className="w-4 h-4 text-primary" />
               <span className="text-sm font-semibold text-foreground">Upgrade Plan</span>
             </div>
-            <p className="text-xs text-gray-600 mb-3">
+            <p className="text-xs text-muted-foreground mb-3">
               Unlock unlimited surveys, responses, and premium features.
             </p>
             <button
@@ -135,16 +171,16 @@ export function CollapsibleSidebar({
       )}
 
       {/* Bottom Section - Profile */}
-      <div className="border-t border-gray-100 p-3">
+      <div className="border-t border-sidebar-border p-3">
         <button
           onClick={onProfileClick}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-foreground transition-all group relative ${collapsed ? 'justify-center' : ''
+          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-all group relative ${collapsed ? 'justify-center' : ''
             }`}
           title={collapsed ? 'Profile' : ''}
         >
           <div className="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center font-semibold text-foreground text-sm flex-shrink-0 overflow-hidden">
-            {user?.photoURL ? (
-              <img src={user.photoURL} alt={displayName} className="w-full h-full object-cover rounded-full" />
+            {showPhoto ? (
+              <img src={user!.photoURL!} alt={displayName} className="w-full h-full object-cover rounded-full" onError={() => setImgError(true)} />
             ) : (
               initials
             )}
@@ -152,12 +188,12 @@ export function CollapsibleSidebar({
           {!collapsed && (
             <div className="text-left flex-1 min-w-0">
               <div className="font-medium text-foreground truncate">{displayName}</div>
-              <div className="text-xs text-gray-500 truncate">{email}</div>
+              <div className="text-xs text-muted-foreground truncate">{email}</div>
             </div>
           )}
 
           {collapsed && (
-            <div className="absolute left-full ml-2 px-3 py-1.5 bg-gray-900 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap pointer-events-none z-50">
+            <div className="absolute left-full ml-2 px-3 py-1.5 bg-foreground text-background text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap pointer-events-none z-50">
               Profile
             </div>
           )}

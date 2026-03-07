@@ -136,7 +136,7 @@ export function DashboardPage({ onNavigate }: DashboardProps) {
 
   const statusStyles: Record<string, string> = {
     active: 'bg-green-100 text-green-700',
-    draft: 'bg-gray-100 text-gray-700',
+    draft: 'bg-muted text-foreground',
     closed: 'bg-orange-100 text-orange-700',
   };
 
@@ -154,7 +154,7 @@ export function DashboardPage({ onNavigate }: DashboardProps) {
       <div className="flex justify-between items-start mb-8">
         <div>
           <h1 className="text-[28px] font-bold text-foreground mb-2">Dashboard</h1>
-          <p className="text-gray-500">Welcome back! Here's what's happening with your surveys.</p>
+          <p className="text-muted-foreground">Welcome back! Here's what's happening with your surveys.</p>
         </div>
         <Button variant="primary" className="gap-2" onClick={() => onNavigate('templates-browse')}>
           <Plus className="w-4 h-4" />
@@ -164,10 +164,10 @@ export function DashboardPage({ onNavigate }: DashboardProps) {
 
       {/* Stat Cards */}
       <div className="grid grid-cols-4 gap-6 mb-6">
-        <Card className="p-6 border border-gray-100 shadow-sm">
+        <Card className="p-6 border border-border shadow-sm">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-gray-500 mb-2">Total Responses</p>
+              <p className="text-sm text-muted-foreground mb-2">Total Responses</p>
               <p className="text-3xl font-bold text-foreground">{totalResponses.toLocaleString()}</p>
             </div>
             {totalResponses > 0 && (
@@ -179,18 +179,18 @@ export function DashboardPage({ onNavigate }: DashboardProps) {
           </div>
         </Card>
 
-        <Card className="p-6 border border-gray-100 shadow-sm">
-          <p className="text-sm text-gray-500 mb-2">Active Surveys</p>
+        <Card className="p-6 border border-border shadow-sm">
+          <p className="text-sm text-muted-foreground mb-2">Active Surveys</p>
           <p className="text-3xl font-bold text-foreground">{activeSurveys}</p>
         </Card>
 
-        <Card className="p-6 border border-gray-100 shadow-sm">
-          <p className="text-sm text-gray-500 mb-2">Total Surveys</p>
+        <Card className="p-6 border border-border shadow-sm">
+          <p className="text-sm text-muted-foreground mb-2">Total Surveys</p>
           <p className="text-3xl font-bold text-foreground">{surveys.length}</p>
         </Card>
 
-        <Card className="p-6 border border-gray-100 shadow-sm">
-          <p className="text-sm text-gray-500 mb-2">Draft Surveys</p>
+        <Card className="p-6 border border-border shadow-sm">
+          <p className="text-sm text-muted-foreground mb-2">Draft Surveys</p>
           <p className="text-3xl font-bold text-foreground">{draftSurveys}</p>
         </Card>
       </div>
@@ -198,13 +198,13 @@ export function DashboardPage({ onNavigate }: DashboardProps) {
       {/* Charts Row */}
       <div className="grid grid-cols-2 gap-6 mb-6">
         {/* Response Trend */}
-        <Card className="p-6 border border-gray-100 shadow-sm">
+        <Card className="p-6 border border-border shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-semibold text-foreground text-lg">Response Trend</h3>
             <div className="relative">
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center gap-1 text-sm px-3 py-1.5 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-1 text-sm px-3 py-1.5 rounded-md border border-border hover:bg-muted transition-colors"
               >
                 {selectedSurveyId
                   ? surveys.find((s) => s.id === selectedSurveyId)?.title?.slice(0, 20) + '...'
@@ -212,10 +212,10 @@ export function DashboardPage({ onNavigate }: DashboardProps) {
                 <ChevronDown className="w-4 h-4" />
               </button>
               {dropdownOpen && (
-                <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-30 py-1">
+                <div className="absolute right-0 top-full mt-1 w-56 bg-card border border-border rounded-lg shadow-lg z-30 py-1">
                   <button
                     onClick={() => { setSelectedSurveyId(null); setDropdownOpen(false); }}
-                    className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 ${!selectedSurveyId ? 'font-semibold text-foreground' : 'text-gray-600'}`}
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-muted ${!selectedSurveyId ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}
                   >
                     All Surveys
                   </button>
@@ -223,7 +223,7 @@ export function DashboardPage({ onNavigate }: DashboardProps) {
                     <button
                       key={s.id}
                       onClick={() => { setSelectedSurveyId(s.id); setDropdownOpen(false); }}
-                      className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 truncate ${selectedSurveyId === s.id ? 'font-semibold text-foreground' : 'text-gray-600'}`}
+                      className={`w-full text-left px-3 py-2 text-sm hover:bg-muted truncate ${selectedSurveyId === s.id ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}
                     >
                       {s.title}
                     </button>
@@ -278,12 +278,12 @@ export function DashboardPage({ onNavigate }: DashboardProps) {
         </Card>
 
         {/* Top Surveys by Responses */}
-        <Card className="p-6 border border-gray-100 shadow-sm">
+        <Card className="p-6 border border-border shadow-sm">
           <div className="mb-6">
             <h3 className="font-semibold text-foreground text-lg">Top Surveys by Responses</h3>
           </div>
           {topSurveys.length === 0 ? (
-            <div className="flex items-center justify-center h-[250px] text-gray-400 text-sm">
+            <div className="flex items-center justify-center h-[250px] text-muted-foreground text-sm">
               No survey data yet
             </div>
           ) : (
@@ -326,7 +326,7 @@ export function DashboardPage({ onNavigate }: DashboardProps) {
       </div>
 
       {/* Quick Actions */}
-      <Card className="p-6 border border-gray-100 shadow-sm mb-6">
+      <Card className="p-6 border border-border shadow-sm mb-6">
         <h3 className="font-semibold text-foreground text-lg mb-4">Quick Actions</h3>
         <div className="grid grid-cols-3 gap-4">
           {quickActions.map((action, idx) => {
@@ -335,14 +335,14 @@ export function DashboardPage({ onNavigate }: DashboardProps) {
               <button
                 key={idx}
                 onClick={action.onClick}
-                className={`${action.bgColor} p-4 rounded-lg text-left hover:shadow-md transition-all group border border-transparent hover:border-gray-200`}
+                className={`${action.bgColor} p-4 rounded-lg text-left hover:shadow-md transition-all group border border-transparent hover:border-border`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-start gap-3 flex-1">
                     <Icon className={`w-5 h-5 ${action.iconColor} mt-0.5 flex-shrink-0`} />
-                    <p className="text-sm font-medium text-foreground">{action.title}</p>
+                    <p className="text-sm font-medium text-gray-900">{action.title}</p>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                  <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                 </div>
               </button>
             );
@@ -351,7 +351,7 @@ export function DashboardPage({ onNavigate }: DashboardProps) {
       </Card>
 
       {/* Recent Surveys Table */}
-      <Card className="p-6 border border-gray-100 shadow-sm">
+      <Card className="p-6 border border-border shadow-sm">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-semibold text-foreground text-lg">Recent Surveys</h3>
           <Button variant="ghost" onClick={() => onNavigate('surveys')}>
@@ -360,25 +360,25 @@ export function DashboardPage({ onNavigate }: DashboardProps) {
         </div>
 
         {recentSurveys.length === 0 ? (
-          <div className="text-center py-8 text-gray-400">
+          <div className="text-center py-8 text-muted-foreground">
             No surveys yet. Create your first one!
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Survey Title</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Status</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Responses</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Last Activity</th>
+                <tr className="border-b border-border">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Survey Title</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Responses</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Last Activity</th>
                 </tr>
               </thead>
               <tbody>
                 {recentSurveys.map((survey) => (
                   <tr
                     key={survey.id}
-                    className="border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="border-b border-gray-50 hover:bg-muted transition-colors cursor-pointer"
                     onClick={() => navigate(`/app/surveys/${survey.id}/edit`)}
                   >
                     <td className="py-4 px-4">
@@ -395,7 +395,7 @@ export function DashboardPage({ onNavigate }: DashboardProps) {
                       </Badge>
                     </td>
                     <td className="py-4 px-4 text-sm text-foreground">{survey.responseCount}</td>
-                    <td className="py-4 px-4 text-sm text-gray-500">{timeAgo(survey.updatedAt)}</td>
+                    <td className="py-4 px-4 text-sm text-muted-foreground">{timeAgo(survey.updatedAt)}</td>
                   </tr>
                 ))}
               </tbody>

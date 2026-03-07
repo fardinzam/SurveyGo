@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from './Button';
-import { ArrowLeft, Edit3, Send, Plug, BarChart3, Loader2, Save } from 'lucide-react';
+import { ArrowLeft, Edit3, Send, Plug, BarChart3 } from 'lucide-react';
 import { getSurvey } from '../../lib/firestore';
 
 export type BuilderStep = 1 | 2 | 3 | 4;
@@ -9,11 +9,7 @@ interface BuilderNavbarProps {
     surveyId?: string;
     currentStep: BuilderStep;
     onNavigate: (page: string) => void;
-    /** Optional: show Save Draft button (only on Edit step) */
-    showSave?: boolean;
-    isSaving?: boolean;
-    onSave?: () => void;
-    /** Optional: custom right-side content (replaces the default buttons) */
+    /** Optional: custom right-side content (replaces the default CTA) */
     rightContent?: React.ReactNode;
 }
 
@@ -39,9 +35,6 @@ export function BuilderNavbar({
     surveyId,
     currentStep,
     onNavigate,
-    showSave = false,
-    isSaving = false,
-    onSave,
     rightContent,
 }: BuilderNavbarProps) {
     const [surveyTitle, setSurveyTitle] = useState('...');
@@ -58,22 +51,32 @@ export function BuilderNavbar({
         return () => { cancelled = true; };
     }, [surveyId]);
 
+    // Back: go to previous step, or "surveys" for step 1
+    const handleBack = () => {
+        if (currentStep === 1) {
+            onNavigate('surveys');
+        } else {
+            const prevRoute = getStepRoute(currentStep - 1, surveyId);
+            if (prevRoute) onNavigate(prevRoute);
+        }
+    };
+
     return (
-        <div className="bg-white border-b border-gray-100 px-6 py-3 fixed top-0 left-0 right-0 z-20">
-            <div className="flex items-center justify-between max-w-full mx-auto">
+        <div className="bg-card border-b border-border px-6 py-3 fixed top-0 left-0 right-0 z-20">
+            <div className="flex items-center justify-between max-w-full mx-auto relative">
                 {/* Left: back + title */}
                 <div className="flex items-center gap-3 min-w-0">
                     <button
-                        onClick={() => onNavigate('surveys')}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+                        onClick={handleBack}
+                        className="p-2 hover:bg-muted rounded-lg transition-colors flex-shrink-0"
                     >
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                     <span className="text-lg font-semibold truncate">{surveyTitle}</span>
                 </div>
 
-                {/* Center: breadcrumb stepper */}
-                <div className="flex items-center">
+                {/* Center: breadcrumb stepper — truly centered */}
+                <div className="absolute left-1/2 -translate-x-1/2 flex items-center">
                     {steps.map((step, index) => {
                         const StepIcon = step.icon;
                         const isActive = currentStep === step.id;
@@ -92,10 +95,10 @@ export function BuilderNavbar({
                                         ? 'bg-primary text-foreground shadow-sm'
                                         : isCompleted
                                             ? 'bg-secondary text-foreground'
-                                            : 'bg-white text-gray-500 border border-gray-200'
+                                            : 'bg-card text-muted-foreground border border-border'
                                         }`}
                                 >
-                                    <div className={`w-5 h-5 rounded flex items-center justify-center ${isActive ? 'bg-white/30' : isCompleted ? 'bg-white/50' : 'bg-gray-100'
+                                    <div className={`w-5 h-5 rounded flex items-center justify-center ${isActive ? 'bg-white/30' : isCompleted ? 'bg-white/50' : 'bg-muted'
                                         }`}>
                                         <StepIcon className="w-3 h-3" />
                                     </div>
@@ -103,7 +106,7 @@ export function BuilderNavbar({
                                 </button>
 
                                 {index < steps.length - 1 && (
-                                    <div className={`w-8 h-0.5 mx-1 ${isCompleted ? 'bg-secondary' : 'bg-gray-200'
+                                    <div className={`w-8 h-0.5 mx-1 ${isCompleted ? 'bg-secondary' : 'bg-border'
                                         }`}></div>
                                 )}
                             </React.Fragment>
@@ -113,22 +116,7 @@ export function BuilderNavbar({
 
                 {/* Right: action buttons or custom content */}
                 <div className="flex items-center gap-3 flex-shrink-0">
-                    {rightContent ?? (
-                        <>
-                            {showSave && onSave && (
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="gap-2"
-                                    onClick={onSave}
-                                    disabled={isSaving}
-                                >
-                                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                    Save Draft
-                                </Button>
-                            )}
-                        </>
-                    )}
+                    {rightContent}
                 </div>
             </div>
         </div>

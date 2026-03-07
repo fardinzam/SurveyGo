@@ -65,7 +65,7 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
   return (
     <div className="min-h-screen bg-background">
       {/* Navbar */}
-      <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
+      <nav className="bg-card border-b border-border sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
@@ -75,9 +75,9 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
           </div>
 
           <div className="flex items-center gap-8">
-            <a href="#features" className="text-gray-600 hover:text-foreground transition-colors">Features</a>
-            <a href="#pricing" className="text-gray-600 hover:text-foreground transition-colors">Pricing</a>
-            <a href="#templates" className="text-gray-600 hover:text-foreground transition-colors">Templates</a>
+            <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</a>
+            <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
+            <a href="#templates" className="text-muted-foreground hover:text-foreground transition-colors">Templates</a>
           </div>
 
           <div className="flex items-center gap-3">
@@ -98,7 +98,7 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
             Transform feedback into
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary"> actionable insights</span>
           </h1>
-          <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+          <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
             Create beautiful surveys, collect responses, and analyze feedback with AI-powered insights. 
             The modern alternative to Google Forms.
           </p>
@@ -120,19 +120,19 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
               <div className="w-20 h-20 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <Sparkles className="w-10 h-10 text-foreground" />
               </div>
-              <p className="text-gray-500">Dashboard Preview</p>
+              <p className="text-muted-foreground">Dashboard Preview</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Trust Logos */}
-      <section className="py-12 border-y border-gray-200 bg-white">
+      <section className="py-12 border-y border-border bg-card">
         <div className="max-w-7xl mx-auto px-8">
-          <p className="text-center text-gray-500 mb-8 font-medium">Trusted by thousands worldwide</p>
+          <p className="text-center text-muted-foreground mb-8 font-medium">Trusted by thousands worldwide</p>
           <div className="flex items-center justify-center gap-12 opacity-40">
             {['Company A', 'Brand B', 'Corp C', 'Business D', 'Startup E', 'Firm F'].map((name, i) => (
-              <div key={i} className="text-2xl font-bold text-gray-400">{name}</div>
+              <div key={i} className="text-2xl font-bold text-muted-foreground">{name}</div>
             ))}
           </div>
         </div>
@@ -142,7 +142,7 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
       <section id="features" className="max-w-7xl mx-auto px-8 py-20">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-foreground mb-4">Everything you need to succeed</h2>
-          <p className="text-xl text-gray-600">Powerful features to help you collect and analyze feedback</p>
+          <p className="text-xl text-muted-foreground">Powerful features to help you collect and analyze feedback</p>
         </div>
 
         <div className="grid grid-cols-3 gap-8">
@@ -154,7 +154,7 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
                   <Icon className="w-8 h-8 text-foreground" />
                 </div>
                 <h3 className="text-xl font-semibold text-foreground mb-3">{feature.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{feature.description}</p>
+                <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
               </Card>
             );
           })}
@@ -162,11 +162,11 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
       </section>
 
       {/* How It Works */}
-      <section className="bg-white py-20">
+      <section className="bg-card py-20">
         <div className="max-w-7xl mx-auto px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-foreground mb-4">How it works</h2>
-            <p className="text-xl text-gray-600">Get started in three simple steps</p>
+            <p className="text-xl text-muted-foreground">Get started in three simple steps</p>
           </div>
 
           <div className="flex items-start justify-between max-w-5xl mx-auto">
@@ -180,9 +180,9 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
                   {step.number}
                 </div>
                 <h3 className="text-xl font-semibold text-foreground mb-2">{step.title}</h3>
-                <p className="text-gray-600">{step.description}</p>
+                <p className="text-muted-foreground">{step.description}</p>
                 {index < 2 && (
-                  <div className="absolute top-8 left-[60%] w-[80%] h-0.5 bg-gray-200"></div>
+                  <div className="absolute top-8 left-[60%] w-[80%] h-0.5 bg-muted"></div>
                 )}
               </div>
             ))}
@@ -195,19 +195,19 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
         <Card className="overflow-hidden">
           <div className="bg-gradient-to-br from-gray-100 to-gray-200 aspect-video flex items-center justify-center">
             <div className="text-center">
-              <TrendingUp className="w-20 h-20 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500 text-lg">Full Dashboard Screenshot</p>
+              <TrendingUp className="w-20 h-20 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground text-lg">Full Dashboard Screenshot</p>
             </div>
           </div>
         </Card>
       </section>
 
       {/* Benefits Grid */}
-      <section className="bg-white py-20">
+      <section className="bg-card py-20">
         <div className="max-w-7xl mx-auto px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-foreground mb-4">Why choose SurveyGo?</h2>
-            <p className="text-xl text-gray-600">All the features you need, none of the complexity</p>
+            <p className="text-xl text-muted-foreground">All the features you need, none of the complexity</p>
           </div>
 
           <div className="grid grid-cols-3 gap-8">
@@ -230,7 +230,7 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
       <section id="pricing" className="max-w-7xl mx-auto px-8 py-20">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-foreground mb-4">Simple, transparent pricing</h2>
-          <p className="text-xl text-gray-600">Choose the plan that's right for you</p>
+          <p className="text-xl text-muted-foreground">Choose the plan that's right for you</p>
         </div>
 
         <div className="grid grid-cols-3 gap-8 max-w-6xl mx-auto">
@@ -247,9 +247,9 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
               <h3 className="text-2xl font-bold text-foreground mb-2">{plan.name}</h3>
               <div className="mb-4">
                 <span className="text-4xl font-bold text-foreground">{plan.price}</span>
-                <span className="text-gray-500">/month</span>
+                <span className="text-muted-foreground">/month</span>
               </div>
-              <p className="text-gray-600 mb-6">{plan.description}</p>
+              <p className="text-muted-foreground mb-6">{plan.description}</p>
               <Button 
                 variant={plan.highlighted ? 'primary' : 'outline'} 
                 className="w-full mb-6"
@@ -259,7 +259,7 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
               </Button>
               <ul className="space-y-3">
                 {plan.features.map((feature, i) => (
-                  <li key={i} className="flex items-center gap-3 text-gray-700">
+                  <li key={i} className="flex items-center gap-3 text-foreground">
                     <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
                     <span>{feature}</span>
                   </li>
@@ -276,7 +276,7 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
           <h2 className="text-4xl font-bold text-white mb-6">
             Ready to transform your feedback?
           </h2>
-          <p className="text-xl text-gray-300 mb-8">
+          <p className="text-xl text-muted-foreground mb-8">
             Join thousands who are already using SurveyGo to collect meaningful insights
           </p>
           <Button 
@@ -287,12 +287,12 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
             Get Started Free
             <ArrowRight className="w-5 h-5 ml-2" />
           </Button>
-          <p className="text-gray-400 mt-4">No credit card required • Free forever plan</p>
+          <p className="text-muted-foreground mt-4">No credit card required • Free forever plan</p>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 py-12">
+      <footer className="bg-card border-t border-border py-12">
         <div className="max-w-7xl mx-auto px-8">
           <div className="grid grid-cols-5 gap-8 mb-8">
             <div className="col-span-2">
@@ -302,7 +302,7 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
                 </div>
                 <span className="text-lg font-bold text-foreground">SurveyGo</span>
               </div>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 The modern survey platform for everyone. Create, share, and analyze surveys with ease.
               </p>
             </div>
@@ -310,37 +310,37 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
             <div>
               <h4 className="font-semibold text-foreground mb-4">Product</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-600 hover:text-foreground">Features</a></li>
-                <li><a href="#" className="text-gray-600 hover:text-foreground">Pricing</a></li>
-                <li><a href="#" className="text-gray-600 hover:text-foreground">Templates</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground">Features</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground">Pricing</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground">Templates</a></li>
               </ul>
             </div>
 
             <div>
               <h4 className="font-semibold text-foreground mb-4">Company</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-600 hover:text-foreground">About</a></li>
-                <li><a href="#" className="text-gray-600 hover:text-foreground">Blog</a></li>
-                <li><a href="#" className="text-gray-600 hover:text-foreground">Careers</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground">About</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground">Blog</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground">Careers</a></li>
               </ul>
             </div>
 
             <div>
               <h4 className="font-semibold text-foreground mb-4">Support</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-600 hover:text-foreground">Help Center</a></li>
-                <li><a href="#" className="text-gray-600 hover:text-foreground">Contact</a></li>
-                <li><a href="#" className="text-gray-600 hover:text-foreground">Privacy</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground">Help Center</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground">Contact</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground">Privacy</a></li>
               </ul>
             </div>
           </div>
 
-          <div className="pt-8 border-t border-gray-200 flex items-center justify-between">
-            <p className="text-gray-500 text-sm">© 2026 SurveyGo. All rights reserved.</p>
+          <div className="pt-8 border-t border-border flex items-center justify-between">
+            <p className="text-muted-foreground text-sm">© 2026 SurveyGo. All rights reserved.</p>
             <div className="flex items-center gap-6">
-              <a href="#" className="text-gray-400 hover:text-foreground">Twitter</a>
-              <a href="#" className="text-gray-400 hover:text-foreground">LinkedIn</a>
-              <a href="#" className="text-gray-400 hover:text-foreground">Facebook</a>
+              <a href="#" className="text-muted-foreground hover:text-foreground">Twitter</a>
+              <a href="#" className="text-muted-foreground hover:text-foreground">LinkedIn</a>
+              <a href="#" className="text-muted-foreground hover:text-foreground">Facebook</a>
             </div>
           </div>
         </div>

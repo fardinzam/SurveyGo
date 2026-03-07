@@ -13,7 +13,7 @@ export function DashboardEmptyState({ onNavigate }: DashboardEmptyStateProps) {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard</h1>
-        <p className="text-gray-500">Welcome to SurveyGo! Let's get started.</p>
+        <p className="text-muted-foreground">Welcome to SurveyGo! Let's get started.</p>
       </div>
 
       {/* Empty State */}
@@ -28,7 +28,7 @@ export function DashboardEmptyState({ onNavigate }: DashboardEmptyStateProps) {
 
           {/* Content */}
           <h2 className="text-2xl font-bold text-foreground mb-4">Welcome to SurveyGo!</h2>
-          <p className="text-gray-500 mb-8 leading-relaxed">
+          <p className="text-muted-foreground mb-8 leading-relaxed">
             You haven't created any surveys yet. Start collecting feedback in just a few minutes.
           </p>
 
@@ -43,7 +43,7 @@ export function DashboardEmptyState({ onNavigate }: DashboardEmptyStateProps) {
             Create Your First Survey
           </Button>
 
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             or{' '}
             <button 
               onClick={() => onNavigate('templates-browse')}

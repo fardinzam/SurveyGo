@@ -7,6 +7,10 @@ import {
     updateProfile as firebaseUpdateProfile,
     updatePassword as firebaseUpdatePassword,
     deleteUser,
+    sendPasswordResetEmail,
+    setPersistence,
+    indexedDBLocalPersistence,
+    browserSessionPersistence,
     type User,
 } from 'firebase/auth'
 import { doc, setDoc, deleteDoc, getDocs, collection, query, where, serverTimestamp } from 'firebase/firestore'
@@ -106,4 +110,23 @@ export async function deleteAccount(user: User): Promise<void> {
 
     // 3. Delete Firebase Auth account
     await deleteUser(user)
+}
+
+/**
+ * Send a password reset email.
+ */
+export async function resetPassword(email: string) {
+    await sendPasswordResetEmail(auth, email)
+}
+
+/**
+ * Toggle auth persistence.
+ * rememberMe = true  → browserLocalPersistence (survives browser close)
+ * rememberMe = false → browserSessionPersistence (cleared on browser close)
+ */
+export async function setAuthPersistence(rememberMe: boolean) {
+    await setPersistence(
+        auth,
+        rememberMe ? indexedDBLocalPersistence : browserSessionPersistence,
+    )
 }

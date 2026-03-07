@@ -13,7 +13,7 @@ const variantStyles: Record<string, string> = {
   warning: 'bg-yellow-100 text-yellow-700 border-transparent',
   error: 'bg-red-100 text-red-700 border-transparent',
   info: 'bg-blue-100 text-blue-700 border-transparent',
-  neutral: 'bg-gray-100 text-gray-700 border-transparent',
+  neutral: 'bg-gray-100 text-foreground border-transparent',
   primary: 'bg-primary text-primary-foreground border-transparent',
   secondary: 'bg-secondary text-secondary-foreground border-transparent',
 };

@@ -158,7 +158,7 @@ export function SurveysListPage({ onNavigate }: SurveysListPageProps) {
   };
 
   const getSortIcon = (column: SortColumn) => {
-    if (sortColumn !== column) return <ArrowUpDown className="w-3.5 h-3.5 text-gray-400" />;
+    if (sortColumn !== column) return <ArrowUpDown className="w-3.5 h-3.5 text-muted-foreground" />;
     if (sortDirection === 'asc') return <ArrowUp className="w-3.5 h-3.5 text-foreground" />;
     return <ArrowDown className="w-3.5 h-3.5 text-foreground" />;
   };
@@ -166,9 +166,9 @@ export function SurveysListPage({ onNavigate }: SurveysListPageProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active': return 'bg-green-100 text-green-700';
-      case 'draft': return 'bg-gray-100 text-gray-700';
+      case 'draft': return 'bg-muted text-foreground';
       case 'closed': return 'bg-red-100 text-red-700';
-      default: return 'bg-gray-100 text-gray-700';
+      default: return 'bg-muted text-foreground';
     }
   };
 
@@ -203,7 +203,7 @@ export function SurveysListPage({ onNavigate }: SurveysListPageProps) {
         <div className="mb-8 flex justify-between items-start">
           <div>
             <h1 className="text-[28px] font-bold text-foreground mb-2">My Surveys</h1>
-            <p className="text-gray-500">Manage and track all your surveys</p>
+            <p className="text-muted-foreground">Manage and track all your surveys</p>
           </div>
           <Button variant="primary" className="gap-2" onClick={handleNewSurvey}>
             <Plus className="w-4 h-4" />
@@ -211,11 +211,11 @@ export function SurveysListPage({ onNavigate }: SurveysListPageProps) {
           </Button>
         </div>
         <Card className="p-12 flex flex-col items-center justify-center text-center border-dashed">
-          <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-            <FileText className="w-8 h-8 text-gray-400" />
+          <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+            <FileText className="w-8 h-8 text-muted-foreground" />
           </div>
           <h3 className="text-lg font-semibold text-foreground mb-2">No surveys yet</h3>
-          <p className="text-gray-500 mb-6 max-w-sm">Create your first survey to start collecting feedback from your audience.</p>
+          <p className="text-muted-foreground mb-6 max-w-sm">Create your first survey to start collecting feedback from your audience.</p>
           <Button variant="primary" className="gap-2" onClick={handleNewSurvey}>
             <Plus className="w-4 h-4" />
             Create Your First Survey
@@ -231,7 +231,7 @@ export function SurveysListPage({ onNavigate }: SurveysListPageProps) {
       <div className="mb-8 flex justify-between items-start">
         <div>
           <h1 className="text-[28px] font-bold text-foreground mb-2">My Surveys</h1>
-          <p className="text-gray-500">Manage and track all your surveys</p>
+          <p className="text-muted-foreground">Manage and track all your surveys</p>
         </div>
         <Button variant="primary" className="gap-2" onClick={handleNewSurvey}>
           <Plus className="w-4 h-4" />
@@ -244,13 +244,13 @@ export function SurveysListPage({ onNavigate }: SurveysListPageProps) {
         <div className="flex gap-3 items-center">
           {/* Search — takes majority of width */}
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
               placeholder="Search surveys..."
               value={searchTerm}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+              className="w-full pl-10 pr-4 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all"
             />
           </div>
           {/* Status dropdown — compact, fixed width */}
@@ -276,26 +276,26 @@ export function SurveysListPage({ onNavigate }: SurveysListPageProps) {
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-muted border-b border-border">
               <tr>
                 <th className="px-4 py-3 text-left">
-                  <button onClick={() => handleSort('name')} className="flex items-center gap-1.5 font-semibold text-sm text-gray-700 hover:text-foreground transition-colors">
+                  <button onClick={() => handleSort('name')} className="flex items-center gap-1.5 font-semibold text-sm text-foreground hover:text-foreground transition-colors">
                     Name {getSortIcon('name')}
                   </button>
                 </th>
                 <th className="px-4 py-3 text-left">
-                  <span className="font-semibold text-sm text-gray-700">Status</span>
+                  <span className="font-semibold text-sm text-foreground">Status</span>
                 </th>
                 <th className="px-4 py-3 text-left">
-                  <span className="font-semibold text-sm text-gray-700">Responses</span>
+                  <span className="font-semibold text-sm text-foreground">Responses</span>
                 </th>
                 <th className="px-4 py-3 text-left">
-                  <button onClick={() => handleSort('updatedAt')} className="flex items-center gap-1.5 font-semibold text-sm text-gray-700 hover:text-foreground transition-colors">
+                  <button onClick={() => handleSort('updatedAt')} className="flex items-center gap-1.5 font-semibold text-sm text-foreground hover:text-foreground transition-colors">
                     Last Modified {getSortIcon('updatedAt')}
                   </button>
                 </th>
                 <th className="px-4 py-3 text-left">
-                  <button onClick={() => handleSort('createdAt')} className="flex items-center gap-1.5 font-semibold text-sm text-gray-700 hover:text-foreground transition-colors">
+                  <button onClick={() => handleSort('createdAt')} className="flex items-center gap-1.5 font-semibold text-sm text-foreground hover:text-foreground transition-colors">
                     Created {getSortIcon('createdAt')}
                   </button>
                 </th>
@@ -307,9 +307,9 @@ export function SurveysListPage({ onNavigate }: SurveysListPageProps) {
                 <tr>
                   <td colSpan={6} className="py-12 text-center">
                     <div className="flex flex-col items-center">
-                      <Search className="w-8 h-8 text-gray-300 mb-3" />
-                      <p className="text-gray-500 font-medium mb-1">No surveys found</p>
-                      <p className="text-gray-400 text-sm">
+                      <Search className="w-8 h-8 text-muted-foreground mb-3" />
+                      <p className="text-muted-foreground font-medium mb-1">No surveys found</p>
+                      <p className="text-muted-foreground text-sm">
                         {searchTerm
                           ? `No surveys matching "${searchTerm}"`
                           : `No ${statusFilter.toLowerCase()} surveys`}
@@ -321,7 +321,7 @@ export function SurveysListPage({ onNavigate }: SurveysListPageProps) {
               {paginated.map((survey) => (
                 <tr
                   key={survey.id}
-                  className="hover:bg-gray-50 transition-colors cursor-pointer"
+                  className="hover:bg-muted transition-colors cursor-pointer"
                   onClick={() => {
                     if (renamingId === survey.id) return;
                     navigate(`/app/surveys/${survey.id}/edit`);
@@ -345,7 +345,7 @@ export function SurveysListPage({ onNavigate }: SurveysListPageProps) {
                       <>
                         <div className="font-medium text-foreground truncate max-w-xs">{survey.title}</div>
                         {survey.description && (
-                          <div className="text-sm text-gray-500 truncate max-w-xs">{survey.description}</div>
+                          <div className="text-sm text-muted-foreground truncate max-w-xs">{survey.description}</div>
                         )}
                       </>
                     )}
@@ -356,13 +356,13 @@ export function SurveysListPage({ onNavigate }: SurveysListPageProps) {
                     </Badge>
                   </td>
                   <td className="px-4 py-4">
-                    <span className="text-gray-700">{survey.responseCount}</span>
+                    <span className="text-foreground">{survey.responseCount}</span>
                   </td>
                   <td className="px-4 py-4">
-                    <span className="text-gray-600">{timeAgo(survey.updatedAt)}</span>
+                    <span className="text-muted-foreground">{timeAgo(survey.updatedAt)}</span>
                   </td>
                   <td className="px-4 py-4">
-                    <span className="text-gray-600">{formatDate(survey.createdAt)}</span>
+                    <span className="text-muted-foreground">{formatDate(survey.createdAt)}</span>
                   </td>
                   <td className="px-4 py-4">
                     <div className="relative">
@@ -383,14 +383,14 @@ export function SurveysListPage({ onNavigate }: SurveysListPageProps) {
                             setOpenMenuId(survey.id);
                           }
                         }}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        className="p-2 hover:bg-muted rounded-lg transition-colors"
                       >
-                        <MoreVertical className="w-4 h-4 text-gray-500" />
+                        <MoreVertical className="w-4 h-4 text-muted-foreground" />
                       </button>
 
                       {openMenuId === survey.id && (
                         <div
-                          className={`absolute right-0 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-30 py-1 ${menuDirection === 'up' ? 'bottom-full mb-1' : 'top-full mt-1'}`}
+                          className={`absolute right-0 w-48 bg-card border border-border rounded-lg shadow-lg z-30 py-1 ${menuDirection === 'up' ? 'bottom-full mb-1' : 'top-full mt-1'}`}
                           onClick={(e) => e.stopPropagation()}
                         >
                           {/* Edit */}
@@ -399,7 +399,7 @@ export function SurveysListPage({ onNavigate }: SurveysListPageProps) {
                               setOpenMenuId(null);
                               navigate(`/app/surveys/${survey.id}/edit`);
                             }}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted"
                           >
                             <Edit3 className="w-4 h-4" /> Edit
                           </button>
@@ -408,7 +408,7 @@ export function SurveysListPage({ onNavigate }: SurveysListPageProps) {
                           {survey.status !== 'draft' && (
                             <button
                               onClick={() => handleCopyLink(survey.id)}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted"
                             >
                               <Link2 className="w-4 h-4" />
                               {copiedId === survey.id ? 'Copied!' : 'Copy Link'}
@@ -418,7 +418,7 @@ export function SurveysListPage({ onNavigate }: SurveysListPageProps) {
                           {/* Rename */}
                           <button
                             onClick={() => handleStartRename(survey)}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted"
                           >
                             <Pencil className="w-4 h-4" /> Rename
                           </button>
@@ -427,14 +427,14 @@ export function SurveysListPage({ onNavigate }: SurveysListPageProps) {
                           {survey.status !== 'draft' && (
                             <button
                               onClick={() => handleToggleStatus(survey)}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted"
                             >
                               <ToggleRight className="w-4 h-4" />
                               {survey.status === 'active' ? 'Close Survey' : 'Reopen Survey'}
                             </button>
                           )}
 
-                          <div className="border-t border-gray-100 my-1" />
+                          <div className="border-t border-border my-1" />
 
                           {/* Duplicate */}
                           <button
@@ -442,7 +442,7 @@ export function SurveysListPage({ onNavigate }: SurveysListPageProps) {
                               duplicateSurveyMut.mutate(survey.id);
                               setOpenMenuId(null);
                             }}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted"
                           >
                             <Copy className="w-4 h-4" /> Duplicate
                           </button>
@@ -469,25 +469,25 @@ export function SurveysListPage({ onNavigate }: SurveysListPageProps) {
 
         {/* Pagination Footer */}
         {sorted.length > 0 && (
-          <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-            <p className="text-sm text-gray-600">
+          <div className="px-6 py-4 border-t border-border flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
               Showing {((safePage - 1) * perPage) + 1}–{Math.min(safePage * perPage, sorted.length)} of {sorted.length} survey{sorted.length !== 1 ? 's' : ''}
             </p>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setCurrentPage(Math.max(1, safePage - 1))}
                 disabled={safePage <= 1}
-                className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="p-1.5 rounded-lg hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <span className="text-sm text-gray-700 min-w-[80px] text-center">
+              <span className="text-sm text-foreground min-w-[80px] text-center">
                 Page {safePage} of {totalPages}
               </span>
               <button
                 onClick={() => setCurrentPage(Math.min(totalPages, safePage + 1))}
                 disabled={safePage >= totalPages}
-                className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="p-1.5 rounded-lg hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>

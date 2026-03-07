@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { toast } from 'sonner';
 import { useNavigate } from 'react-router';
 import { Card } from './Card';
 import { Button } from './Button';
@@ -151,6 +152,7 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
       setSaveIconState('saved');
       setTimeout(() => setSaveIconState('idle'), 2000);
     } catch (_e) {
+      toast.error('Failed to save survey. Please try again.');
       setSaveIconState('idle');
     } finally {
       setIsSaving(false);
@@ -164,6 +166,14 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
     saveTimerRef.current = setTimeout(() => { save(); }, 1500);
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
   }, [surveyTitle, surveyDescription, questions, headerImageUrl, surveySettings]);
+
+  // Warn on tab/window close when there are unsaved changes
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [hasUnsavedChanges]);
 
   // ── Load Google Font ─────────────────────
   useEffect(() => {

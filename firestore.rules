@@ -25,8 +25,9 @@ service cloud.firestore {
 
     // ─── Surveys collection ────────────────────
     match /surveys/{surveyId} {
-      // Anyone can read a survey (needed for public respondent page)
-      allow read: if true;
+      // Owner can always read their own surveys; public can only read active (published) surveys
+      allow read: if (isSignedIn() && resource.data.createdBy == request.auth.uid)
+                  || resource.data.status == 'active';
 
       // Only authenticated users can create surveys
       allow create: if isSignedIn()

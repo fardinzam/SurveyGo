@@ -5,6 +5,7 @@ import { ThemeProvider } from 'next-themes';
 import { AuthProvider } from '../contexts/AuthContext';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { ErrorBoundary } from '../components/ErrorBoundary';
+import { Toaster } from './components/ui/sonner';
 import { CollapsibleSidebar } from './components/CollapsibleSidebar';
 import { ProfileDropdown } from './components/ProfileDropdown';
 import { LoginPage } from './components/LoginPage';
@@ -269,6 +270,7 @@ function PlansRoute() {
 function App() {
   return (
     <ErrorBoundary>
+      <Toaster position="bottom-right" richColors />
       <QueryClientProvider client={queryClient}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <AuthProvider>

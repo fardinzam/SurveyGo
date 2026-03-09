@@ -62,12 +62,14 @@ export function SignUpPage({ onNavigate }: SignUpPageProps) {
     setError('');
     setLoading(true);
     try {
-      // signInWithRedirect navigates away from the page;
-      // auth state is handled on return by useAuth's onAuthStateChanged
       await signInWithGoogle();
+      navigate('/app/dashboard', { replace: true });
     } catch (err: any) {
       console.error('Google sign-up error:', err);
-      setError('Google sign-up failed. Please try again.');
+      if (err.code !== 'auth/popup-closed-by-user') {
+        setError('Google sign-up failed. Please try again.');
+      }
+    } finally {
       setLoading(false);
     }
   };

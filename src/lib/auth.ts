@@ -121,12 +121,24 @@ export async function resetPassword(email: string) {
 
 /**
  * Toggle auth persistence.
- * rememberMe = true  → browserLocalPersistence (survives browser close)
+ * rememberMe = true  → indexedDBLocalPersistence (survives browser close)
  * rememberMe = false → browserSessionPersistence (cleared on browser close)
+ *
+ * Falls back gracefully if the browser denies storage access.
  */
 export async function setAuthPersistence(rememberMe: boolean) {
-    await setPersistence(
-        auth,
-        rememberMe ? indexedDBLocalPersistence : browserSessionPersistence,
-    )
+    try {
+        await setPersistence(
+            auth,
+            rememberMe ? indexedDBLocalPersistence : browserSessionPersistence,
+        )
+    } catch {
+        // IndexedDB or localStorage may be blocked (e.g. incognito, restrictive browser settings).
+        // Fall back to session persistence, then give up silently (Firebase uses in-memory as last resort).
+        try {
+            await setPersistence(auth, browserSessionPersistence)
+        } catch {
+            console.warn('[SurveyGo] Could not set auth persistence — using in-memory fallback.')
+        }
+    }
 }

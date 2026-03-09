@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from 'next-themes';
 import { AuthProvider } from '../contexts/AuthContext';
 import { ProtectedRoute } from '../components/ProtectedRoute';
+import { GuestRoute } from '../components/GuestRoute';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { Toaster } from './components/ui/sonner';
 import { CollapsibleSidebar } from './components/CollapsibleSidebar';
@@ -278,8 +279,8 @@ function App() {
               <Routes>
                 {/* Public pages (no sidebar) */}
                 <Route path="/" element={<><LandingRoute />{import.meta.env.DEV && <ScreenNavigator />}</>} />
-                <Route path="/auth/login" element={<><LoginRoute />{import.meta.env.DEV && <ScreenNavigator />}</>} />
-                <Route path="/auth/signup" element={<><SignUpRoute />{import.meta.env.DEV && <ScreenNavigator />}</>} />
+                <Route path="/auth/login" element={<GuestRoute><LoginRoute />{import.meta.env.DEV && <ScreenNavigator />}</GuestRoute>} />
+                <Route path="/auth/signup" element={<GuestRoute><SignUpRoute />{import.meta.env.DEV && <ScreenNavigator />}</GuestRoute>} />
                 {/* Public survey respondent page (no auth, no sidebar) */}
                 <Route path="/s/:id" element={<RespondentRoute />} />
 

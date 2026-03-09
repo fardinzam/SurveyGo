@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    name: Build, Lint & Format
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: TypeScript type-check
+        run: npx tsc --noEmit
+
+      - name: Lint (errors only)
+        run: npx eslint . --quiet
+
+      - name: Check formatting
+        run: npx prettier --check "src/**/*.{ts,tsx,css,json}" || echo "::warning::Formatting issues found. Run 'npx prettier --write src' to fix."
+
+      - name: Build
+        run: npm run build

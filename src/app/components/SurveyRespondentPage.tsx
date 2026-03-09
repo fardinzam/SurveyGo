@@ -473,47 +473,12 @@ function QuestionInput({ question, value, onChange, onToggleCheckbox, onGridChan
 
         case 'dropdown': {
             const choices = question.options?.choices || [];
-            const [isOpen, setIsOpen] = useState(false);
-            const dropdownRef = useRef<HTMLDivElement>(null);
-            const selected = (value as string) || '';
-
-            // Close on click outside
-            useEffect(() => {
-                function handleClickOutside(e: MouseEvent) {
-                    if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-                        setIsOpen(false);
-                    }
-                }
-                document.addEventListener('mousedown', handleClickOutside);
-                return () => document.removeEventListener('mousedown', handleClickOutside);
-            }, []);
-
             return (
-                <div ref={dropdownRef} className="relative max-w-sm">
-                    <button
-                        type="button"
-                        onClick={() => setIsOpen(!isOpen)}
-                        className="w-full flex items-center justify-between px-4 py-3 border border-border rounded-lg text-sm bg-card hover:border-border focus:outline-none focus:ring-2 focus:ring-primary transition-all"
-                    >
-                        <span className={selected ? 'text-foreground' : 'text-muted-foreground'}>
-                            {selected || 'Choose an option...'}
-                        </span>
-                        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-                    </button>
-                    {isOpen && (
-                        <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-30 py-1 max-h-60 overflow-y-auto">
-                            {choices.map((c, i) => (
-                                <button
-                                    key={i}
-                                    onClick={() => { onChange(c); setIsOpen(false); }}
-                                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${selected === c ? 'bg-primary/10 text-foreground font-medium' : 'text-foreground hover:bg-muted'}`}
-                                >
-                                    {c}
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                </div>
+                <DropdownInput
+                    choices={choices}
+                    value={(value as string) || ''}
+                    onChange={onChange}
+                />
             );
         }
 
@@ -579,70 +544,8 @@ function QuestionInput({ question, value, onChange, onToggleCheckbox, onGridChan
         }
 
         case 'date': {
-            const [showCalendar, setShowCalendar] = useState(false);
-            const [calendarDate, setCalendarDate] = useState(() => {
-                if (value) return new Date(value as string);
-                return new Date();
-            });
-            const strVal = (value as string) || '';
-
-            const daysInMonth = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 0).getDate();
-            const firstDay = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 1).getDay();
-            const monthName = calendarDate.toLocaleString('default', { month: 'long', year: 'numeric' });
-
             return (
-                <div className="relative max-w-xs">
-                    <div className="relative">
-                        <input
-                            type="text"
-                            value={strVal}
-                            onChange={(e) => onChange(e.target.value)}
-                            placeholder="mm/dd/yyyy"
-                            className="w-full px-4 py-3 pr-10 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all"
-                        />
-                        <button
-                            onClick={() => setShowCalendar(!showCalendar)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                        >
-                            <Calendar className="w-4 h-4" />
-                        </button>
-                    </div>
-                    {showCalendar && (
-                        <div className="absolute top-full mt-2 bg-card border border-border rounded-lg shadow-lg p-4 z-10 w-72">
-                            <div className="flex items-center justify-between mb-3">
-                                <button onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1))} className="p-1 hover:bg-muted rounded">
-                                    <ChevronLeft className="w-4 h-4" />
-                                </button>
-                                <span className="text-sm font-medium">{monthName}</span>
-                                <button onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1))} className="p-1 hover:bg-muted rounded">
-                                    <ChevronRight className="w-4 h-4" />
-                                </button>
-                            </div>
-                            <div className="grid grid-cols-7 gap-1 text-center text-xs">
-                                {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
-                                    <div key={d} className="text-muted-foreground font-medium py-1">{d}</div>
-                                ))}
-                                {Array.from({ length: firstDay }).map((_, i) => (
-                                    <div key={`empty-${i}`} />
-                                ))}
-                                {Array.from({ length: daysInMonth }, (_, i) => {
-                                    const day = i + 1;
-                                    const dateStr = `${String(calendarDate.getMonth() + 1).padStart(2, '0')}/${String(day).padStart(2, '0')}/${calendarDate.getFullYear()}`;
-                                    const isSelected = strVal === dateStr;
-                                    return (
-                                        <button
-                                            key={day}
-                                            onClick={() => { onChange(dateStr); setShowCalendar(false); }}
-                                            className={`py-1.5 rounded text-sm transition-all ${isSelected ? 'bg-primary text-foreground font-medium' : 'hover:bg-muted text-foreground'}`}
-                                        >
-                                            {day}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
-                </div>
+                <DateInput value={(value as string) || ''} onChange={onChange} />
             );
         }
 
@@ -663,3 +566,116 @@ function QuestionInput({ question, value, onChange, onToggleCheckbox, onGridChan
             return <p className="text-muted-foreground text-sm">Unsupported question type</p>;
     }
 }
+
+// ── Extracted components (hooks must be at top level) ─────────
+
+function DropdownInput({ choices, value, onChange }: { choices: string[]; value: string; onChange: (v: string) => void }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        function handleClickOutside(e: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                setIsOpen(false);
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    return (
+        <div ref={dropdownRef} className="relative max-w-sm">
+            <button
+                type="button"
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-full flex items-center justify-between px-4 py-3 border border-border rounded-lg text-sm bg-card hover:border-border focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+            >
+                <span className={value ? 'text-foreground' : 'text-muted-foreground'}>
+                    {value || 'Choose an option...'}
+                </span>
+                <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {isOpen && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-30 py-1 max-h-60 overflow-y-auto">
+                    {choices.map((c, i) => (
+                        <button
+                            key={i}
+                            onClick={() => { onChange(c); setIsOpen(false); }}
+                            className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${value === c ? 'bg-primary/10 text-foreground font-medium' : 'text-foreground hover:bg-muted'}`}
+                        >
+                            {c}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+function DateInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+    const [showCalendar, setShowCalendar] = useState(false);
+    const [calendarDate, setCalendarDate] = useState(() => {
+        if (value) return new Date(value);
+        return new Date();
+    });
+
+    const daysInMonth = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 0).getDate();
+    const firstDay = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 1).getDay();
+    const monthName = calendarDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+    return (
+        <div className="relative max-w-xs">
+            <div className="relative">
+                <input
+                    type="text"
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    placeholder="mm/dd/yyyy"
+                    className="w-full px-4 py-3 pr-10 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                />
+                <button
+                    onClick={() => setShowCalendar(!showCalendar)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                    <Calendar className="w-4 h-4" />
+                </button>
+            </div>
+            {showCalendar && (
+                <div className="absolute top-full mt-2 bg-card border border-border rounded-lg shadow-lg p-4 z-10 w-72">
+                    <div className="flex items-center justify-between mb-3">
+                        <button onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1))} className="p-1 hover:bg-muted rounded">
+                            <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <span className="text-sm font-medium">{monthName}</span>
+                        <button onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1))} className="p-1 hover:bg-muted rounded">
+                            <ChevronRight className="w-4 h-4" />
+                        </button>
+                    </div>
+                    <div className="grid grid-cols-7 gap-1 text-center text-xs">
+                        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
+                            <div key={d} className="text-muted-foreground font-medium py-1">{d}</div>
+                        ))}
+                        {Array.from({ length: firstDay }).map((_, i) => (
+                            <div key={`empty-${i}`} />
+                        ))}
+                        {Array.from({ length: daysInMonth }, (_, i) => {
+                            const day = i + 1;
+                            const dateStr = `${String(calendarDate.getMonth() + 1).padStart(2, '0')}/${String(day).padStart(2, '0')}/${calendarDate.getFullYear()}`;
+                            const isSelected = value === dateStr;
+                            return (
+                                <button
+                                    key={day}
+                                    onClick={() => { onChange(dateStr); setShowCalendar(false); }}
+                                    className={`py-1.5 rounded text-sm transition-all ${isSelected ? 'bg-primary text-foreground font-medium' : 'hover:bg-muted text-foreground'}`}
+                                >
+                                    {day}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+

@@ -14,8 +14,8 @@ import {
     increment,
 } from 'firebase/firestore';
 import { db } from './firebase';
-import type { Survey, SurveyClient, CreateSurveyInput, UpdateSurveyInput, SurveyResponse, SurveyResponseClient, SubmitResponseInput } from '../types/survey';
-import { toSurveyClient, toResponseClient } from '../types/survey';
+import type { Survey, SurveyClient, CreateSurveyInput, UpdateSurveyInput, SurveyResponse, SurveyResponseClient, SubmitResponseInput, UserPreferences } from '../types/survey';
+import { toSurveyClient, toResponseClient, DEFAULT_USER_PREFERENCES } from '../types/survey';
 
 // ──────────────────────────────────────────
 // Surveys collection
@@ -219,4 +219,28 @@ export async function getResponses(surveyId: string): Promise<SurveyResponseClie
         );
         return results.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
     }
+}
+
+// ──────────────────────────────────────────
+// User preferences
+// ──────────────────────────────────────────
+
+/**
+ * Get user notification preferences from Firestore.
+ */
+export async function getUserPreferences(uid: string): Promise<UserPreferences> {
+    const snap = await getDoc(doc(db, 'users', uid));
+    if (!snap.exists()) return DEFAULT_USER_PREFERENCES;
+    const data = snap.data();
+    return data.preferences ?? DEFAULT_USER_PREFERENCES;
+}
+
+/**
+ * Update user notification preferences in Firestore.
+ */
+export async function updateUserPreferences(uid: string, prefs: UserPreferences): Promise<void> {
+    await updateDoc(doc(db, 'users', uid), {
+        preferences: prefs,
+        updatedAt: serverTimestamp(),
+    });
 }

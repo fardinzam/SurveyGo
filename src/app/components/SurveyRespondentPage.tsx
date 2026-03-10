@@ -4,11 +4,41 @@ import { Button } from './Button';
 import { Loader2, AlertCircle, Calendar, Clock, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import { getSurveyPublic, submitResponse } from '../../lib/firestore';
 import { SurveyThankYou } from './SurveyThankYou';
-import type { SurveyClient, Question, Answer, SurveySettings } from '../../types/survey';
+import type { SurveyClient, Question, Answer, SurveySettings, LogicCondition } from '../../types/survey';
 import { DEFAULT_SURVEY_SETTINGS } from '../../types/survey';
 
 interface SurveyRespondentPageProps {
     surveyId: string;
+}
+
+// ── Skip-logic evaluation engine ─────────────────────
+
+function evaluateCondition(cond: LogicCondition, answers: Record<string, unknown>): boolean {
+    const val = answers[cond.questionId];
+    switch (cond.operator) {
+        case 'equals':
+            return String(val) === String(cond.value);
+        case 'not_equals':
+            return String(val) !== String(cond.value);
+        case 'contains':
+            return Array.isArray(val) && val.includes(cond.value as string);
+        case 'not_contains':
+            return !Array.isArray(val) || !val.includes(cond.value as string);
+        case 'is_answered':
+            return val !== undefined && val !== '' && (!Array.isArray(val) || val.length > 0);
+        case 'is_not_answered':
+            return val === undefined || val === '' || (Array.isArray(val) && val.length === 0);
+        default:
+            return true;
+    }
+}
+
+function isQuestionVisible(question: Question, answers: Record<string, unknown>): boolean {
+    if (!question.logic || question.logic.conditions.length === 0) return true;
+    const { action, conjunction, conditions } = question.logic;
+    const results = conditions.map((c) => evaluateCondition(c, answers));
+    const match = conjunction === 'and' ? results.every(Boolean) : results.some(Boolean);
+    return action === 'show' ? match : !match;
 }
 
 export function SurveyRespondentPage({ surveyId }: SurveyRespondentPageProps) {
@@ -92,6 +122,8 @@ export function SurveyRespondentPage({ surveyId }: SurveyRespondentPageProps) {
         if (!survey) return false;
         const newErrors: Record<string, string> = {};
         for (const q of survey.questions) {
+            // Skip validation for hidden questions
+            if (!isQuestionVisible(q, answers)) continue;
             if (!q.required) continue;
             const val = answers[q.id];
             if (val === undefined || val === '' || (Array.isArray(val) && val.length === 0)) {
@@ -125,7 +157,7 @@ export function SurveyRespondentPage({ surveyId }: SurveyRespondentPageProps) {
         setSubmitting(true);
         try {
             const formattedAnswers: Answer[] = survey.questions
-                .filter((q) => answers[q.id] !== undefined && answers[q.id] !== '')
+                .filter((q) => isQuestionVisible(q, answers) && answers[q.id] !== undefined && answers[q.id] !== '')
                 .map((q) => ({
                     questionId: q.id,
                     value: answers[q.id],
@@ -193,8 +225,9 @@ export function SurveyRespondentPage({ surveyId }: SurveyRespondentPageProps) {
     if (!survey) return null;
 
     const settings: SurveySettings = { ...DEFAULT_SURVEY_SETTINGS, ...survey.settings };
-    const answeredCount = survey.questions.filter(q => answers[q.id] !== undefined && answers[q.id] !== '' && answers[q.id] !== null).length;
-    const progressPct = survey.questions.length > 0 ? (answeredCount / survey.questions.length) * 100 : 0;
+    const visibleQuestions = survey.questions.filter((q) => isQuestionVisible(q, answers));
+    const answeredCount = visibleQuestions.filter(q => answers[q.id] !== undefined && answers[q.id] !== '' && answers[q.id] !== null).length;
+    const progressPct = visibleQuestions.length > 0 ? (answeredCount / visibleQuestions.length) * 100 : 0;
 
     // Load Google Font
     const fontLink = document.querySelector('link[data-survey-font]') as HTMLLinkElement;
@@ -227,7 +260,7 @@ export function SurveyRespondentPage({ surveyId }: SurveyRespondentPageProps) {
                 >
                     <div className="max-w-2xl mx-auto">
                         <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs text-muted-foreground">{answeredCount} of {survey.questions.length} answered</span>
+                            <span className="text-xs text-muted-foreground">{answeredCount} of {visibleQuestions.length} answered</span>
                             <span className="text-xs text-muted-foreground">{Math.round(progressPct)}%</span>
                         </div>
                         <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -276,9 +309,9 @@ export function SurveyRespondentPage({ surveyId }: SurveyRespondentPageProps) {
                     </div>
                 )}
 
-                {/* Questions */}
+                {/* Questions — only visible ones */}
                 <div className="space-y-6">
-                    {survey.questions.map((question, idx) => (
+                    {visibleQuestions.map((question, idx) => (
                         <Card key={question.id} className="p-6">
                             <div className="mb-4">
                                 <div className="flex items-start gap-3">

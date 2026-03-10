@@ -20,6 +20,41 @@ export const QuestionTypeEnum = z.enum([
 
 export type QuestionType = z.infer<typeof QuestionTypeEnum>;
 
+// ──────────────────────────────────────────
+// Branching / conditional logic
+// ──────────────────────────────────────────
+
+export const LogicOperatorEnum = z.enum([
+    'equals',
+    'not_equals',
+    'contains',
+    'not_contains',
+    'is_answered',
+    'is_not_answered',
+]);
+
+export type LogicOperator = z.infer<typeof LogicOperatorEnum>;
+
+export const LogicConditionSchema = z.object({
+    questionId: z.string(),
+    operator: LogicOperatorEnum,
+    value: z.union([z.string(), z.number(), z.array(z.string())]).optional(),
+});
+
+export type LogicCondition = z.infer<typeof LogicConditionSchema>;
+
+export const LogicRuleSchema = z.object({
+    action: z.enum(['show', 'hide']),
+    conjunction: z.enum(['and', 'or']),
+    conditions: z.array(LogicConditionSchema),
+});
+
+export type LogicRule = z.infer<typeof LogicRuleSchema>;
+
+// ──────────────────────────────────────────
+// Question schema
+// ──────────────────────────────────────────
+
 export const QuestionSchema = z.object({
     id: z.string(),
     type: QuestionTypeEnum,
@@ -37,6 +72,7 @@ export const QuestionSchema = z.object({
             highLabel: z.string().optional(),           // rating scale high endpoint label
         })
         .optional(),
+    logic: LogicRuleSchema.optional(),                 // conditional display rule
 });
 
 export type Question = z.infer<typeof QuestionSchema>;
@@ -207,3 +243,27 @@ export interface SubmitResponseInput {
     surveyId: string;
     answers: Answer[];
 }
+
+// ──────────────────────────────────────────
+// User preferences (notification settings)
+// ──────────────────────────────────────────
+
+export interface UserPreferences {
+    notifications: {
+        emailNewResponses: boolean;
+        weeklySummary: boolean;
+        urgentAlerts: boolean;
+        teamActivity: boolean;
+        productUpdates: boolean;
+    };
+}
+
+export const DEFAULT_USER_PREFERENCES: UserPreferences = {
+    notifications: {
+        emailNewResponses: true,
+        weeklySummary: true,
+        urgentAlerts: true,
+        teamActivity: false,
+        productUpdates: false,
+    },
+};

@@ -8,6 +8,9 @@ import { updateProfile, updatePassword, deleteAccount } from '../../lib/auth';
 import { EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { usePageTitle } from '../../hooks/usePageTitle';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { useUserPreferences, useUpdateUserPreferences } from '../../hooks/useUserPreferences';
+import { DEFAULT_USER_PREFERENCES } from '../../types/survey';
+import type { UserPreferences } from '../../types/survey';
 
 interface SettingsPageProps {
   onNavigate: (page: string) => void;
@@ -286,27 +289,7 @@ export function SettingsPage({ onNavigate }: SettingsPageProps) {
           )}
 
           {activeTab === 'notifications' && (
-            <Card className="p-6">
-              <h2 className="text-xl font-semibold text-foreground mb-6">Notification Preferences</h2>
-              <div className="space-y-4">
-                {[
-                  { label: 'Email notifications for new responses', checked: true },
-                  { label: 'Weekly summary report', checked: true },
-                  { label: 'Alert for urgent issues', checked: true },
-                  { label: 'Team activity updates', checked: false },
-                  { label: 'Product updates and news', checked: false },
-                ].map((item, index) => (
-                  <label key={index} className="flex items-center justify-between p-4 hover:bg-muted rounded-lg cursor-pointer transition-colors">
-                    <span className="text-foreground">{item.label}</span>
-                    <input
-                      type="checkbox"
-                      defaultChecked={item.checked}
-                      className="w-5 h-5 rounded border-border text-primary focus:ring-primary"
-                    />
-                  </label>
-                ))}
-              </div>
-            </Card>
+            <NotificationsTab />
           )}
         </div>
       </div>
@@ -337,5 +320,64 @@ export function SettingsPage({ onNavigate }: SettingsPageProps) {
         onCancel={() => setShowDeleteConfirm(false)}
       />
     </div>
+  );
+}
+
+// ── Notifications Tab (extracted to use hooks at top level) ──
+function NotificationsTab() {
+  const { data: prefs, isLoading } = useUserPreferences();
+  const updatePrefs = useUpdateUserPreferences();
+
+  const notifications = prefs?.notifications ?? DEFAULT_USER_PREFERENCES.notifications;
+
+  const toggle = (key: keyof UserPreferences['notifications']) => {
+    const updated: UserPreferences = {
+      notifications: { ...notifications, [key]: !notifications[key] },
+    };
+    updatePrefs.mutate(updated);
+  };
+
+  const items: { key: keyof UserPreferences['notifications']; label: string }[] = [
+    { key: 'emailNewResponses', label: 'Email notifications for new responses' },
+    { key: 'weeklySummary', label: 'Weekly summary report' },
+    { key: 'urgentAlerts', label: 'Alert for urgent issues' },
+    { key: 'teamActivity', label: 'Team activity updates' },
+    { key: 'productUpdates', label: 'Product updates and news' },
+  ];
+
+  if (isLoading) {
+    return (
+      <Card className="p-6">
+        <h2 className="text-xl font-semibold text-foreground mb-6">Notification Preferences</h2>
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-5 h-5 animate-spin text-primary" />
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="p-6">
+      <h2 className="text-xl font-semibold text-foreground mb-6">Notification Preferences</h2>
+      <div className="space-y-4">
+        {items.map((item) => (
+          <label key={item.key} className="flex items-center justify-between p-4 hover:bg-muted rounded-lg cursor-pointer transition-colors">
+            <span className="text-foreground">{item.label}</span>
+            <input
+              type="checkbox"
+              checked={notifications[item.key]}
+              onChange={() => toggle(item.key)}
+              className="w-5 h-5 rounded border-border text-primary focus:ring-primary"
+            />
+          </label>
+        ))}
+      </div>
+      {updatePrefs.isError && (
+        <p className="text-red-500 text-sm mt-4 flex items-center gap-1">
+          <AlertCircle className="w-3.5 h-3.5" />
+          Failed to save preferences. Please try again.
+        </p>
+      )}
+    </Card>
   );
 }

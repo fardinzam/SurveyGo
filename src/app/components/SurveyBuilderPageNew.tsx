@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { Badge } from './Badge';
 import { useSurvey, useUpdateSurvey, useCreateSurvey } from '../../hooks/useSurveys';
-import type { Question, QuestionType, SurveySettings } from '../../types/survey';
+import type { Question, QuestionType, SurveySettings, LogicRule, LogicOperator } from '../../types/survey';
 import { DEFAULT_SURVEY_SETTINGS } from '../../types/survey';
 
 interface BuilderPageProps {
@@ -628,18 +628,170 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
                         onChange={(v) => updateSettings({ shuffleQuestions: v })}
                       />
                       <div className="pt-4 border-t border-border">
-                        <div className="font-medium text-foreground text-sm mb-2">Skip Logic Rules</div>
-                        <p className="text-xs text-muted-foreground mb-2">Coming soon</p>
-                        <button disabled className="w-full px-4 py-3 border-2 border-dashed border-border rounded-lg text-sm text-muted-foreground cursor-not-allowed">
-                          + Add Skip Logic Rule
-                        </button>
-                      </div>
-                      <div className="pt-4 border-t border-border">
-                        <div className="font-medium text-foreground text-sm mb-2">Branching Logic</div>
-                        <p className="text-xs text-muted-foreground mb-2">Coming soon</p>
-                        <button disabled className="w-full px-4 py-3 border-2 border-dashed border-border rounded-lg text-sm text-muted-foreground cursor-not-allowed">
-                          + Add Branch
-                        </button>
+                        <div className="font-medium text-foreground text-sm mb-2">Conditional Logic</div>
+                        {selectedId === 'header' ? (
+                          <p className="text-xs text-muted-foreground">Select a question to add conditional logic.</p>
+                        ) : (() => {
+                          const selectedQuestion = questions.find((q) => q.id === selectedId);
+                          if (!selectedQuestion) return <p className="text-xs text-muted-foreground">Select a question to add conditional logic.</p>;
+                          const qIndex = questions.findIndex((q) => q.id === selectedId);
+                          const precedingQuestions = questions.slice(0, qIndex);
+                          if (precedingQuestions.length === 0) return <p className="text-xs text-muted-foreground">This is the first question — no conditions can be set.</p>;
+
+                          const logic: LogicRule = selectedQuestion.logic ?? { action: 'show', conjunction: 'and', conditions: [] };
+
+                          const setLogic = (updated: LogicRule) => {
+                            updateQuestion(selectedId, { logic: updated.conditions.length > 0 ? updated : undefined });
+                          };
+
+                          const addCondition = () => {
+                            setLogic({
+                              ...logic,
+                              conditions: [...logic.conditions, { questionId: precedingQuestions[0].id, operator: 'equals' as LogicOperator, value: '' }],
+                            });
+                          };
+
+                          const removeCondition = (idx: number) => {
+                            const next = { ...logic, conditions: logic.conditions.filter((_, i) => i !== idx) };
+                            setLogic(next);
+                          };
+
+                          const updateCondition = (idx: number, updates: Record<string, unknown>) => {
+                            const next = { ...logic, conditions: logic.conditions.map((c, i) => (i === idx ? { ...c, ...updates } : c)) };
+                            setLogic(next);
+                          };
+
+                          const getChoicesForQuestion = (qid: string) => {
+                            const q = questions.find((x) => x.id === qid);
+                            if (!q) return null;
+                            if (['multiple', 'checkbox', 'dropdown'].includes(q.type) && q.options?.choices) return q.options.choices;
+                            if (q.type === 'rating') return Array.from({ length: q.options?.scale ?? 5 }, (_, i) => String(i + 1));
+                            return null;
+                          };
+
+                          return (
+                            <div className="space-y-3">
+                              <p className="text-xs text-muted-foreground">
+                                Q{qIndex + 1}: {selectedQuestion.text || '(untitled)'}
+                              </p>
+
+                              {/* Action toggle */}
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => setLogic({ ...logic, action: 'show' })}
+                                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${logic.action === 'show' ? 'bg-primary text-foreground' : 'bg-muted text-muted-foreground'}`}
+                                >
+                                  Show when
+                                </button>
+                                <button
+                                  onClick={() => setLogic({ ...logic, action: 'hide' })}
+                                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${logic.action === 'hide' ? 'bg-primary text-foreground' : 'bg-muted text-muted-foreground'}`}
+                                >
+                                  Hide when
+                                </button>
+                              </div>
+
+                              {/* Conjunction toggle */}
+                              {logic.conditions.length > 1 && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-muted-foreground">Match:</span>
+                                  <button
+                                    onClick={() => setLogic({ ...logic, conjunction: 'and' })}
+                                    className={`px-2 py-1 rounded text-xs font-medium transition-colors ${logic.conjunction === 'and' ? 'bg-secondary text-foreground' : 'bg-muted text-muted-foreground'}`}
+                                  >
+                                    All (AND)
+                                  </button>
+                                  <button
+                                    onClick={() => setLogic({ ...logic, conjunction: 'or' })}
+                                    className={`px-2 py-1 rounded text-xs font-medium transition-colors ${logic.conjunction === 'or' ? 'bg-secondary text-foreground' : 'bg-muted text-muted-foreground'}`}
+                                  >
+                                    Any (OR)
+                                  </button>
+                                </div>
+                              )}
+
+                              {/* Conditions */}
+                              {logic.conditions.map((cond, ci) => {
+                                const choices = getChoicesForQuestion(cond.questionId);
+                                const needsValue = !['is_answered', 'is_not_answered'].includes(cond.operator);
+                                return (
+                                  <div key={ci} className="p-3 bg-muted/50 rounded-lg space-y-2">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-[10px] font-medium text-muted-foreground uppercase">Condition {ci + 1}</span>
+                                      <button onClick={() => removeCondition(ci)} className="text-muted-foreground hover:text-red-500 transition-colors">
+                                        <X className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                    {/* Question selector */}
+                                    <select
+                                      value={cond.questionId}
+                                      onChange={(e) => updateCondition(ci, { questionId: e.target.value, value: '' })}
+                                      className="w-full px-2 py-1.5 text-xs border border-border rounded-md bg-card focus:outline-none focus:ring-1 focus:ring-primary"
+                                    >
+                                      {precedingQuestions.map((pq, pi) => (
+                                        <option key={pq.id} value={pq.id}>Q{pi + 1}: {pq.text || '(untitled)'}</option>
+                                      ))}
+                                    </select>
+                                    {/* Operator selector */}
+                                    <select
+                                      value={cond.operator}
+                                      onChange={(e) => updateCondition(ci, { operator: e.target.value })}
+                                      className="w-full px-2 py-1.5 text-xs border border-border rounded-md bg-card focus:outline-none focus:ring-1 focus:ring-primary"
+                                    >
+                                      <option value="equals">Equals</option>
+                                      <option value="not_equals">Does not equal</option>
+                                      <option value="contains">Contains</option>
+                                      <option value="not_contains">Does not contain</option>
+                                      <option value="is_answered">Is answered</option>
+                                      <option value="is_not_answered">Is not answered</option>
+                                    </select>
+                                    {/* Value input */}
+                                    {needsValue && (
+                                      choices ? (
+                                        <select
+                                          value={(cond.value as string) ?? ''}
+                                          onChange={(e) => updateCondition(ci, { value: e.target.value })}
+                                          className="w-full px-2 py-1.5 text-xs border border-border rounded-md bg-card focus:outline-none focus:ring-1 focus:ring-primary"
+                                        >
+                                          <option value="">Select a value...</option>
+                                          {choices.map((ch, chi) => (
+                                            <option key={chi} value={ch}>{ch}</option>
+                                          ))}
+                                        </select>
+                                      ) : (
+                                        <input
+                                          type="text"
+                                          value={(cond.value as string) ?? ''}
+                                          onChange={(e) => updateCondition(ci, { value: e.target.value })}
+                                          placeholder="Value..."
+                                          className="w-full px-2 py-1.5 text-xs border border-border rounded-md bg-card focus:outline-none focus:ring-1 focus:ring-primary"
+                                        />
+                                      )
+                                    )}
+                                  </div>
+                                );
+                              })}
+
+                              {/* Add condition button */}
+                              <button
+                                onClick={addCondition}
+                                className="w-full px-4 py-2.5 border-2 border-dashed border-border rounded-lg text-xs text-muted-foreground hover:border-primary hover:text-foreground transition-colors"
+                              >
+                                + Add Condition
+                              </button>
+
+                              {/* Clear all */}
+                              {logic.conditions.length > 0 && (
+                                <button
+                                  onClick={() => updateQuestion(selectedId, { logic: undefined })}
+                                  className="text-xs text-red-500 hover:text-red-600 transition-colors"
+                                >
+                                  Remove all conditions
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                   )}
@@ -729,6 +881,14 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
                                 <TypeIcon className="w-4 h-4 text-muted-foreground" />
                               </span>
                             </Tooltip>
+                            {/* Logic badge */}
+                            {question.logic && question.logic.conditions.length > 0 && (
+                              <Tooltip text={`${question.logic.action === 'show' ? 'Shown' : 'Hidden'} conditionally (${question.logic.conditions.length} rule${question.logic.conditions.length > 1 ? 's' : ''})`}>
+                                <span className="flex items-center justify-center w-6 h-6 bg-blue-50 rounded">
+                                  <GitBranch className="w-3.5 h-3.5 text-blue-500" />
+                                </span>
+                              </Tooltip>
+                            )}
                           </div>
 
                           {/* Drag handle — absolute center */}

@@ -8,6 +8,7 @@ import { GuestRoute } from '../components/GuestRoute';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { Toaster } from './components/ui/sonner';
 import { CollapsibleSidebar } from './components/CollapsibleSidebar';
+import { MobileBottomNav } from './components/MobileBottomNav';
 import { ProfileDropdown } from './components/ProfileDropdown';
 import { LoginPage } from './components/LoginPage';
 import { SignUpPage } from './components/SignUpPage';
@@ -77,68 +78,10 @@ function useOnNavigate() {
   };
 }
 
-/** Maps route paths back to page IDs for the Screen Navigator */
+/** Maps route paths back to page IDs for the active nav highlight */
 const routeToPage: Record<string, string> = Object.fromEntries(
   Object.entries(pageToRoute).map(([k, v]) => [v, k])
 );
-
-// --- Screen Navigator FAB ---
-function ScreenNavigator() {
-  const [showScreenNav, setShowScreenNav] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
-  const currentPage = routeToPage[location.pathname] || '';
-
-  const allScreens = [
-    { id: 'landing', name: '🏠 Landing Page' },
-    { id: 'login', name: 'Login Page' },
-    { id: 'signup', name: 'Sign Up Page' },
-    { id: 'dashboard', name: 'Dashboard (with data)' },
-    { id: 'dashboard-empty', name: 'Dashboard (empty state)' },
-    { id: 'surveys', name: 'My Surveys' },
-    { id: 'templates-browse', name: 'Templates Page' },
-    { id: 'builder', name: 'Survey Builder' },
-    { id: 'publish', name: 'Publish Page' },
-    { id: 'survey-results', name: 'Survey Results' },
-    { id: 'team', name: 'Team Page' },
-    { id: 'settings', name: 'Settings Page' },
-    { id: 'activity', name: 'Activity Page' },
-    { id: 'plans', name: 'Plans Page' },
-  ];
-
-  return (
-    <div className="fixed bottom-6 right-6 z-50">
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}>
-        <button
-          onClick={() => setShowScreenNav(!showScreenNav)}
-          className="w-full px-6 py-3 bg-primary text-foreground font-semibold flex items-center justify-between gap-3 hover:bg-primary/90 transition-colors"
-        >
-          <span>Navigate Screens</span>
-          {showScreenNav ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
-        </button>
-
-        {showScreenNav && (
-          <div className="max-h-96 overflow-y-auto">
-            {allScreens.map((screen) => (
-              <button
-                key={screen.id}
-                onClick={() => {
-                  const route = pageToRoute[screen.id];
-                  if (route) navigate(route);
-                  setShowScreenNav(false);
-                }}
-                className={`w-full px-6 py-3 text-left hover:bg-gray-50 transition-colors border-t border-gray-100 ${currentPage === screen.id ? 'bg-secondary font-medium' : ''
-                  }`}
-              >
-                {screen.name}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 // --- App Layout (sidebar + main content area) ---
 function AppLayout() {
@@ -158,9 +101,11 @@ function AppLayout() {
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
 
-      <main className={`${sidebarCollapsed ? 'ml-16' : 'ml-60'} transition-all duration-300 min-h-screen`}>
+      <main className={`transition-all duration-300 min-h-screen pb-16 lg:pb-0 ${sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-60'}`}>
         <Outlet />
       </main>
+
+      <MobileBottomNav activePage={activePage} onNavigate={onNavigate} />
 
       <ProfileDropdown
         isOpen={profileDropdownOpen}
@@ -278,21 +223,21 @@ function App() {
             <BrowserRouter>
               <Routes>
                 {/* Public pages (no sidebar) */}
-                <Route path="/" element={<><LandingRoute />{import.meta.env.DEV && <ScreenNavigator />}</>} />
-                <Route path="/auth/login" element={<GuestRoute><LoginRoute />{import.meta.env.DEV && <ScreenNavigator />}</GuestRoute>} />
-                <Route path="/auth/signup" element={<GuestRoute><SignUpRoute />{import.meta.env.DEV && <ScreenNavigator />}</GuestRoute>} />
+                <Route path="/" element={<LandingRoute />} />
+                <Route path="/auth/login" element={<GuestRoute><LoginRoute /></GuestRoute>} />
+                <Route path="/auth/signup" element={<GuestRoute><SignUpRoute /></GuestRoute>} />
                 {/* Public survey respondent page (no auth, no sidebar) */}
                 <Route path="/s/:id" element={<RespondentRoute />} />
 
                 {/* Builder & Publish (custom layout, no sidebar, protected) */}
-                <Route path="/app/surveys/new" element={<ProtectedRoute><BuilderRoute />{import.meta.env.DEV && <ScreenNavigator />}</ProtectedRoute>} />
-                <Route path="/app/surveys/:id/edit" element={<ProtectedRoute><BuilderEditRoute />{import.meta.env.DEV && <ScreenNavigator />}</ProtectedRoute>} />
-                <Route path="/app/surveys/:id/publish" element={<ProtectedRoute><PublishEditRoute />{import.meta.env.DEV && <ScreenNavigator />}</ProtectedRoute>} />
-                <Route path="/app/surveys/:id/connect" element={<ProtectedRoute><ConnectAppsRoute />{import.meta.env.DEV && <ScreenNavigator />}</ProtectedRoute>} />
-                <Route path="/app/surveys/:id/results" element={<ProtectedRoute><SurveyResultsEditRoute />{import.meta.env.DEV && <ScreenNavigator />}</ProtectedRoute>} />
+                <Route path="/app/surveys/new" element={<ProtectedRoute><BuilderRoute /></ProtectedRoute>} />
+                <Route path="/app/surveys/:id/edit" element={<ProtectedRoute><BuilderEditRoute /></ProtectedRoute>} />
+                <Route path="/app/surveys/:id/publish" element={<ProtectedRoute><PublishEditRoute /></ProtectedRoute>} />
+                <Route path="/app/surveys/:id/connect" element={<ProtectedRoute><ConnectAppsRoute /></ProtectedRoute>} />
+                <Route path="/app/surveys/:id/results" element={<ProtectedRoute><SurveyResultsEditRoute /></ProtectedRoute>} />
 
                 {/* App pages (with sidebar, protected) */}
-                <Route path="/app" element={<ProtectedRoute><AppLayout />{import.meta.env.DEV && <ScreenNavigator />}</ProtectedRoute>}>
+                <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
                   <Route index element={<Navigate to="/app/dashboard" replace />} />
                   <Route path="dashboard" element={<DashboardRoute />} />
                   <Route path="dashboard/empty" element={<DashboardEmptyRoute />} />

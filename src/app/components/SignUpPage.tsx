@@ -75,13 +75,13 @@ export function SignUpPage({ onNavigate }: SignUpPageProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-6">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-4 sm:p-6">
       <div className="w-full max-w-md">
-        <div className="bg-card rounded-2xl shadow-lg p-8" style={{ boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)' }}>
+        <div className="bg-card rounded-2xl shadow-lg p-6 sm:p-8" style={{ boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)' }}>
           {/* Logo */}
           <div className="flex justify-center mb-6">
-            <div className="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center">
-              <span className="text-2xl font-bold text-foreground">S</span>
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-primary rounded-2xl flex items-center justify-center">
+              <span className="text-xl sm:text-2xl font-bold text-foreground">S</span>
             </div>
           </div>
 

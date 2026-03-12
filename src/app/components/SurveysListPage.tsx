@@ -199,18 +199,18 @@ export function SurveysListPage({ onNavigate }: SurveysListPageProps) {
   // --- Empty state (no surveys at all) ---
   if (surveys.length === 0) {
     return (
-      <div className="p-8">
-        <div className="mb-8 flex justify-between items-start">
+      <div className="p-4 sm:p-6 lg:p-8">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start">
           <div>
-            <h1 className="text-[28px] font-bold text-foreground mb-2">My Surveys</h1>
-            <p className="text-muted-foreground">Manage and track all your surveys</p>
+            <h1 className="text-2xl sm:text-[28px] font-bold text-foreground mb-2">My Surveys</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">Manage and track all your surveys</p>
           </div>
-          <Button variant="primary" className="gap-2" onClick={handleNewSurvey}>
+          <Button variant="primary" className="gap-2 w-full sm:w-auto" onClick={handleNewSurvey}>
             <Plus className="w-4 h-4" />
             New Survey
           </Button>
         </div>
-        <Card className="p-12 flex flex-col items-center justify-center text-center border-dashed">
+        <Card className="p-6 sm:p-12 flex flex-col items-center justify-center text-center border-dashed">
           <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
             <FileText className="w-8 h-8 text-muted-foreground" />
           </div>
@@ -226,14 +226,14 @@ export function SurveysListPage({ onNavigate }: SurveysListPageProps) {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       {/* Header */}
-      <div className="mb-8 flex justify-between items-start">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start">
         <div>
-          <h1 className="text-[28px] font-bold text-foreground mb-2">My Surveys</h1>
-          <p className="text-muted-foreground">Manage and track all your surveys</p>
+          <h1 className="text-2xl sm:text-[28px] font-bold text-foreground mb-2">My Surveys</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">Manage and track all your surveys</p>
         </div>
-        <Button variant="primary" className="gap-2" onClick={handleNewSurvey}>
+        <Button variant="primary" className="gap-2 w-full sm:w-auto" onClick={handleNewSurvey}>
           <Plus className="w-4 h-4" />
           New Survey
         </Button>
@@ -241,7 +241,7 @@ export function SurveysListPage({ onNavigate }: SurveysListPageProps) {
 
       {/* Filters */}
       <Card className="p-4 mb-6">
-        <div className="flex gap-3 items-center">
+        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
           {/* Search — takes majority of width */}
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -253,21 +253,23 @@ export function SurveysListPage({ onNavigate }: SurveysListPageProps) {
               className="w-full pl-10 pr-4 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all"
             />
           </div>
-          {/* Status dropdown — compact, fixed width */}
-          <div className="flex-shrink-0 w-[120px]">
-            <CustomDropdown
-              value={statusFilter}
-              onChange={handleStatusChange}
-              options={['All', 'Active', 'Draft', 'Closed']}
-            />
-          </div>
-          {/* Per-page dropdown — compact, fixed width */}
-          <div className="flex-shrink-0 w-[80px]">
-            <CustomDropdown
-              value={String(perPage)}
-              onChange={handlePerPageChange}
-              options={['10', '25', '50']}
-            />
+          <div className="flex gap-3">
+            {/* Status dropdown */}
+            <div className="flex-1 sm:flex-shrink-0 sm:w-[120px]">
+              <CustomDropdown
+                value={statusFilter}
+                onChange={handleStatusChange}
+                options={['All', 'Active', 'Draft', 'Closed']}
+              />
+            </div>
+            {/* Per-page dropdown */}
+            <div className="flex-1 sm:flex-shrink-0 sm:w-[80px]">
+              <CustomDropdown
+                value={String(perPage)}
+                onChange={handlePerPageChange}
+                options={['10', '25', '50']}
+              />
+            </div>
           </div>
         </div>
       </Card>
@@ -294,7 +296,7 @@ export function SurveysListPage({ onNavigate }: SurveysListPageProps) {
                     Last Modified {getSortIcon('updatedAt')}
                   </button>
                 </th>
-                <th className="px-4 py-3 text-left">
+                <th className="px-4 py-3 text-left hidden lg:table-cell">
                   <button onClick={() => handleSort('createdAt')} className="flex items-center gap-1.5 font-semibold text-sm text-foreground hover:text-foreground transition-colors">
                     Created {getSortIcon('createdAt')}
                   </button>
@@ -361,7 +363,7 @@ export function SurveysListPage({ onNavigate }: SurveysListPageProps) {
                   <td className="px-4 py-4">
                     <span className="text-muted-foreground">{timeAgo(survey.updatedAt)}</span>
                   </td>
-                  <td className="px-4 py-4">
+                  <td className="px-4 py-4 hidden lg:table-cell">
                     <span className="text-muted-foreground">{formatDate(survey.createdAt)}</span>
                   </td>
                   <td className="px-4 py-4">
@@ -469,8 +471,8 @@ export function SurveysListPage({ onNavigate }: SurveysListPageProps) {
 
         {/* Pagination Footer */}
         {sorted.length > 0 && (
-          <div className="px-6 py-4 border-t border-border flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
+          <div className="px-4 sm:px-6 py-4 border-t border-border flex flex-col gap-3 sm:flex-row items-center sm:justify-between">
+            <p className="text-sm text-muted-foreground text-center sm:text-left">
               Showing {((safePage - 1) * perPage) + 1}–{Math.min(safePage * perPage, sorted.length)} of {sorted.length} survey{sorted.length !== 1 ? 's' : ''}
             </p>
             <div className="flex items-center gap-2">

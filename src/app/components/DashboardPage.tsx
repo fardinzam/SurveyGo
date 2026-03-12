@@ -149,21 +149,21 @@ export function DashboardPage({ onNavigate }: DashboardProps) {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 lg:p-8 overflow-hidden">
       {/* Header */}
-      <div className="flex justify-between items-start mb-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start mb-8">
         <div>
-          <h1 className="text-[28px] font-bold text-foreground mb-2">Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back! Here's what's happening with your surveys.</p>
+          <h1 className="text-2xl sm:text-[28px] font-bold text-foreground mb-2">Dashboard</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">Welcome back! Here's what's happening with your surveys.</p>
         </div>
-        <Button variant="primary" className="gap-2" onClick={() => onNavigate('templates-browse')}>
+        <Button variant="primary" className="gap-2 w-full sm:w-auto" onClick={() => onNavigate('templates-browse')}>
           <Plus className="w-4 h-4" />
           New Survey
         </Button>
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-4 gap-6 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">
         <Card className="p-6 border border-border shadow-sm">
           <div className="flex items-start justify-between">
             <div>
@@ -196,7 +196,7 @@ export function DashboardPage({ onNavigate }: DashboardProps) {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
         {/* Response Trend */}
         <Card className="p-6 border border-border shadow-sm">
           <div className="flex items-center justify-between mb-6">
@@ -326,9 +326,9 @@ export function DashboardPage({ onNavigate }: DashboardProps) {
       </div>
 
       {/* Quick Actions */}
-      <Card className="p-6 border border-border shadow-sm mb-6">
+      <Card className="p-4 sm:p-6 border border-border shadow-sm mb-6">
         <h3 className="font-semibold text-foreground text-lg mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {quickActions.map((action, idx) => {
             const Icon = action.icon;
             return (
@@ -371,7 +371,7 @@ export function DashboardPage({ onNavigate }: DashboardProps) {
                   <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Survey Title</th>
                   <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
                   <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Responses</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Last Activity</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground hidden sm:table-cell">Last Activity</th>
                 </tr>
               </thead>
               <tbody>
@@ -395,7 +395,7 @@ export function DashboardPage({ onNavigate }: DashboardProps) {
                       </Badge>
                     </td>
                     <td className="py-4 px-4 text-sm text-foreground">{survey.responseCount}</td>
-                    <td className="py-4 px-4 text-sm text-muted-foreground">{timeAgo(survey.updatedAt)}</td>
+                    <td className="py-4 px-4 text-sm text-muted-foreground hidden sm:table-cell">{timeAgo(survey.updatedAt)}</td>
                   </tr>
                 ))}
               </tbody>

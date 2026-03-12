@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Home, Activity, FileText, LayoutTemplate, Users, Settings, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { useAuthContext } from '../../contexts/AuthContext';
+import { useSurveys } from '../../hooks/useSurveys';
 
 /** Tooltip that uses fixed positioning to escape overflow-hidden parents. */
 function FixedTooltip({ label }: { label: string }) {
@@ -58,11 +59,15 @@ export function CollapsibleSidebar({
 }: CollapsibleSidebarProps) {
   const { user } = useAuthContext();
   const [imgError, setImgError] = useState(false);
+  const { data: surveys } = useSurveys();
 
   const displayName = user?.displayName || user?.email?.split('@')[0] || 'User';
   const email = user?.email || '';
   const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   const showPhoto = user?.photoURL && !imgError;
+
+  // Check if any surveys have unread responses
+  const hasUnread = surveys?.some(s => s.responseCount > (s.lastReadResponseCount ?? 0)) ?? false;
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
@@ -74,7 +79,7 @@ export function CollapsibleSidebar({
 
   return (
     <div
-      className={`bg-sidebar border-r border-sidebar-border h-screen flex flex-col fixed left-0 top-0 transition-all duration-300 z-10 ${collapsed ? 'w-16' : 'w-60'
+      className={`hidden lg:flex bg-sidebar border-r border-sidebar-border h-screen flex-col fixed left-0 top-0 transition-all duration-300 z-10 ${collapsed ? 'w-16' : 'w-60'
         }`}
     >
       {/* Logo / Brand */}
@@ -123,7 +128,12 @@ export function CollapsibleSidebar({
                     } ${collapsed ? 'justify-center' : ''}`}
                   title={collapsed ? item.label : ''}
                 >
-                  <Icon className="w-5 h-5 flex-shrink-0" />
+                  <span className="relative flex-shrink-0">
+                    <Icon className="w-5 h-5" />
+                    {item.id === 'activity' && hasUnread && (
+                      <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                    )}
+                  </span>
                   {!collapsed && <span>{item.label}</span>}
                 </button>
 

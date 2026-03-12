@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthContext } from '../contexts/AuthContext';
 import {
@@ -6,6 +7,7 @@ import {
     duplicateSurvey,
     getSurvey,
     getSurveys,
+    subscribeSurveys,
     updateSurvey,
 } from '../lib/firestore';
 import type { CreateSurveyInput, UpdateSurveyInput } from '../types/survey';
@@ -23,14 +25,28 @@ export const surveyKeys = {
 // Queries
 // ──────────────────────────────────────────
 
-/** Fetch all surveys for the current user. */
+/** Fetch all surveys for the current user with real-time updates. */
 export function useSurveys() {
     const { user } = useAuthContext();
-    return useQuery({
+    const queryClient = useQueryClient();
+
+    // Initial fetch via queryFn (provides loading/error states)
+    const result = useQuery({
         queryKey: surveyKeys.list(),
         queryFn: () => getSurveys(user!.uid),
         enabled: !!user,
     });
+
+    // Real-time listener that pushes updates into the query cache
+    useEffect(() => {
+        if (!user) return;
+        const unsub = subscribeSurveys(user.uid, (surveys) => {
+            queryClient.setQueryData(surveyKeys.list(), surveys);
+        });
+        return unsub;
+    }, [user, queryClient]);
+
+    return result;
 }
 
 /** Fetch a single survey by id. */

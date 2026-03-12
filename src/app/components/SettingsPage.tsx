@@ -19,7 +19,6 @@ interface SettingsPageProps {
 export function SettingsPage({ onNavigate }: SettingsPageProps) {
   usePageTitle('Settings');
   const { user } = useAuthContext();
-  const [activeTab, setActiveTab] = useState('account');
 
   // Profile state
   const [displayName, setDisplayName] = useState(user?.displayName ?? '');
@@ -68,7 +67,6 @@ export function SettingsPage({ onNavigate }: SettingsPageProps) {
     }
     setChangingPw(true);
     try {
-      // Re-authenticate before changing password
       const cred = EmailAuthProvider.credential(user.email, currentPassword);
       await reauthenticateWithCredential(user, cred);
       await updatePassword(user, newPassword);
@@ -86,212 +84,190 @@ export function SettingsPage({ onNavigate }: SettingsPageProps) {
     }
   };
 
-  const tabs = [
-    { id: 'account', label: 'General', icon: User },
-    { id: 'billing', label: 'Billing', icon: CreditCard },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
-  ];
-
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">Settings</h1>
-        <p className="text-muted-foreground">Manage your account and preferences</p>
+        <h1 className="text-3xl font-bold text-foreground">Settings</h1>
+        <p className="text-muted-foreground mt-1">Manage your account, billing, and notification preferences</p>
       </div>
 
-      <div className="flex gap-8">
-        {/* Sidebar Navigation */}
-        <div className="w-64">
-          <Card className="p-2">
-            <nav className="space-y-1">
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left ${activeTab === tab.id
-                      ? 'bg-secondary text-foreground font-medium'
-                      : 'text-muted-foreground hover:bg-muted'
-                      }`}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
-            </nav>
-          </Card>
-        </div>
+      <div className="max-w-3xl space-y-10">
 
-        {/* Content Area */}
-        <div className="flex-1">
-          {activeTab === 'account' && (
-            <div className="space-y-6">
-              {/* Profile */}
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold text-foreground mb-6">General</h2>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-6 mb-6">
-                    <div className="w-20 h-20 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center text-2xl font-bold text-foreground">
-                      {user?.photoURL ? (
-                        <img src={user.photoURL} alt="" className="w-20 h-20 rounded-full object-cover" />
-                      ) : (
-                        initials
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">{user?.displayName ?? 'User'}</p>
-                      <p className="text-sm text-muted-foreground">{user?.email}</p>
-                    </div>
+        {/* ── Account Section ── */}
+        <section>
+          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+            <User className="w-5 h-5" /> Account
+          </h2>
+          <div className="space-y-6">
+            {/* Profile */}
+            <Card className="p-6">
+              <h3 className="text-base font-semibold text-foreground mb-6">Profile Information</h3>
+              <div className="space-y-4">
+                <div className="flex items-center gap-6 mb-6">
+                  <div className="w-20 h-20 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center text-2xl font-bold text-foreground">
+                    {user?.photoURL ? (
+                      <img src={user.photoURL} alt="" className="w-20 h-20 rounded-full object-cover" />
+                    ) : (
+                      initials
+                    )}
                   </div>
+                  <div>
+                    <p className="font-medium text-foreground">{user?.displayName ?? 'User'}</p>
+                    <p className="text-sm text-muted-foreground">{user?.email}</p>
+                  </div>
+                </div>
 
+                <Input
+                  label="Full Name"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                />
+
+                <Input
+                  label="Email"
+                  type="email"
+                  value={user?.email ?? ''}
+                  disabled
+                />
+
+                {profileMsg && (
+                  <div className={`flex items-center gap-2 text-sm ${profileMsg.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+                    {profileMsg.type === 'success' ? <Check className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+                    {profileMsg.text}
+                  </div>
+                )}
+
+                <div className="pt-4">
+                  <Button variant="primary" onClick={handleSaveProfile} disabled={saving}>
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                    Save Changes
+                  </Button>
+                </div>
+              </div>
+            </Card>
+
+            {/* Password — only for email/password users */}
+            {!isGoogleOnly && (
+              <Card className="p-6">
+                <h3 className="text-base font-semibold text-foreground mb-6">Change Password</h3>
+                <div className="space-y-4">
                   <Input
-                    label="Full Name"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
+                    label="Current Password"
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                  />
+                  <Input
+                    label="New Password"
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
+                  <Input
+                    label="Confirm New Password"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
                   />
 
-                  <Input
-                    label="Email"
-                    type="email"
-                    value={user?.email ?? ''}
-                    disabled
-                  />
-
-                  {profileMsg && (
-                    <div className={`flex items-center gap-2 text-sm ${profileMsg.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
-                      {profileMsg.type === 'success' ? <Check className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-                      {profileMsg.text}
+                  {pwMsg && (
+                    <div className={`flex items-center gap-2 text-sm ${pwMsg.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+                      {pwMsg.type === 'success' ? <Check className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+                      {pwMsg.text}
                     </div>
                   )}
 
                   <div className="pt-4">
-                    <Button variant="primary" onClick={handleSaveProfile} disabled={saving}>
-                      {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                      Save Changes
+                    <Button variant="primary" onClick={handleChangePassword} disabled={changingPw || !currentPassword || !newPassword}>
+                      {changingPw ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                      Update Password
                     </Button>
                   </div>
                 </div>
               </Card>
+            )}
 
-              {/* Password — only for email/password users */}
-              {!isGoogleOnly && (
-                <Card className="p-6">
-                  <h2 className="text-xl font-semibold text-foreground mb-6">Password</h2>
-                  <div className="space-y-4">
-                    <Input
-                      label="Current Password"
-                      type="password"
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                    />
-                    <Input
-                      label="New Password"
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                    />
-                    <Input
-                      label="Confirm New Password"
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                    />
-
-                    {pwMsg && (
-                      <div className={`flex items-center gap-2 text-sm ${pwMsg.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
-                        {pwMsg.type === 'success' ? <Check className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-                        {pwMsg.text}
-                      </div>
-                    )}
-
-                    <div className="pt-4">
-                      <Button variant="primary" onClick={handleChangePassword} disabled={changingPw || !currentPassword || !newPassword}>
-                        {changingPw ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                        Update Password
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              )}
-
-              {isGoogleOnly && (
-                <Card className="p-6 bg-muted">
-                  <h2 className="text-xl font-semibold text-foreground mb-2">Password</h2>
-                  <p className="text-muted-foreground text-sm">
-                    You signed in with Google. Password management is handled through your Google account.
-                  </p>
-                </Card>
-              )}
-
-              {/* Danger Zone */}
-              <Card className="p-6 border-2 border-red-100">
-                <h2 className="text-xl font-semibold text-red-600 mb-4">Danger Zone</h2>
-                <p className="text-muted-foreground mb-4">
-                  Once you delete your account, there is no going back. Please be certain.
+            {isGoogleOnly && (
+              <Card className="p-6 bg-muted">
+                <h3 className="text-base font-semibold text-foreground mb-2">Password</h3>
+                <p className="text-muted-foreground text-sm">
+                  You signed in with Google. Password management is handled through your Google account.
                 </p>
-                <Button variant="destructive" onClick={() => setShowDeleteConfirm(true)} disabled={deleting}>
-                  {deleting ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Deleting...</> : 'Delete Account'}
+              </Card>
+            )}
+          </div>
+        </section>
+
+        {/* ── Billing Section ── */}
+        <section>
+          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+            <CreditCard className="w-5 h-5" /> Billing
+          </h2>
+          <div className="space-y-6">
+            {/* Current Plan */}
+            <Card className="p-6">
+              <h3 className="text-base font-semibold text-foreground mb-6">Current Plan</h3>
+              <div className="flex items-center justify-between p-5 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-border">
+                <div>
+                  <div className="text-lg font-bold text-gray-900">Basic Plan</div>
+                  <div className="text-sm text-gray-600 mt-1">Free — Up to 3 surveys, 100 responses each</div>
+                </div>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => onNavigate('plans')}
+                >
+                  Upgrade Plan
+                  <ArrowRight className="w-4 h-4" />
                 </Button>
-                {deleteError && (
-                  <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" />
-                    {deleteError}
-                  </p>
-                )}
-              </Card>
-            </div>
+              </div>
+            </Card>
+
+            {/* Transaction History */}
+            <Card className="p-6">
+              <h3 className="text-base font-semibold text-foreground mb-6">Transaction History</h3>
+              <div className="text-center py-8">
+                <p className="text-muted-foreground text-sm">No transactions yet.</p>
+                <p className="text-muted-foreground text-xs mt-1">Your billing history will appear here once you upgrade.</p>
+              </div>
+            </Card>
+
+            {/* Payment Method */}
+            <Card className="p-6">
+              <h3 className="text-base font-semibold text-foreground mb-6">Payment Method</h3>
+              <div className="text-center py-8">
+                <p className="text-muted-foreground text-sm">No payment method on file.</p>
+                <p className="text-muted-foreground text-xs mt-1">Add a payment method when you upgrade your plan.</p>
+              </div>
+            </Card>
+          </div>
+        </section>
+
+        {/* ── Notifications Section ── */}
+        <section>
+          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Bell className="w-5 h-5" /> Notifications
+          </h2>
+          <NotificationsTab />
+        </section>
+
+        {/* Danger Zone */}
+        <Card className="p-6 border-2 border-red-100">
+          <h3 className="text-base font-semibold text-red-600 mb-4">Danger Zone</h3>
+          <p className="text-muted-foreground mb-4">
+            Once you delete your account, there is no going back. Please be certain.
+          </p>
+          <Button variant="destructive" onClick={() => setShowDeleteConfirm(true)} disabled={deleting}>
+            {deleting ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Deleting...</> : 'Delete Account'}
+          </Button>
+          {deleteError && (
+            <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+              <AlertCircle className="w-4 h-4" />
+              {deleteError}
+            </p>
           )}
-
-
-
-          {activeTab === 'billing' && (
-            <div className="space-y-6">
-              {/* Current Plan */}
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold text-foreground mb-6">Current Plan</h2>
-                <div className="flex items-center justify-between p-5 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-border">
-                  <div>
-                    <div className="text-lg font-bold text-gray-900">Basic Plan</div>
-                    <div className="text-sm text-gray-600 mt-1">Free — Up to 3 surveys, 100 responses each</div>
-                  </div>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    className="gap-2"
-                    onClick={() => onNavigate('plans')}
-                  >
-                    Upgrade Plan
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
-                </div>
-              </Card>
-
-              {/* Transaction History */}
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold text-foreground mb-6">Transaction History</h2>
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground text-sm">No transactions yet.</p>
-                  <p className="text-muted-foreground text-xs mt-1">Your billing history will appear here once you upgrade.</p>
-                </div>
-              </Card>
-
-              {/* Payment Method */}
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold text-foreground mb-6">Payment Method</h2>
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground text-sm">No payment method on file.</p>
-                  <p className="text-muted-foreground text-xs mt-1">Add a payment method when you upgrade your plan.</p>
-                </div>
-              </Card>
-            </div>
-          )}
-
-          {activeTab === 'notifications' && (
-            <NotificationsTab />
-          )}
-        </div>
+        </Card>
       </div>
 
       <ConfirmDialog
@@ -341,7 +317,6 @@ function NotificationsTab() {
     { key: 'emailNewResponses', label: 'Email notifications for new responses' },
     { key: 'weeklySummary', label: 'Weekly summary report' },
     { key: 'urgentAlerts', label: 'Alert for urgent issues' },
-    { key: 'teamActivity', label: 'Team activity updates' },
     { key: 'productUpdates', label: 'Product updates and news' },
   ];
 

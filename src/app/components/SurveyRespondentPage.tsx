@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Card } from './Card';
 import { Button } from './Button';
 import { Loader2, AlertCircle, Calendar, Clock, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
@@ -6,10 +6,14 @@ import { getSurveyPublic, submitResponse } from '../../lib/firestore';
 import { SurveyThankYou } from './SurveyThankYou';
 import type { SurveyClient, Question, Answer, SurveySettings, LogicCondition } from '../../types/survey';
 import { DEFAULT_SURVEY_SETTINGS } from '../../types/survey';
+import { toast } from 'sonner';
 
 interface SurveyRespondentPageProps {
     surveyId: string;
 }
+
+// ── localStorage draft key ───────────────────────
+const draftKey = (surveyId: string) => `surveygo_draft_${surveyId}`;
 
 // ── Skip-logic evaluation engine ─────────────────────
 
@@ -50,6 +54,8 @@ export function SurveyRespondentPage({ surveyId }: SurveyRespondentPageProps) {
     const [submitted, setSubmitted] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [respondentEmail, setRespondentEmail] = useState('');
+    const draftRestored = useRef(false);
+    const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Load the survey
     useEffect(() => {
@@ -62,6 +68,21 @@ export function SurveyRespondentPage({ surveyId }: SurveyRespondentPageProps) {
                     setNotFound(true);
                 } else {
                     setSurvey(data);
+                    // Restore draft from localStorage after survey loads
+                    if (!draftRestored.current) {
+                        draftRestored.current = true;
+                        try {
+                            const saved = localStorage.getItem(draftKey(surveyId));
+                            if (saved) {
+                                const draft = JSON.parse(saved);
+                                if (draft.answers && Object.keys(draft.answers).length > 0) {
+                                    setAnswers(draft.answers);
+                                    if (draft.email) setRespondentEmail(draft.email);
+                                    toast.info('Draft restored', { description: 'Your previous answers have been loaded.' });
+                                }
+                            }
+                        } catch { /* ignore corrupted draft */ }
+                    }
                 }
             } catch (err) {
                 console.error('[SurveyGo] Error loading survey:', err);
@@ -72,6 +93,25 @@ export function SurveyRespondentPage({ surveyId }: SurveyRespondentPageProps) {
         })();
         return () => { cancelled = true; };
     }, [surveyId]);
+
+    // ── Auto-save draft to localStorage (debounced) ──
+    const saveDraft = useCallback(() => {
+        if (Object.keys(answers).length === 0 && !respondentEmail) return;
+        try {
+            localStorage.setItem(draftKey(surveyId), JSON.stringify({
+                answers,
+                email: respondentEmail,
+                savedAt: Date.now(),
+            }));
+        } catch { /* localStorage full — silently ignore */ }
+    }, [answers, respondentEmail, surveyId]);
+
+    useEffect(() => {
+        if (!survey || submitted) return;
+        if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = setTimeout(saveDraft, 500);
+        return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
+    }, [answers, respondentEmail, survey, submitted, saveDraft]);
 
     // Set an answer value
     const setAnswer = (questionId: string, value: any) => {
@@ -163,7 +203,12 @@ export function SurveyRespondentPage({ surveyId }: SurveyRespondentPageProps) {
                     value: answers[q.id],
                 }));
 
-            await submitResponse({ surveyId, answers: formattedAnswers });
+            await submitResponse({
+                surveyId,
+                answers: formattedAnswers,
+                ...(respondentEmail.trim() ? { respondentEmail: respondentEmail.trim() } : {}),
+            });
+            localStorage.removeItem(draftKey(surveyId));
             setSubmitted(true);
         } catch (err) {
             console.error('[SurveyGo] Error submitting response:', err);

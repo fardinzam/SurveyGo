@@ -242,6 +242,7 @@ export function toResponseClient(r: SurveyResponse): SurveyResponseClient {
 export interface SubmitResponseInput {
     surveyId: string;
     answers: Answer[];
+    respondentEmail?: string;
 }
 
 // ──────────────────────────────────────────

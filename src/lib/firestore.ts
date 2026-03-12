@@ -12,6 +12,8 @@ import {
     serverTimestamp,
     Timestamp,
     increment,
+    onSnapshot,
+    type Unsubscribe,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import type { Survey, SurveyClient, CreateSurveyInput, UpdateSurveyInput, SurveyResponse, SurveyResponseClient, SubmitResponseInput, UserPreferences } from '../types/survey';
@@ -90,6 +92,35 @@ export async function getSurveys(uid: string): Promise<SurveyClient[]> {
         // Sort by updatedAt descending on the client
         return surveys.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
     }
+}
+
+/**
+ * Subscribe to real-time survey updates for a user.
+ * Returns an unsubscribe function.
+ */
+export function subscribeSurveys(
+    uid: string,
+    onData: (surveys: SurveyClient[]) => void,
+    onError?: (err: Error) => void,
+): Unsubscribe {
+    const q = query(
+        surveysCol(),
+        where('createdBy', '==', uid),
+    );
+    return onSnapshot(
+        q,
+        (snap) => {
+            const surveys = snap.docs.map((d) =>
+                toSurveyClient({ id: d.id, ...d.data() } as Survey)
+            );
+            surveys.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+            onData(surveys);
+        },
+        (err) => {
+            console.error('[SurveyGo] subscribeSurveys error:', err);
+            onError?.(err);
+        },
+    );
 }
 
 /**
@@ -183,6 +214,7 @@ export async function submitResponse(input: SubmitResponseInput): Promise<string
         surveyId: input.surveyId,
         answers: input.answers,
         submittedAt: serverTimestamp(),
+        ...(input.respondentEmail ? { respondentEmail: input.respondentEmail } : {}),
         respondentMetadata: {
             userAgent: navigator.userAgent,
         },
@@ -219,6 +251,35 @@ export async function getResponses(surveyId: string): Promise<SurveyResponseClie
         );
         return results.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
     }
+}
+
+/**
+ * Subscribe to real-time response updates for a survey.
+ * Returns an unsubscribe function.
+ */
+export function subscribeResponses(
+    surveyId: string,
+    onData: (responses: SurveyResponseClient[]) => void,
+    onError?: (err: Error) => void,
+): Unsubscribe {
+    const q = query(
+        responsesCol(),
+        where('surveyId', '==', surveyId),
+    );
+    return onSnapshot(
+        q,
+        (snap) => {
+            const responses = snap.docs.map((d) =>
+                toResponseClient({ id: d.id, ...d.data() } as SurveyResponse)
+            );
+            responses.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
+            onData(responses);
+        },
+        (err) => {
+            console.error('[SurveyGo] subscribeResponses error:', err);
+            onError?.(err);
+        },
+    );
 }
 
 // ──────────────────────────────────────────

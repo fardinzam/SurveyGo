@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Card } from './Card';
 import { Button } from './Button';
-import { Sparkles, Send, Users, Briefcase, TrendingUp, GraduationCap, Globe, Loader2, Plus } from 'lucide-react';
+import { Sparkles, Send, Users, Briefcase, TrendingUp, GraduationCap, Globe, Loader2, Plus, CalendarDays, Heart } from 'lucide-react';
 import { useCreateSurvey } from '../../hooks/useSurveys';
 import type { Question } from '../../types/survey';
 
@@ -106,6 +106,62 @@ const templateQuestions: Record<string, { title: string; description: string; qu
       { id: 'q3', type: 'long', text: 'What new features would you like to see?', required: false },
     ],
   },
+  'remote-work': {
+    title: 'Remote Work Check-In',
+    description: 'Monitor remote employee wellbeing, productivity, and needs',
+    questions: [
+      { id: 'q1', type: 'rating', text: 'How would you rate your work-life balance this week?', required: true, options: { scale: 5, lowLabel: 'Very poor', highLabel: 'Excellent' } },
+      { id: 'q2', type: 'multiple', text: 'I feel connected to my team while working remotely.', required: true, options: { choices: ['Strongly Agree', 'Agree', 'Neutral', 'Disagree', 'Strongly Disagree'] } },
+      { id: 'q3', type: 'multiple', text: 'I have the tools and technology I need to work effectively.', required: true, options: { choices: ['Strongly Agree', 'Agree', 'Neutral', 'Disagree', 'Strongly Disagree'] } },
+      { id: 'q4', type: 'checkbox', text: 'What is your biggest challenge working remotely?', required: false, options: { choices: ['Isolation', 'Distractions at home', 'Communication gaps', 'Work-life boundaries', 'Tech issues', 'Other'] } },
+      { id: 'q5', type: 'long', text: 'What additional support would help you?', required: false },
+    ],
+  },
+  'event-feedback': {
+    title: 'Event Feedback',
+    description: 'Gather feedback after conferences, workshops, meetings, or social events',
+    questions: [
+      { id: 'q1', type: 'rating', text: 'How would you rate the event overall?', required: true, options: { scale: 5 } },
+      { id: 'q2', type: 'rating', text: 'How well was the event organized?', required: true, options: { scale: 5 } },
+      { id: 'q3', type: 'multiple', text: 'The event met my expectations.', required: true, options: { choices: ['Strongly Agree', 'Agree', 'Neutral', 'Disagree', 'Strongly Disagree'] } },
+      { id: 'q4', type: 'rating', text: 'How would you rate the speakers/presenters?', required: false, options: { scale: 5 } },
+      { id: 'q5', type: 'long', text: 'What was your favorite part of the event?', required: false },
+      { id: 'q6', type: 'long', text: 'What could be improved for future events?', required: false },
+    ],
+  },
+  'scheduling-poll': {
+    title: 'Scheduling Poll',
+    description: 'Find the best time for meetings, events, or appointments',
+    questions: [
+      { id: 'q1', type: 'checkbox', text: 'Please select all times that work for you:', required: true, options: { choices: ['Monday morning', 'Monday afternoon', 'Tuesday morning', 'Tuesday afternoon', 'Wednesday morning', 'Wednesday afternoon', 'Thursday morning', 'Thursday afternoon', 'Friday morning', 'Friday afternoon'] } },
+      { id: 'q2', type: 'short', text: 'Do you have a strong preference for any specific time?', required: false },
+      { id: 'q3', type: 'dropdown', text: 'Preferred meeting format:', required: true, options: { choices: ['In-person', 'Video call', 'Phone call', 'No preference'] } },
+      { id: 'q4', type: 'dropdown', text: 'Expected duration needed:', required: true, options: { choices: ['15 minutes', '30 minutes', '1 hour', '1.5 hours', '2+ hours'] } },
+    ],
+  },
+  'volunteer-feedback': {
+    title: 'Volunteer Feedback',
+    description: 'Collect feedback from volunteers about their experience',
+    questions: [
+      { id: 'q1', type: 'rating', text: 'How would you rate your overall volunteer experience?', required: true, options: { scale: 5 } },
+      { id: 'q2', type: 'multiple', text: 'I felt welcomed and appreciated as a volunteer.', required: true, options: { choices: ['Strongly Agree', 'Agree', 'Neutral', 'Disagree', 'Strongly Disagree'] } },
+      { id: 'q3', type: 'multiple', text: 'I received adequate training for my role.', required: true, options: { choices: ['Strongly Agree', 'Agree', 'Neutral', 'Disagree', 'Strongly Disagree'] } },
+      { id: 'q4', type: 'long', text: 'What did you enjoy most about volunteering?', required: false },
+      { id: 'q5', type: 'multiple', text: 'Would you volunteer with us again?', required: true, options: { choices: ['Yes', 'No', 'Maybe'] } },
+    ],
+  },
+  'employee-complaint': {
+    title: 'Employee Complaint Form',
+    description: 'Allow employees to submit workplace complaints or concerns confidentially',
+    questions: [
+      { id: 'q1', type: 'short', text: 'Your name (or leave blank for anonymous):', required: false },
+      { id: 'q2', type: 'dropdown', text: 'Type of complaint:', required: true, options: { choices: ['Harassment', 'Discrimination', 'Safety Concern', 'Policy Violation', 'Interpersonal Conflict', 'Other'] } },
+      { id: 'q3', type: 'date', text: 'Date of incident:', required: true },
+      { id: 'q4', type: 'long', text: 'Describe what happened:', required: true },
+      { id: 'q5', type: 'multiple', text: 'Have you reported this to anyone else?', required: true, options: { choices: ['Yes', 'No'] } },
+      { id: 'q6', type: 'long', text: 'What resolution would you like to see?', required: false },
+    ],
+  },
 };
 
 export function TemplatesBrowsePage({ onNavigate }: TemplatesBrowsePageProps) {
@@ -162,6 +218,8 @@ export function TemplatesBrowsePage({ onNavigate }: TemplatesBrowsePageProps) {
       templates: [
         { id: 'engagement', name: 'Employee Engagement', description: 'Assess employee satisfaction, motivation, and workplace culture' },
         { id: 'onboarding', name: 'Onboarding Feedback', description: 'Gather insights from new hires about their onboarding experience' },
+        { id: 'remote-work', name: 'Remote Work Check-In', description: 'Monitor remote employee wellbeing, productivity, and needs' },
+        { id: 'employee-complaint', name: 'Employee Complaint Form', description: 'Allow employees to submit workplace complaints or concerns' },
       ],
     },
     {
@@ -189,6 +247,23 @@ export function TemplatesBrowsePage({ onNavigate }: TemplatesBrowsePageProps) {
       templates: [
         { id: 'website-usability', name: 'Website Usability', description: 'Test and improve your website user experience and navigation' },
         { id: 'app-feedback', name: 'App Feedback', description: 'Gather user feedback on app features, design, and performance' },
+      ],
+    },
+    {
+      category: 'Events & Scheduling',
+      icon: CalendarDays,
+      color: 'from-teal-100 to-teal-200',
+      templates: [
+        { id: 'event-feedback', name: 'Event Feedback', description: 'Gather feedback after conferences, workshops, or social events' },
+        { id: 'scheduling-poll', name: 'Scheduling Poll', description: 'Find the best time for meetings, events, or appointments' },
+      ],
+    },
+    {
+      category: 'Community',
+      icon: Heart,
+      color: 'from-rose-100 to-rose-200',
+      templates: [
+        { id: 'volunteer-feedback', name: 'Volunteer Feedback', description: 'Collect feedback from volunteers about their experience' },
       ],
     },
   ];

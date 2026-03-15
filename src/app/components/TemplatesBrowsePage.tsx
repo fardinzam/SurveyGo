@@ -269,18 +269,18 @@ export function TemplatesBrowsePage({ onNavigate }: TemplatesBrowsePageProps) {
   ];
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex justify-between items-start mb-8">
+      <div className="flex flex-col sm:flex-row gap-4 sm:justify-between items-start mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-foreground mb-3">Create Your Survey</h1>
-          <p className="text-muted-foreground text-lg">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">Create Your Survey</h1>
+          <p className="text-muted-foreground text-sm sm:text-lg">
             Let AI build it for you, or choose from our expert templates
           </p>
         </div>
         <Button
           variant="primary"
-          className="gap-2"
+          className="w-full sm:w-auto gap-2"
           onClick={handleCreateBlank}
           disabled={createSurvey.isPending}
         >
@@ -343,7 +343,7 @@ export function TemplatesBrowsePage({ onNavigate }: TemplatesBrowsePageProps) {
               </div>
 
               {/* Template Cards */}
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {category.templates.map((template) => (
                   <Card
                     key={template.id}
@@ -378,9 +378,9 @@ export function TemplatesBrowsePage({ onNavigate }: TemplatesBrowsePageProps) {
 
       {/* Start from Scratch — above categories */}
       <Card className="p-6 mt-12">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center flex-shrink-0">
               <Plus className="w-5 h-5 text-gray-900" />
             </div>
             <div>
@@ -390,7 +390,7 @@ export function TemplatesBrowsePage({ onNavigate }: TemplatesBrowsePageProps) {
           </div>
           <Button
             variant="primary"
-            className="gap-2"
+            className="w-full sm:w-auto gap-2"
             onClick={handleCreateBlank}
             disabled={createSurvey.isPending}
           >

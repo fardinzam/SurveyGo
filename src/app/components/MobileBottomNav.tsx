@@ -40,10 +40,10 @@ export function MobileBottomNav({ activePage, onNavigate }: MobileBottomNavProps
   }, [profileOpen]);
 
   const navItems = [
-    { id: 'dashboard', label: 'Home', icon: Home },
-    { id: 'surveys', label: 'Surveys', icon: FileText },
-    { id: 'templates-browse', label: 'Templates', icon: LayoutTemplate },
+    { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'activity', label: 'Activity', icon: Activity },
+    { id: 'surveys', label: 'My Surveys', icon: FileText },
+    { id: 'templates-browse', label: 'Templates', icon: LayoutTemplate },
   ];
 
   const ThemeIcon = themeIcon[currentTheme] || Monitor;
@@ -53,7 +53,7 @@ export function MobileBottomNav({ activePage, onNavigate }: MobileBottomNavProps
       {/* Profile dropdown — slides up from bottom */}
       {profileOpen && (
         <div ref={dropdownRef} className="fixed bottom-16 right-2 z-[60] lg:hidden w-56">
-          <Card className="overflow-hidden shadow-xl" style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}>
+          <Card className="overflow-hidden shadow-xl gap-2" style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}>
             <div className="py-1">
               <button
                 onClick={() => { onNavigate('plans'); setProfileOpen(false); }}
@@ -104,9 +104,8 @@ export function MobileBottomNav({ activePage, onNavigate }: MobileBottomNavProps
             <button
               key={item.id}
               onClick={() => { onNavigate(item.id); setProfileOpen(false); }}
-              className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 transition-colors ${
-                isActive ? 'text-foreground' : 'text-muted-foreground'
-              }`}
+              className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 transition-colors ${isActive ? 'text-foreground' : 'text-muted-foreground'
+                }`}
             >
               <div className="relative">
                 <Icon className="w-5 h-5" />
@@ -122,9 +121,8 @@ export function MobileBottomNav({ activePage, onNavigate }: MobileBottomNavProps
         {/* Profile button */}
         <button
           onClick={() => setProfileOpen(!profileOpen)}
-          className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 transition-colors ${
-            profileOpen || activePage === 'settings' ? 'text-foreground' : 'text-muted-foreground'
-          }`}
+          className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 transition-colors ${profileOpen || activePage === 'settings' ? 'text-foreground' : 'text-muted-foreground'
+            }`}
         >
           <div className="w-5 h-5 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center text-[8px] font-bold text-foreground">
             {initials}

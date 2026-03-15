@@ -62,21 +62,21 @@ export function BuilderNavbar({
     };
 
     return (
-        <div className="bg-card border-b border-border px-6 py-3 fixed top-0 left-0 right-0 z-20">
-            <div className="flex items-center justify-between max-w-full mx-auto relative">
+        <div className="bg-card border-b border-border px-3 sm:px-6 py-3 fixed top-0 left-0 right-0 z-20">
+            <div className="flex items-center justify-between max-w-full mx-auto relative gap-2">
                 {/* Left: back + title */}
-                <div className="flex items-center gap-3 min-w-0">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-shrink-0">
                     <button
                         onClick={handleBack}
                         className="p-2 hover:bg-muted rounded-lg transition-colors flex-shrink-0"
                     >
                         <ArrowLeft className="w-5 h-5" />
                     </button>
-                    <span className="text-lg font-semibold truncate">{surveyTitle}</span>
+                    <span className="text-lg font-semibold truncate hidden sm:inline">{surveyTitle}</span>
                 </div>
 
-                {/* Center: breadcrumb stepper — truly centered */}
-                <div className="absolute left-1/2 -translate-x-1/2 flex items-center">
+                {/* Center: breadcrumb stepper */}
+                <div className="flex-1 flex items-center justify-center min-w-0 overflow-x-auto scrollbar-hide py-1">
                     {steps.map((step, index) => {
                         const StepIcon = step.icon;
                         const isActive = currentStep === step.id;
@@ -91,7 +91,7 @@ export function BuilderNavbar({
                                             if (route) onNavigate(route);
                                         }
                                     }}
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${isActive
+                                    className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-md text-xs font-medium transition-all ${isActive
                                         ? 'bg-primary text-foreground shadow-sm'
                                         : isCompleted
                                             ? 'bg-secondary text-foreground'
@@ -106,7 +106,7 @@ export function BuilderNavbar({
                                 </button>
 
                                 {index < steps.length - 1 && (
-                                    <div className={`w-8 h-0.5 mx-1 ${isCompleted ? 'bg-secondary' : 'bg-border'
+                                    <div className={`w-4 sm:w-8 h-0.5 mx-0.5 sm:mx-1 ${isCompleted ? 'bg-secondary' : 'bg-border'
                                         }`}></div>
                                 )}
                             </React.Fragment>

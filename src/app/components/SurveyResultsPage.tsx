@@ -89,6 +89,7 @@ export function SurveyResultsPage({ onNavigate, surveyId }: SurveyResultsPagePro
   const [dateRange, setDateRange] = useState<DateRange>('all');
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
+  const [showCustomDropdown, setShowCustomDropdown] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
 
   const { data: allResponses = [], isLoading: loadingResponses } = useResponses(surveyId);
@@ -198,12 +199,12 @@ export function SurveyResultsPage({ onNavigate, surveyId }: SurveyResultsPagePro
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-2"
+                className="gap-2 px-2 sm:px-3"
                 onClick={() => setShowExportMenu(!showExportMenu)}
               >
                 <Download className="w-4 h-4" />
-                Export
-                <ChevronDown className="w-3 h-3" />
+                <span className="hidden sm:inline">Export</span>
+                <ChevronDown className="w-3 h-3 hidden sm:inline" />
               </Button>
               {showExportMenu && (
                 <>
@@ -229,7 +230,7 @@ export function SurveyResultsPage({ onNavigate, surveyId }: SurveyResultsPagePro
             </div>
 
             <Button variant="primary" size="sm" className="gap-2" onClick={() => onNavigate('surveys')}>
-              Return to My Surveys
+              Return
             </Button>
           </div>
         }
@@ -255,39 +256,60 @@ export function SurveyResultsPage({ onNavigate, surveyId }: SurveyResultsPagePro
             {(['all', '7d', '30d', 'custom'] as DateRange[]).map((range) => (
               <button
                 key={range}
-                onClick={() => setDateRange(range)}
+                onClick={() => {
+                  if (range === 'custom') {
+                    if (dateRange === 'custom') {
+                      setShowCustomDropdown(!showCustomDropdown);
+                    } else {
+                      setDateRange('custom');
+                      setShowCustomDropdown(true);
+                    }
+                  } else {
+                    setDateRange(range);
+                    setShowCustomDropdown(false);
+                  }
+                }}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${dateRange === range
                   ? 'bg-primary text-foreground shadow-sm'
                   : 'bg-muted text-muted-foreground hover:bg-muted'
                   }`}
               >
-                {range === 'all' ? 'All Time' : range === '7d' ? 'Last 7 Days' : range === '30d' ? 'Last 30 Days' : 'Custom'}
+                {range === 'all' ? (
+                  <><span className="hidden sm:inline">All Time</span><span className="inline sm:hidden">All</span></>
+                ) : range === '7d' ? (
+                  <><span className="hidden sm:inline">Last 7 Days</span><span className="inline sm:hidden">7 Days</span></>
+                ) : range === '30d' ? (
+                  <><span className="hidden sm:inline">Last 30 Days</span><span className="inline sm:hidden">30 Days</span></>
+                ) : 'Custom'}
               </button>
             ))}
-            {dateRange === 'custom' && (
-              <div className="absolute top-full mt-2 bg-card border border-border rounded-xl shadow-lg p-4 z-30">
-                <div className="flex items-center gap-3">
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">From</label>
-                    <input
-                      type="date"
-                      value={customFrom}
-                      onChange={(e) => setCustomFrom(e.target.value)}
-                      className="px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground"
-                    />
-                  </div>
-                  <span className="text-sm text-muted-foreground mt-4">to</span>
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">To</label>
-                    <input
-                      type="date"
-                      value={customTo}
-                      onChange={(e) => setCustomTo(e.target.value)}
-                      className="px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground"
-                    />
+            {dateRange === 'custom' && showCustomDropdown && (
+              <>
+                <div className="fixed inset-0 z-20" onClick={() => setShowCustomDropdown(false)} />
+                <div className="absolute top-full mt-2 bg-card border border-border rounded-xl shadow-lg p-4 z-30">
+                  <div className="flex items-center gap-3 relative z-30">
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">From</label>
+                      <input
+                        type="date"
+                        value={customFrom}
+                        onChange={(e) => setCustomFrom(e.target.value)}
+                        className="px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground"
+                      />
+                    </div>
+                    <span className="text-sm text-muted-foreground mt-4">to</span>
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">To</label>
+                      <input
+                        type="date"
+                        value={customTo}
+                        onChange={(e) => setCustomTo(e.target.value)}
+                        className="px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
+              </>
             )}
           </div>
         </div>
@@ -322,48 +344,48 @@ export function SurveyResultsPage({ onNavigate, surveyId }: SurveyResultsPagePro
         {!isLoading && activeTab === 'overview' && (
           <div className="space-y-6">
             {/* Stats Grid */}
-            <div className="grid grid-cols-4 gap-6">
-              <Card className="p-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Hash className="w-5 h-5 text-blue-600" />
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+              <Card className="p-4 sm:p-6">
+                <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Hash className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
                   </div>
-                  <div className="text-sm text-muted-foreground">Total Responses</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">Total Responses</div>
                 </div>
-                <div className="text-3xl font-bold text-foreground">{totalResponses}</div>
+                <div className="text-2xl sm:text-3xl font-bold text-foreground">{totalResponses}</div>
               </Card>
 
-              <Card className="p-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-                    <Star className="w-5 h-5 text-yellow-600" />
+              <Card className="p-4 sm:p-6">
+                <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                    <Star className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600" />
                   </div>
-                  <div className="text-sm text-muted-foreground">Avg Rating</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">Avg Rating</div>
                 </div>
-                <div className="text-3xl font-bold text-foreground">
+                <div className="text-2xl sm:text-3xl font-bold text-foreground">
                   {avgRating ?? '—'}
-                  {avgRating && <span className="text-lg font-normal text-muted-foreground"> / 5</span>}
+                  {avgRating && <span className="text-sm sm:text-lg font-normal text-muted-foreground"> / 5</span>}
                 </div>
               </Card>
 
-              <Card className="p-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <BarChart3 className="w-5 h-5 text-purple-600" />
+              <Card className="p-4 sm:p-6">
+                <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
                   </div>
-                  <div className="text-sm text-muted-foreground">Questions</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">Questions</div>
                 </div>
-                <div className="text-3xl font-bold text-foreground">{questions.length}</div>
+                <div className="text-2xl sm:text-3xl font-bold text-foreground">{questions.length}</div>
               </Card>
 
-              <Card className="p-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <Clock className="w-5 h-5 text-green-600" />
+              <Card className="p-4 sm:p-6">
+                <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                    <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
                   </div>
-                  <div className="text-sm text-muted-foreground">Latest Response</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">Latest Response</div>
                 </div>
-                <div className="text-lg font-bold text-foreground truncate">
+                <div className="text-base sm:text-lg font-bold text-foreground truncate">
                   {latestResponse ? formatDate(latestResponse.submittedAt) : '—'}
                 </div>
               </Card>

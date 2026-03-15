@@ -74,7 +74,6 @@ export function CollapsibleSidebar({
     { id: 'activity', label: 'Activity', icon: Activity },
     { id: 'surveys', label: 'My Surveys', icon: FileText },
     { id: 'templates-browse', label: 'Templates', icon: LayoutTemplate },
-    { id: 'team', label: 'Team', icon: Users },
   ];
 
   return (

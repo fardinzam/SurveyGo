@@ -7,7 +7,7 @@ import { Input } from './Input';
 import { CustomDropdown } from './CustomDropdown';
 import {
   ArrowLeft, Save, GripVertical, Star, Type, AlignLeft, ListOrdered, CheckSquare, Trash2,
-  Edit3, Send, BarChart3, Palette, GitBranch, Settings, Sparkles, User, Plug, Loader2, Plus,
+  Edit3, Send, BarChart3, Palette, GitBranch, Settings, Settings2, Sparkles, User, Plug, Loader2, Plus,
   ChevronDown, Calendar, Clock, Grid3X3, BarChart2, Image as ImageIcon, X, Copy, Asterisk,
   Eye, RefreshCw, Check, GripHorizontal, LayoutGrid,
 } from 'lucide-react';
@@ -94,6 +94,9 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
   const [addQuestionOpen, setAddQuestionOpen] = useState(false);
   const [titleOverflow, setTitleOverflow] = useState<{ left: boolean; right: boolean }>({ left: false, right: false });
   const titleWrapRef = useRef<HTMLDivElement>(null);
+
+  // Mobile Bottom Nav state
+  const [mobileActiveTab, setMobileActiveTab] = useState<'build' | 'logic' | 'settings' | 'ai' | null>(null);
 
   // AI chat state
   const [chatMessages, setChatMessages] = useState([
@@ -381,15 +384,15 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
   return (
     <div className="min-h-screen bg-background">
       {/* Top Bar */}
-      <div className="bg-card border-b border-border px-6 py-3 fixed top-0 left-0 right-0 z-20">
-        <div className="flex items-center justify-between max-w-full mx-auto relative">
-          <div className="flex items-center gap-3 min-w-0">
-            <button onClick={() => onNavigate('surveys')} className="p-2 hover:bg-muted rounded-lg transition-colors flex-shrink-0">
+      <div className="bg-card border-b border-border px-3 sm:px-6 py-3 fixed top-0 left-0 right-0 z-20">
+        <div className="flex items-center justify-between max-w-full mx-auto relative gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-shrink-0">
+            <button onClick={() => onNavigate('surveys')} className="p-1.5 sm:p-2 hover:bg-muted rounded-lg transition-colors flex-shrink-0">
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div
               ref={titleWrapRef}
-              className="relative min-w-0"
+              className="relative min-w-0 hidden sm:block"
               onScroll={(e) => {
                 const el = e.currentTarget.firstElementChild as HTMLElement;
                 if (!el) return;
@@ -424,8 +427,8 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
             </div>
           </div>
 
-          {/* Center: breadcrumb stepper — truly centered */}
-          <div className="absolute left-1/2 -translate-x-1/2 flex items-center">
+          {/* Center: breadcrumb stepper */}
+          <div className="flex-1 flex items-center justify-center min-w-0 overflow-x-auto scrollbar-hide py-1">
             {steps.map((step, index) => {
               const StepIcon = step.icon;
               const isActive = currentStep === step.id;
@@ -440,7 +443,7 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
                         else if (step.id === 4) onNavigate(`surveys/${surveyId}/results`);
                       }
                     }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${isActive ? 'bg-primary text-foreground shadow-sm' : isCompleted ? 'bg-secondary text-foreground' : 'bg-card text-muted-foreground border border-border'}`}
+                    className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-md text-xs font-medium transition-all ${isActive ? 'bg-primary text-foreground shadow-sm' : isCompleted ? 'bg-secondary text-foreground' : 'bg-card text-muted-foreground border border-border'}`}
                   >
                     <div className={`w-5 h-5 rounded flex items-center justify-center ${isActive ? 'bg-white/30' : isCompleted ? 'bg-white/50' : 'bg-muted'}`}>
                       <StepIcon className="w-3 h-3" />
@@ -448,7 +451,7 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
                     <span className="hidden lg:inline">{step.label}</span>
                   </button>
                   {index < steps.length - 1 && (
-                    <div className={`w-8 h-0.5 mx-1 ${isCompleted ? 'bg-secondary' : 'bg-border'}`}></div>
+                    <div className={`w-4 sm:w-8 h-0.5 mx-0.5 sm:mx-1 ${isCompleted ? 'bg-secondary' : 'bg-border'}`}></div>
                   )}
                 </React.Fragment>
               );
@@ -478,14 +481,14 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
               </button>
             </TooltipBelow>
             <Button variant="primary" size="sm" className="gap-2" onClick={() => surveyId ? onNavigate(`surveys/${surveyId}/publish`) : handleSaveDraft()}>
-              Continue to Publish
+              <span className="hidden md:inline">Continue to </span>Publish
             </Button>
           </div>
         </div>
       </div>
 
       <div
-        className="pt-16 pb-8 max-w-full px-8"
+        className="pt-16 pb-8 max-w-full px-4 sm:px-6 lg:px-8"
         style={{
           '--primary': surveySettings.accentColor,
           '--ring': surveySettings.accentColor,
@@ -495,9 +498,9 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
       >
 
         {viewMode === 'editor' ? (
-          <div className="flex gap-6">
-            {/* Left Panel */}
-            <div className="w-72 flex-shrink-0">
+          <div className="flex flex-col lg:flex-row gap-6 relative pb-28 lg:pb-0">
+            {/* Left Panel (Desktop only) */}
+            <div className="hidden lg:block w-72 flex-shrink-0">
               <Card className="sticky top-24">
                 <div className="border-b border-border flex">
                   {(['build', 'logic', 'settings'] as const).map((tab) => (
@@ -953,8 +956,8 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
               </div>
             </div>
 
-            {/* Right Panel — AI Chatbot */}
-            <div className="w-72 flex-shrink-0">
+            {/* AI Chatbot Panel (Desktop only) */}
+            <div className="hidden lg:block w-72 flex-shrink-0">
               <Card className="sticky top-24 flex flex-col" style={{ height: 'calc(100vh - 140px)' }}>
                 <div className="p-4 border-b border-border flex items-center gap-3">
                   <div className="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center">
@@ -996,6 +999,283 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
                   </div>
                 </div>
               </Card>
+            </div>
+
+            {/* Mobile Bottom Navigation & Sliding Sheet */}
+            <div className="lg:hidden">
+              {/* Backdrop for sliding sheet */}
+              {mobileActiveTab && (
+                <div
+                  className="fixed inset-0 bg-black/40 z-40 transition-opacity"
+                  onClick={() => setMobileActiveTab(null)}
+                />
+              )}
+
+              {/* Sliding Sheet */}
+              <div
+                className={`fixed bottom-16 left-0 right-0 max-h-[75vh] bg-card border-t border-border rounded-t-2xl shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-in-out ${mobileActiveTab ? 'translate-y-0' : 'translate-y-full'}`}
+              >
+                {/* Drag handle / drag area to close can be added here */}
+                <div className="w-full flex justify-center py-2" onClick={() => setMobileActiveTab(null)}>
+                  <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+                </div>
+
+                {/* Sheet Content Area */}
+                <div className="flex-1 overflow-y-auto px-4 pb-6">
+                  {mobileActiveTab === 'build' && (
+                    <div className="space-y-6 pt-2">
+                      <h3 className="font-semibold text-lg text-foreground px-2">Add Question</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 px-2">
+                        {questionTypeGroups.map((group) => (
+                          <div key={group.label} className="space-y-2">
+                            <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{group.label}</div>
+                            {group.types.map((type) => {
+                              const Icon = type.icon;
+                              return (
+                                <button
+                                  key={type.id}
+                                  onClick={() => { addQuestion(type.id); setMobileActiveTab(null); }}
+                                  className="w-full flex items-center gap-3 px-4 py-3 bg-muted/50 rounded-xl text-left text-sm text-foreground hover:bg-muted transition-colors border border-transparent hover:border-border"
+                                >
+                                  <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-background shadow-sm border border-border">
+                                    <Icon className="w-4 h-4 text-foreground" />
+                                  </div>
+                                  <span className="font-medium">{type.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {mobileActiveTab === 'logic' && (
+                    <div className="space-y-6 pt-2">
+                      <h3 className="font-semibold text-lg text-foreground">Conditional Logic</h3>
+                      <div className="bg-muted/30 p-4 rounded-xl">
+                        {selectedId === 'header' ? (
+                          <p className="text-sm text-muted-foreground">Select a question in the canvas to add conditional logic.</p>
+                        ) : (() => {
+                          const selectedQuestion = questions.find((q) => q.id === selectedId);
+                          if (!selectedQuestion) return <p className="text-sm text-muted-foreground">Select a question to add conditional logic.</p>;
+                          const qIndex = questions.findIndex((q) => q.id === selectedId);
+                          const precedingQuestions = questions.slice(0, qIndex);
+                          if (precedingQuestions.length === 0) return <p className="text-sm text-muted-foreground">This is the first question — no conditions can be set.</p>;
+
+                          const logic: LogicRule = selectedQuestion.logic ?? { action: 'show', conjunction: 'and', conditions: [] };
+
+                          const setLogic = (updated: LogicRule) => {
+                            updateQuestion(selectedId, { logic: updated.conditions.length > 0 ? updated : undefined });
+                          };
+
+                          const addCondition = () => {
+                            setLogic({
+                              ...logic,
+                              conditions: [...logic.conditions, { questionId: precedingQuestions[0].id, operator: 'equals' as LogicOperator, value: '' }],
+                            });
+                          };
+
+                          return (
+                            <div className="space-y-4">
+                              <p className="text-sm font-medium">
+                                Editing logic for Q{qIndex + 1}
+                              </p>
+
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => setLogic({ ...logic, action: 'show' })}
+                                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${logic.action === 'show' ? 'bg-primary text-foreground shadow-sm' : 'bg-background text-muted-foreground border border-border'}`}
+                                >
+                                  Show when
+                                </button>
+                                <button
+                                  onClick={() => setLogic({ ...logic, action: 'hide' })}
+                                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${logic.action === 'hide' ? 'bg-primary text-foreground shadow-sm' : 'bg-background text-muted-foreground border border-border'}`}
+                                >
+                                  Hide when
+                                </button>
+                              </div>
+
+                              {logic.conditions.length > 0 && (
+                                <div className="space-y-3 mt-4">
+                                  {logic.conditions.map((cond, ci) => (
+                                    <div key={ci} className="bg-background border border-border p-3 rounded-lg text-xs flex justify-between items-center">
+                                      <span className="truncate max-w-[80%] opacity-80">Condition logic configured on Desktop</span>
+                                      <button onClick={() => {
+                                        const next = { ...logic, conditions: logic.conditions.filter((_, i) => i !== ci) };
+                                        setLogic(next);
+                                      }} className="p-1 hover:text-red-500 rounded"><X className="w-3.5 h-3.5" /></button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              <button onClick={addCondition} className="w-full mt-4 flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground bg-background border border-dashed border-border rounded-lg hover:text-foreground hover:border-primary transition-colors">
+                                <Plus className="w-4 h-4" /> Add Condition
+                              </button>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  )}
+
+                  {mobileActiveTab === 'settings' && (
+                    <div className="space-y-6 pt-2">
+                      <h3 className="font-semibold text-lg text-foreground">Survey Settings</h3>
+
+                      {/* Visual Settings */}
+                      <div className="space-y-4 pt-2">
+                        <h4 className="font-medium text-sm text-muted-foreground">Visuals</h4>
+                        <div>
+                          <label className="block text-sm font-medium text-foreground mb-2">Font Family</label>
+                          <CustomDropdown
+                            value={surveySettings.fontFamily}
+                            onChange={(v) => updateSettings({ fontFamily: v })}
+                            options={['Inter', 'Roboto', 'Open Sans', 'Lato', 'Montserrat']}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-foreground mb-2">Accent Color</label>
+                          <div className="flex gap-2 flex-wrap">
+                            {['#E2F380', '#058ED9', '#E08E45', '#DA627D'].map((color) => (
+                              <button
+                                key={color}
+                                onClick={() => updateSettings({ accentColor: color })}
+                                className={`w-10 h-10 rounded-xl border-2 transition-all ${surveySettings.accentColor === color ? 'border-gray-800 scale-110' : 'border-gray-200'}`}
+                                style={{ backgroundColor: color }}
+                              />
+                            ))}
+                            <label className={`w-10 h-10 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-center overflow-hidden flex-shrink-0 ${!['#E2F380', '#C5EDCE', '#3B82F6', '#A855F7', '#F43F5E'].includes(surveySettings.accentColor) ? 'border-gray-800 scale-110' : 'border-gray-200'}`}
+                              style={{ background: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)' }}
+                            >
+                              <input
+                                type="color"
+                                value={surveySettings.accentColor}
+                                onChange={(e) => updateSettings({ accentColor: e.target.value })}
+                                className="opacity-0 absolute w-0 h-0"
+                              />
+                            </label>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-foreground mb-2">Background</label>
+                          <div className="flex gap-2 flex-wrap">
+                            {[
+                              { value: '#FFFFFF', label: 'White' },
+                              { value: '#F9FAFB', label: 'Light Gray' },
+                              { value: '#FEF3C7', label: 'Warm' },
+                              { value: '#EDE9FE', label: 'Lavender' },
+                            ].map((bg) => (
+                              <button
+                                key={bg.value}
+                                onClick={() => updateSettings({ background: bg.value })}
+                                className={`w-10 h-10 rounded-xl border-2 transition-all ${surveySettings.background === bg.value ? 'border-gray-800 scale-110' : 'border-gray-200'}`}
+                                style={{ backgroundColor: bg.value }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="h-px bg-border my-6" />
+
+                      {/* Toggles */}
+                      <div className="space-y-4">
+                        <ToggleSetting
+                          label="Limit to 1 response"
+                          description="Requires users to sign in to their Google account."
+                          checked={surveySettings.limitOneResponse}
+                          onChange={(v) => updateSettings({ limitOneResponse: v })}
+                        />
+                        <ToggleSetting
+                          label="Show progress bar"
+                          description="Display completion percentage at bottom of survey."
+                          checked={surveySettings.showProgressBar}
+                          onChange={(v) => updateSettings({ showProgressBar: v })}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {mobileActiveTab === 'ai' && (
+                    <div className="flex flex-col h-[65vh]">
+                      <div className="flex items-center gap-3 mb-4 shrink-0">
+                        <div className="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center">
+                          <Sparkles className="w-4 h-4 text-foreground" />
+                        </div>
+                        <h3 className="font-semibold text-lg text-foreground">AI Assistant</h3>
+                      </div>
+                      <div className="flex-1 p-2 overflow-y-auto space-y-4 bg-muted/20 border border-border rounded-xl">
+                        {chatMessages.map((message) => (
+                          <div key={message.id} className={`flex gap-3 ${message.sender === 'user' ? 'flex-row-reverse' : ''}`}>
+                            {message.sender === 'ai' && (
+                              <div className="w-7 h-7 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+                                <Sparkles className="w-3.5 h-3.5 text-foreground" />
+                              </div>
+                            )}
+                            {message.sender === 'user' && (
+                              <div className="w-7 h-7 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+                                <User className="w-3.5 h-3.5 text-muted-foreground" />
+                              </div>
+                            )}
+                            <div className={`flex-1 px-3 py-2.5 rounded-xl text-sm ${message.sender === 'ai' ? 'bg-card border border-border text-foreground shadow-sm max-w-[85%]' : 'bg-primary text-foreground max-w-[85%]'}`}>
+                              {message.text}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="pt-4 shrink-0">
+                        <div className="flex gap-2">
+                          <input
+                            type="text" value={chatInput}
+                            onChange={(e) => setChatInput(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                            placeholder="Ask AI to help..."
+                            className="flex-1 px-4 py-3 text-sm border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary bg-card"
+                          />
+                          <button onClick={handleSendMessage} className="w-12 h-12 bg-primary hover:bg-primary/90 rounded-xl flex items-center justify-center transition-colors flex-shrink-0 shadow-sm">
+                            <Send className="w-5 h-5 text-foreground" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Bottom Navigation Bar */}
+              <div className="fixed bottom-0 left-0 right-0 h-16 bg-card border-t border-border flex items-stretch justify-around px-2 z-50">
+                <button
+                  onClick={() => setMobileActiveTab(mobileActiveTab === 'build' ? null : 'build')}
+                  className={`flex flex-col items-center justify-center w-full basis-1/4 gap-1 ${mobileActiveTab === 'build' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                  <Plus className="w-5 h-5" />
+                  <span className="text-[10px] font-medium">Build</span>
+                </button>
+                <button
+                  onClick={() => setMobileActiveTab(mobileActiveTab === 'logic' ? null : 'logic')}
+                  className={`flex flex-col items-center justify-center w-full basis-1/4 gap-1 ${mobileActiveTab === 'logic' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                  <GitBranch className="w-5 h-5" />
+                  <span className="text-[10px] font-medium">Logic</span>
+                </button>
+                <button
+                  onClick={() => setMobileActiveTab(mobileActiveTab === 'settings' ? null : 'settings')}
+                  className={`flex flex-col items-center justify-center w-full basis-1/4 gap-1 ${mobileActiveTab === 'settings' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                  <Settings2 className="w-5 h-5" />
+                  <span className="text-[10px] font-medium">Settings</span>
+                </button>
+                <button
+                  onClick={() => setMobileActiveTab(mobileActiveTab === 'ai' ? null : 'ai')}
+                  className={`flex flex-col items-center justify-center w-full basis-1/4 gap-1 ${mobileActiveTab === 'ai' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                  <Sparkles className="w-5 h-5" />
+                  <span className="text-[10px] font-medium">AI Chat</span>
+                </button>
+              </div>
             </div>
           </div>
         ) : (

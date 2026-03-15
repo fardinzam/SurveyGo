@@ -76,12 +76,6 @@ export function PublishPage({ onNavigate, surveyId }: PublishPageProps) {
         onNavigate={onNavigate}
         rightContent={
           <div className="flex items-center gap-3">
-            {isActive && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-100 text-green-700 text-sm font-medium rounded-full">
-                <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                Live
-              </span>
-            )}
             {!isActive ? (
               <Button
                 variant="primary"
@@ -100,19 +94,19 @@ export function PublishPage({ onNavigate, surveyId }: PublishPageProps) {
                 className="gap-2"
                 onClick={() => surveyId ? onNavigate(`surveys/${surveyId}/connect`) : undefined}
               >
-                Continue to Connect Apps
-                <Plug className="w-4 h-4" />
+                Connect Apps
+                <Plug className="w-4 h-4 hidden sm:inline" />
               </Button>
             )}
           </div>
         }
       />
 
-      <div className="pt-16 pb-8 max-w-4xl mx-auto px-8">
+      <div className="pt-16 pb-8 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Content */}
         <div className="text-center mb-8 mt-4">
-          <h2 className="text-3xl font-bold text-foreground mb-3">Distribute Your Survey</h2>
-          <p className="text-muted-foreground text-lg">
+          <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">Distribute Your Survey</h2>
+          <p className="text-muted-foreground text-sm sm:text-lg">
             {isActive
               ? 'Your survey is live! Share it using any of these methods.'
               : 'Publish your survey first, then share using the link below.'}
@@ -122,18 +116,20 @@ export function PublishPage({ onNavigate, surveyId }: PublishPageProps) {
         {/* Status Banner */}
         {!isActive && !loading && (
           <Card className="p-4 mb-8 bg-yellow-50 border-yellow-200">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
-                <Send className="w-4 h-4 text-yellow-600" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-yellow-800">Survey not published yet</p>
-                <p className="text-xs text-yellow-600">Click "Publish Survey" to make it available at the link below.</p>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="flex items-center gap-3 flex-1">
+                <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Send className="w-4 h-4 text-yellow-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-yellow-800">Survey not published yet</p>
+                  <p className="text-xs text-yellow-600">Click "Publish Survey" to make it available at the link below.</p>
+                </div>
               </div>
               <Button
                 variant="primary"
                 size="sm"
-                className="gap-2"
+                className="w-full sm:w-auto gap-2 flex-shrink-0"
                 onClick={handlePublish}
                 disabled={publishing || !surveyId}
               >
@@ -145,7 +141,7 @@ export function PublishPage({ onNavigate, surveyId }: PublishPageProps) {
         )}
 
         {/* Distribution Options */}
-        <div className="grid grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
           {/* Share Link */}
           <Card className="p-6">
             <div className="flex items-center gap-3 mb-4">
@@ -157,17 +153,17 @@ export function PublishPage({ onNavigate, surveyId }: PublishPageProps) {
             <p className="text-muted-foreground mb-4 text-sm">
               Share this direct link with your audience
             </p>
-            <div className="flex gap-2">
+            <div className="flex flex-col xl:flex-row gap-2">
               <input
                 type="text"
                 value={surveyUrl}
                 readOnly
-                className="flex-1 px-4 py-2.5 bg-muted border border-border rounded-lg text-sm text-foreground"
+                className="flex-1 px-4 py-2.5 bg-muted border border-border rounded-lg text-sm text-foreground overflow-hidden text-ellipsis"
               />
               <Button
                 variant={copied === 'link' ? 'secondary' : 'outline'}
                 onClick={() => handleCopy(surveyUrl, 'link')}
-                className="gap-2"
+                className="w-full xl:w-auto gap-2 flex-shrink-0"
                 disabled={!surveyUrl}
               >
                 {copied === 'link' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}

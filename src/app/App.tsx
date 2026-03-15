@@ -20,7 +20,6 @@ import { SurveyBuilderPageNew } from './components/SurveyBuilderPageNew';
 import { PublishPage } from './components/PublishPage';
 import { SurveyRespondentPage } from './components/SurveyRespondentPage';
 import { SettingsPage } from './components/SettingsPage';
-import { TeamPage } from './components/TeamPage';
 import { SurveyResultsPage } from './components/SurveyResultsPage';
 import { ConnectAppsPage } from './components/ConnectAppsPage';
 import { LandingPage } from './components/LandingPage';
@@ -138,11 +137,6 @@ function TemplatesRoute() {
   return <TemplatesBrowsePage onNavigate={onNavigate} />;
 }
 
-function TeamRoute() {
-  const onNavigate = useOnNavigate();
-  return <TeamPage onNavigate={onNavigate} />;
-}
-
 function SettingsRoute() {
   const onNavigate = useOnNavigate();
   return <SettingsPage onNavigate={onNavigate} />;
@@ -244,7 +238,6 @@ function App() {
                   <Route path="surveys" element={<SurveysRoute />} />
                   <Route path="surveys/results" element={<SurveyResultsRoute />} />
                   <Route path="templates" element={<TemplatesRoute />} />
-                  <Route path="team" element={<TeamRoute />} />
                   <Route path="settings" element={<SettingsRoute />} />
                   <Route path="activity" element={<ActivityRoute />} />
                   <Route path="plans" element={<PlansRoute />} />

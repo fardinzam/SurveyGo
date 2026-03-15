@@ -68,17 +68,17 @@ export function ConnectAppsPage({ onNavigate, surveyId }: ConnectAppsPageProps) 
                         className="gap-2"
                         onClick={() => surveyId ? onNavigate(`surveys/${surveyId}/results`) : undefined}
                     >
-                        Continue to Analytics
+                        <span className="hidden sm:inline">Continue to </span>Analytics
                         <BarChart3 className="w-4 h-4" />
                     </Button>
                 }
             />
 
-            <div className="pt-16 pb-8 max-w-5xl mx-auto px-8">
+            <div className="pt-16 pb-8 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
                 <div className="text-center mb-8 mt-4">
-                    <h2 className="text-3xl font-bold text-foreground mb-3">Connect Apps</h2>
-                    <p className="text-muted-foreground text-lg">
+                    <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">Connect Apps</h2>
+                    <p className="text-muted-foreground text-sm sm:text-lg">
                         Integrate your survey with the tools you already use
                     </p>
                 </div>
@@ -180,7 +180,7 @@ export function ConnectAppsPage({ onNavigate, surveyId }: ConnectAppsPageProps) 
                         )}
 
                         {displayApps.map((app) => (
-                            <Card key={app.id} className="p-4 flex items-center gap-4">
+                            <Card key={app.id} className="p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
                                 <div className={`w-10 h-10 ${app.color} rounded-lg flex items-center justify-center p-2 flex-shrink-0`}>
                                     <img src={app.logoUrl} alt={app.name} className="w-6 h-6" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                                 </div>
@@ -209,7 +209,7 @@ export function ConnectAppsPage({ onNavigate, surveyId }: ConnectAppsPageProps) 
 
                 {/* Request an App */}
                 <Card className="p-6 bg-gradient-to-br from-gray-50 to-white">
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-col sm:flex-row items-center text-center sm:text-left gap-4">
                         <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
                             <MessageCircle className="w-6 h-6 text-primary" />
                         </div>
@@ -219,7 +219,7 @@ export function ConnectAppsPage({ onNavigate, surveyId }: ConnectAppsPageProps) 
                                 Let us know and we'll work on adding it to our integration library.
                             </p>
                         </div>
-                        <Button variant="outline" className="gap-2 flex-shrink-0">
+                        <Button variant="outline" className="w-full sm:w-auto gap-2 flex-shrink-0">
                             <ExternalLink className="w-4 h-4" />
                             Request an App
                         </Button>

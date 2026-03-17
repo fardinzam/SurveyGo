@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Card } from './Card';
 import { Button } from './Button';
 import { Loader2, AlertCircle, Calendar, Clock, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
-import { getSurveyPublic, submitResponse } from '../../lib/firestore';
+import { getSurveyPublic } from '../../lib/firestore';
 import { SurveyThankYou } from './SurveyThankYou';
 import type { SurveyClient, Question, Answer, SurveySettings, LogicCondition } from '../../types/survey';
 import { DEFAULT_SURVEY_SETTINGS } from '../../types/survey';
@@ -44,6 +44,8 @@ function isQuestionVisible(question: Question, answers: Record<string, unknown>)
     const match = conjunction === 'and' ? results.every(Boolean) : results.some(Boolean);
     return action === 'show' ? match : !match;
 }
+
+const SUBMIT_FUNCTION_URL = import.meta.env.VITE_SUBMIT_FUNCTION_URL ?? '';
 
 export function SurveyRespondentPage({ surveyId }: SurveyRespondentPageProps) {
     const [survey, setSurvey] = useState<SurveyClient | null>(null);
@@ -191,7 +193,7 @@ export function SurveyRespondentPage({ surveyId }: SurveyRespondentPageProps) {
         return Object.keys(newErrors).length === 0;
     };
 
-    // Submit the response
+    // Submit the response via Cloud Function
     const handleSubmit = async () => {
         if (!survey || !validate()) return;
         setSubmitting(true);
@@ -203,11 +205,21 @@ export function SurveyRespondentPage({ surveyId }: SurveyRespondentPageProps) {
                     value: answers[q.id],
                 }));
 
-            await submitResponse({
-                surveyId,
-                answers: formattedAnswers,
-                ...(respondentEmail.trim() ? { respondentEmail: respondentEmail.trim() } : {}),
+            const res = await fetch(SUBMIT_FUNCTION_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    surveyId,
+                    answers: formattedAnswers,
+                    ...(respondentEmail.trim() ? { respondentEmail: respondentEmail.trim() } : {}),
+                }),
             });
+
+            if (!res.ok) {
+                const body = await res.json().catch(() => ({}));
+                throw new Error((body as { error?: string }).error ?? `HTTP ${res.status}`);
+            }
+
             localStorage.removeItem(draftKey(surveyId));
             setSubmitted(true);
         } catch (err) {

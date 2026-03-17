@@ -2,8 +2,11 @@ import React, { useState } from 'react';
 import { Card } from './Card';
 import { Button } from './Button';
 import { Badge } from './Badge';
-import { Check, Sparkles, Zap, Crown, ArrowRight } from 'lucide-react';
+import { Check, Sparkles, Zap, Crown, ArrowRight, Loader2 } from 'lucide-react';
 import { usePageTitle } from '../../hooks/usePageTitle';
+import { useSubscription } from '../../hooks/useSubscription';
+import { callCreateCheckoutSession } from '../../lib/functions';
+import { toast } from 'sonner';
 
 interface PlansPageProps {
     onNavigate: (page: string) => void;
@@ -31,6 +34,7 @@ const plans = [
             'SurveyGo branding on surveys',
             'No export to CSV/PDF',
             'No custom themes',
+            'No AI features',
         ],
         cta: 'Current Plan',
         popular: false,
@@ -47,11 +51,12 @@ const plans = [
             'Unlimited surveys',
             '1,000 responses per survey',
             'Unlimited questions',
-            'All question types',
+            'All question types + branching logic',
             'Share via link, email & QR code',
             'Advanced analytics & exports (CSV, PDF)',
             'Remove SurveyGo branding',
             'Custom themes & colors',
+            'AI question generation (10 requests/month)',
             'Priority email support',
             'Connect up to 5 apps',
         ],
@@ -70,9 +75,8 @@ const plans = [
         features: [
             'Everything in Standard',
             'Unlimited responses',
-            'AI-powered survey generation',
-            'AI sentiment analysis',
-            'Branching logic & skip patterns',
+            'Unlimited AI question generation',
+            'AI sentiment analysis on open-ended responses',
             'Team collaboration (up to 10 members)',
             'White-label surveys (custom domain)',
             'Webhook integrations',
@@ -90,7 +94,23 @@ const plans = [
 export function PlansPage({ onNavigate }: PlansPageProps) {
     usePageTitle('Plans');
     const [billing, setBilling] = useState<'monthly' | 'yearly'>('monthly');
+    const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
     const yearlyDiscount = 0.8; // 20% off
+    const { plan: currentPlan, loading: subLoading } = useSubscription();
+
+    async function handleUpgrade(planId: 'standard' | 'professional') {
+        setLoadingPlan(planId);
+        try {
+            const result = await callCreateCheckoutSession({ planId, billingPeriod: billing });
+            const url = result.data.url;
+            if (url) window.location.href = url;
+        } catch (err) {
+            console.error('Checkout error:', err);
+            toast.error('Could not start checkout. Please try again.');
+        } finally {
+            setLoadingPlan(null);
+        }
+    }
 
     return (
         <div className="p-8 max-w-6xl mx-auto">
@@ -131,6 +151,14 @@ export function PlansPage({ onNavigate }: PlansPageProps) {
                             ? Math.round(plan.price * yearlyDiscount)
                             : plan.price;
 
+                    const isCurrentPlan = !subLoading && currentPlan === plan.id;
+                    const isDowngrade = !subLoading && currentPlan !== 'basic' &&
+                        plans.findIndex(p => p.id === plan.id) < plans.findIndex(p => p.id === currentPlan);
+
+                    let ctaLabel = plan.cta;
+                    if (isCurrentPlan) ctaLabel = 'Current Plan';
+                    else if (isDowngrade) ctaLabel = `Downgrade to ${plan.name}`;
+
                     return (
                         <Card
                             key={plan.id}
@@ -140,6 +168,11 @@ export function PlansPage({ onNavigate }: PlansPageProps) {
                             {plan.popular && (
                                 <div className="absolute top-0 right-0 bg-primary text-foreground text-xs font-semibold px-3 py-1 rounded-bl-lg">
                                     Most Popular
+                                </div>
+                            )}
+                            {isCurrentPlan && (
+                                <div className="absolute top-0 left-0 bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-br-lg">
+                                    Active
                                 </div>
                             )}
 
@@ -160,12 +193,19 @@ export function PlansPage({ onNavigate }: PlansPageProps) {
                             </div>
 
                             <Button
-                                variant={plan.id === 'basic' ? 'outline' : 'primary'}
+                                variant={isCurrentPlan || plan.id === 'basic' ? 'outline' : 'primary'}
                                 className="w-full gap-2 mb-6"
-                                disabled={plan.id === 'basic'}
+                                disabled={isCurrentPlan || plan.id === 'basic' || loadingPlan !== null || subLoading}
+                                onClick={() => {
+                                    if (plan.id === 'standard' || plan.id === 'professional') {
+                                        handleUpgrade(plan.id);
+                                    }
+                                }}
                             >
-                                {plan.cta}
-                                {plan.id !== 'basic' && <ArrowRight className="w-4 h-4" />}
+                                {loadingPlan === plan.id
+                                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Redirecting…</>
+                                    : <>{ctaLabel}{!isCurrentPlan && plan.id !== 'basic' && <ArrowRight className="w-4 h-4" />}</>
+                                }
                             </Button>
 
                             <div className="space-y-3">
@@ -187,10 +227,10 @@ export function PlansPage({ onNavigate }: PlansPageProps) {
                 })}
             </div>
 
-            {/* FAQ / Bottom CTA */}
+            {/* Bottom note */}
             <div className="text-center mt-12">
                 <p className="text-muted-foreground text-sm">
-                    All plans include a 14-day free trial of Standard features.{' '}
+                    All paid plans include a 14-day free trial.{' '}
                     <button onClick={() => onNavigate('settings')} className="text-primary font-medium hover:underline">
                         Contact support
                     </button>{' '}

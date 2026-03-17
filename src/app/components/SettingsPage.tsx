@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card } from './Card';
 import { Button } from './Button';
 import { Input } from './Input';
-import { User, Bell, CreditCard, Loader2, Check, AlertCircle, ArrowRight } from 'lucide-react';
+import { User, Bell, CreditCard, Loader2, Check, AlertCircle, ArrowRight, ExternalLink } from 'lucide-react';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { updateProfile, updatePassword, deleteAccount } from '../../lib/auth';
 import { EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
@@ -11,6 +11,9 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { useUserPreferences, useUpdateUserPreferences } from '../../hooks/useUserPreferences';
 import { DEFAULT_USER_PREFERENCES } from '../../types/survey';
 import type { UserPreferences } from '../../types/survey';
+import { useSubscription } from '../../hooks/useSubscription';
+import { callCreatePortalSession } from '../../lib/functions';
+import { toast } from 'sonner';
 
 interface SettingsPageProps {
   onNavigate: (page: string) => void;
@@ -19,6 +22,21 @@ interface SettingsPageProps {
 export function SettingsPage({ onNavigate }: SettingsPageProps) {
   usePageTitle('Settings');
   const { user } = useAuthContext();
+  const { plan, status, cancelAtPeriodEnd, currentPeriodEnd } = useSubscription();
+  const [portalLoading, setPortalLoading] = useState(false);
+
+  async function handleManageSubscription() {
+    setPortalLoading(true);
+    try {
+      const result = await callCreatePortalSession();
+      window.location.href = result.data.url;
+    } catch (err) {
+      console.error('Portal session error:', err);
+      toast.error('Could not open billing portal. Please try again.');
+    } finally {
+      setPortalLoading(false);
+    }
+  }
 
   // Profile state
   const [displayName, setDisplayName] = useState(user?.displayName ?? '');
@@ -209,18 +227,46 @@ export function SettingsPage({ onNavigate }: SettingsPageProps) {
               <h3 className="text-base font-semibold text-foreground mb-6">Current Plan</h3>
               <div className="flex items-center justify-between p-5 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-border">
                 <div>
-                  <div className="text-lg font-bold text-gray-900">Basic Plan</div>
-                  <div className="text-sm text-gray-600 mt-1">Free — Up to 3 surveys, 100 responses each</div>
+                  <div className="text-lg font-bold text-gray-900 capitalize">
+                    {plan.charAt(0).toUpperCase() + plan.slice(1)} Plan
+                  </div>
+                  {plan === 'basic' && (
+                    <div className="text-sm text-gray-600 mt-1">Free — Up to 3 surveys, 100 responses each</div>
+                  )}
+                  {plan !== 'basic' && status && (
+                    <div className="text-sm text-gray-600 mt-1">
+                      {cancelAtPeriodEnd
+                        ? `Cancels ${currentPeriodEnd?.toLocaleDateString() ?? ''}`
+                        : `Renews ${currentPeriodEnd?.toLocaleDateString() ?? ''}`}
+                      {status === 'past_due' && (
+                        <span className="ml-2 text-red-500 font-medium">· Payment past due</span>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  className="gap-2"
-                  onClick={() => onNavigate('plans')}
-                >
-                  Upgrade Plan
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
+                <div className="flex gap-2">
+                  {plan !== 'basic' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                      disabled={portalLoading}
+                      onClick={handleManageSubscription}
+                    >
+                      {portalLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}
+                      Manage Subscription
+                    </Button>
+                  )}
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => onNavigate('plans')}
+                  >
+                    {plan === 'basic' ? 'Upgrade Plan' : 'Change Plan'}
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             </Card>
 

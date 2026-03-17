@@ -15,6 +15,9 @@ import { Badge } from './Badge';
 import { useSurvey, useUpdateSurvey, useCreateSurvey } from '../../hooks/useSurveys';
 import type { Question, QuestionType, SurveySettings, LogicRule, LogicOperator } from '../../types/survey';
 import { DEFAULT_SURVEY_SETTINGS } from '../../types/survey';
+import { callGenerateQuestions } from '../../lib/functions';
+import { useSubscription } from '../../hooks/useSubscription';
+import { canUseAI } from '../../lib/planLimits';
 
 interface BuilderPageProps {
   onNavigate: (page: string) => void;
@@ -73,6 +76,7 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
   const { data: survey, isLoading: surveyLoading } = useSurvey(surveyId);
   const updateSurvey = useUpdateSurvey();
   const createSurvey = useCreateSurvey();
+  const { plan } = useSubscription();
 
   // ── Local state ─────────────────────────
   const [surveyTitle, setSurveyTitle] = useState('Untitled Survey');
@@ -103,6 +107,7 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
     { id: 1, sender: 'ai', text: 'Hi! I\'m your AI assistant. How can I help you build your survey today?' },
   ]);
   const [chatInput, setChatInput] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
 
   // Refs for scroll-to-center
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -341,17 +346,64 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
     }
   };
 
-  // ── Chat handler (placeholder AI) ───────
-  const handleSendMessage = () => {
-    if (chatInput.trim()) {
-      setChatMessages([...chatMessages, { id: Date.now(), sender: 'user', text: chatInput }]);
-      setChatInput('');
-      setTimeout(() => {
+  // ── Chat handler (AI-powered) ────────────
+  const handleSendMessage = async () => {
+    const prompt = chatInput.trim();
+    if (!prompt || aiLoading) return;
+
+    if (!canUseAI(plan)) {
+      toast.error('AI features require a Standard or Professional plan. Upgrade in Plans.');
+      return;
+    }
+
+    setChatMessages(prev => [...prev, { id: Date.now(), sender: 'user', text: prompt }]);
+    setChatInput('');
+    setAiLoading(true);
+
+    try {
+      const result = await callGenerateQuestions({
+        surveyTitle,
+        surveyDescription,
+        existingQuestions: questions.map((q) => ({ text: q.text, type: q.type })),
+        userPrompt: prompt,
+      });
+
+      const generated = result.data.questions;
+      if (!generated?.length) {
         setChatMessages(prev => [...prev, {
           id: Date.now(), sender: 'ai',
-          text: 'I can help you with that! Let me add that to your survey.'
+          text: 'I couldn\'t generate questions for that request. Please try rephrasing.',
         }]);
-      }, 1000);
+        return;
+      }
+
+      // Map generated questions into the survey question format
+      const newQuestions: Question[] = generated.map((q) => ({
+        id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        type: (q.type === 'multiple-choice' ? 'multiple'
+          : q.type === 'checkbox' ? 'checkbox'
+          : q.type === 'short-answer' ? 'short'
+          : q.type === 'long-answer' ? 'long'
+          : q.type === 'rating' ? 'rating'
+          : 'short') as QuestionType,
+        text: q.text,
+        required: q.required,
+        ...(q.options?.length ? { options: { choices: q.options } } : {}),
+      }));
+
+      setQuestions(prev => [...prev, ...newQuestions]);
+      setChatMessages(prev => [...prev, {
+        id: Date.now(), sender: 'ai',
+        text: `Added ${newQuestions.length} question${newQuestions.length !== 1 ? 's' : ''} to your survey!`,
+      }]);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Something went wrong';
+      setChatMessages(prev => [...prev, {
+        id: Date.now(), sender: 'ai',
+        text: `Sorry, I ran into an error: ${msg}`,
+      }]);
+    } finally {
+      setAiLoading(false);
     }
   };
 
@@ -991,10 +1043,11 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
                       onChange={(e) => setChatInput(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                       placeholder="Ask AI to help..."
-                      className="flex-1 px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-card"
+                      disabled={aiLoading}
+                      className="flex-1 px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-card disabled:opacity-50"
                     />
-                    <button onClick={handleSendMessage} className="w-9 h-9 bg-primary hover:bg-primary/90 rounded-lg flex items-center justify-center transition-colors flex-shrink-0">
-                      <Send className="w-4 h-4 text-foreground" />
+                    <button onClick={handleSendMessage} disabled={aiLoading} className="w-9 h-9 bg-primary hover:bg-primary/90 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 disabled:opacity-50">
+                      {aiLoading ? <Loader2 className="w-4 h-4 text-foreground animate-spin" /> : <Send className="w-4 h-4 text-foreground" />}
                     </button>
                   </div>
                 </div>
@@ -1233,10 +1286,11 @@ export function SurveyBuilderPageNew({ onNavigate, surveyId }: BuilderPageProps)
                             onChange={(e) => setChatInput(e.target.value)}
                             onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                             placeholder="Ask AI to help..."
-                            className="flex-1 px-4 py-3 text-sm border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary bg-card"
+                            disabled={aiLoading}
+                            className="flex-1 px-4 py-3 text-sm border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary bg-card disabled:opacity-50"
                           />
-                          <button onClick={handleSendMessage} className="w-12 h-12 bg-primary hover:bg-primary/90 rounded-xl flex items-center justify-center transition-colors flex-shrink-0 shadow-sm">
-                            <Send className="w-5 h-5 text-foreground" />
+                          <button onClick={handleSendMessage} disabled={aiLoading} className="w-12 h-12 bg-primary hover:bg-primary/90 rounded-xl flex items-center justify-center transition-colors flex-shrink-0 shadow-sm disabled:opacity-50">
+                            {aiLoading ? <Loader2 className="w-5 h-5 text-foreground animate-spin" /> : <Send className="w-5 h-5 text-foreground" />}
                           </button>
                         </div>
                       </div>

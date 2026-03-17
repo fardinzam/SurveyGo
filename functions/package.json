@@ -1,0 +1,30 @@
+{
+  "name": "surveygo-functions",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Firebase Cloud Functions for SurveyGo",
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "firebase-admin": "^13.0.0",
+    "firebase-functions": "^6.0.0",
+    "stripe": "^17.0.0",
+    "@sendgrid/mail": "^8.1.0",
+    "@anthropic-ai/sdk": "^0.36.0",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "@types/cors": "^2.8.17",
+    "@types/node": "^20.0.0"
+  }
+}

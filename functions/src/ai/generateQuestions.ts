@@ -17,7 +17,7 @@ interface GeneratedQuestion {
 }
 
 export const generateQuestions = onCall(
-    { secrets: [anthropicApiKey] },
+    { secrets: [anthropicApiKey], cors: true, invoker: 'public' },
     async (request) => {
         if (!request.auth) {
             throw new HttpsError('unauthenticated', 'Must be signed in.');

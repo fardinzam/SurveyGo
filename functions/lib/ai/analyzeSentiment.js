@@ -9,7 +9,7 @@ const params_1 = require("firebase-functions/params");
 const firestore_1 = require("firebase-admin/firestore");
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const anthropicApiKey = (0, params_1.defineSecret)('ANTHROPIC_API_KEY');
-exports.analyzeSentiment = (0, https_1.onCall)({ secrets: [anthropicApiKey] }, async (request) => {
+exports.analyzeSentiment = (0, https_1.onCall)({ secrets: [anthropicApiKey], cors: true, invoker: 'public' }, async (request) => {
     if (!request.auth) {
         throw new https_1.HttpsError('unauthenticated', 'Must be signed in.');
     }

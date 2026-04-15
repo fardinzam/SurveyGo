@@ -9,7 +9,8 @@ const params_1 = require("firebase-functions/params");
 const firestore_1 = require("firebase-admin/firestore");
 const stripe_1 = __importDefault(require("stripe"));
 const stripeSecretKey = (0, params_1.defineSecret)('STRIPE_SECRET_KEY');
-exports.createPortalSession = (0, https_1.onCall)({ secrets: [stripeSecretKey] }, async (request) => {
+const appUrl = (0, params_1.defineString)('APP_URL', { default: 'https://surveygo-effcc.web.app' });
+exports.createPortalSession = (0, https_1.onCall)({ secrets: [stripeSecretKey], cors: true, invoker: 'public' }, async (request) => {
     if (!request.auth) {
         throw new https_1.HttpsError('unauthenticated', 'Must be signed in.');
     }
@@ -21,10 +22,10 @@ exports.createPortalSession = (0, https_1.onCall)({ secrets: [stripeSecretKey] }
         throw new https_1.HttpsError('failed-precondition', 'No active subscription found.');
     }
     const stripe = new stripe_1.default(stripeSecretKey.value());
-    const appUrl = process.env.APP_URL ?? 'http://localhost:5173';
+    const resolvedAppUrl = appUrl.value();
     const session = await stripe.billingPortal.sessions.create({
         customer: stripeCustomerId,
-        return_url: `${appUrl}/app/settings`,
+        return_url: `${resolvedAppUrl}/app/settings`,
     });
     return { url: session.url };
 });

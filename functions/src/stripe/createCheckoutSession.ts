@@ -1,9 +1,10 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { defineSecret } from 'firebase-functions/params';
+import { defineSecret, defineString } from 'firebase-functions/params';
 import { getFirestore } from 'firebase-admin/firestore';
 import Stripe from 'stripe';
 
 const stripeSecretKey = defineSecret('STRIPE_SECRET_KEY');
+const appUrl = defineString('APP_URL', { default: 'https://surveygo-effcc.web.app' });
 
 // Price IDs — set these after creating products in the Stripe dashboard
 // and update the values here (or move to Firebase config/secrets)
@@ -19,7 +20,7 @@ const PRICE_IDS: Record<string, Record<string, string>> = {
 };
 
 export const createCheckoutSession = onCall(
-    { secrets: [stripeSecretKey] },
+    { secrets: [stripeSecretKey], cors: true, invoker: 'public' },
     async (request) => {
         if (!request.auth) {
             throw new HttpsError('unauthenticated', 'Must be signed in.');
@@ -61,14 +62,14 @@ export const createCheckoutSession = onCall(
             );
         }
 
-        const appUrl = process.env.APP_URL ?? 'http://localhost:5173';
+        const resolvedAppUrl = appUrl.value();
 
         const session = await stripe.checkout.sessions.create({
             customer: stripeCustomerId,
             mode: 'subscription',
             line_items: [{ price: priceId, quantity: 1 }],
-            success_url: `${appUrl}/app/plans/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${appUrl}/app/plans`,
+            success_url: `${resolvedAppUrl}/app/plans/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${resolvedAppUrl}/app/plans`,
             metadata: { firebaseUid: uid, planId },
             subscription_data: {
                 metadata: { firebaseUid: uid, planId },

@@ -17,10 +17,20 @@ service cloud.firestore {
              && get(/databases/$(database)/documents/surveys/$(surveyId)).data.createdBy == request.auth.uid;
     }
 
+    // Returns true if the request does NOT touch any protected subscription fields
+    function noSubscriptionChanges() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['subscription']);
+    }
+
     // ─── Users collection ──────────────────────
-    // Users can only read/write their own profile
+    // Users can read their own profile; can write EXCEPT subscription fields
     match /users/{userId} {
-      allow read, write: if isOwner(userId);
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId)
+                    && !('subscription' in request.resource.data);
+      allow update: if isOwner(userId)
+                    && noSubscriptionChanges();
+      allow delete: if isOwner(userId);
     }
 
     // ─── Surveys collection ────────────────────

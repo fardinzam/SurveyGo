@@ -11,12 +11,11 @@ import {
     orderBy,
     serverTimestamp,
     Timestamp,
-    increment,
     onSnapshot,
     type Unsubscribe,
 } from 'firebase/firestore';
 import { db } from './firebase';
-import type { Survey, SurveyClient, CreateSurveyInput, UpdateSurveyInput, SurveyResponse, SurveyResponseClient, SubmitResponseInput, UserPreferences } from '../types/survey';
+import type { Survey, SurveyClient, CreateSurveyInput, UpdateSurveyInput, SurveyResponse, SurveyResponseClient, UserPreferences } from '../types/survey';
 import { toSurveyClient, toResponseClient, DEFAULT_USER_PREFERENCES } from '../types/survey';
 
 // ──────────────────────────────────────────
@@ -203,29 +202,6 @@ const responsesCol = () => collection(db, 'responses');
  */
 export async function getSurveyPublic(surveyId: string): Promise<SurveyClient | null> {
     return getSurvey(surveyId);
-}
-
-/**
- * Submit a response to a survey (public, no auth required).
- * Also increments the responseCount on the parent survey.
- */
-export async function submitResponse(input: SubmitResponseInput): Promise<string> {
-    const docRef = await addDoc(responsesCol(), {
-        surveyId: input.surveyId,
-        answers: input.answers,
-        submittedAt: serverTimestamp(),
-        ...(input.respondentEmail ? { respondentEmail: input.respondentEmail } : {}),
-        respondentMetadata: {
-            userAgent: navigator.userAgent,
-        },
-    });
-
-    // Increment the response count on the survey document
-    await updateDoc(doc(db, 'surveys', input.surveyId), {
-        responseCount: increment(1),
-    });
-
-    return docRef.id;
 }
 
 /**

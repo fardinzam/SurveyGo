@@ -13,9 +13,11 @@ An AI-powered **B2C survey platform** that helps individual consumers and small 
 ### Phase 1: Foundation (Weeks 1-2)
 
 #### 1. Authentication & User Management
-- **OAuth Social Login**: Google, Apple, Facebook via Firebase Auth
+- **OAuth Social Login**: Google via Firebase Auth
+  - ~~Apple~~ (removed — requires paid Apple Developer subscription)
+  - ~~Facebook~~ (removed — verification process takes weeks)
 - **Email/Password**: Traditional authentication option
-- **Magic Links**: Passwordless authentication
+- ~~**Magic Links**: Passwordless authentication~~ (removed — unnecessary)
 - **Auto-provisioned Personal Workspace**: Every user gets their own workspace on signup
 - **User Profile Management**: Basic profile settings and preferences
 

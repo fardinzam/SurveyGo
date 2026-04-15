@@ -16,3 +16,6 @@ export { weeklySummary } from './email/weeklySummary';
 // ── AI ───────────────────────────────────────────────────────────────────────
 export { generateQuestions } from './ai/generateQuestions';
 export { analyzeSentiment } from './ai/analyzeSentiment';
+
+// ── Billing ──────────────────────────────────────────────────────────────────
+export { billingKillSwitch } from './billing/killSwitch';

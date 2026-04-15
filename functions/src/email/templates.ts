@@ -1,4 +1,4 @@
-const APP_URL = process.env.APP_URL ?? 'https://surveygo.app';
+const APP_URL = process.env.APP_URL ?? 'https://surveygo-effcc.web.app';
 
 const baseStyle = `
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;

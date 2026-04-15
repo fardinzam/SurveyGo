@@ -15,7 +15,7 @@ interface SentimentResult {
 }
 
 export const analyzeSentiment = onCall(
-    { secrets: [anthropicApiKey] },
+    { secrets: [anthropicApiKey], cors: true, invoker: 'public' },
     async (request) => {
         if (!request.auth) {
             throw new HttpsError('unauthenticated', 'Must be signed in.');

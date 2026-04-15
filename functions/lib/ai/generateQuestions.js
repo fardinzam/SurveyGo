@@ -10,7 +10,7 @@ const firestore_1 = require("firebase-admin/firestore");
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const anthropicApiKey = (0, params_1.defineSecret)('ANTHROPIC_API_KEY');
 const MONTHLY_LIMIT_STANDARD = 10; // Standard plan: 10 AI requests per month
-exports.generateQuestions = (0, https_1.onCall)({ secrets: [anthropicApiKey] }, async (request) => {
+exports.generateQuestions = (0, https_1.onCall)({ secrets: [anthropicApiKey], cors: true, invoker: 'public' }, async (request) => {
     if (!request.auth) {
         throw new https_1.HttpsError('unauthenticated', 'Must be signed in.');
     }

@@ -1,12 +1,13 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { defineSecret } from 'firebase-functions/params';
+import { defineSecret, defineString } from 'firebase-functions/params';
 import { getFirestore } from 'firebase-admin/firestore';
 import Stripe from 'stripe';
 
 const stripeSecretKey = defineSecret('STRIPE_SECRET_KEY');
+const appUrl = defineString('APP_URL', { default: 'https://surveygo-effcc.web.app' });
 
 export const createPortalSession = onCall(
-    { secrets: [stripeSecretKey] },
+    { secrets: [stripeSecretKey], cors: true, invoker: 'public' },
     async (request) => {
         if (!request.auth) {
             throw new HttpsError('unauthenticated', 'Must be signed in.');
@@ -23,11 +24,11 @@ export const createPortalSession = onCall(
         }
 
         const stripe = new Stripe(stripeSecretKey.value());
-        const appUrl = process.env.APP_URL ?? 'http://localhost:5173';
+        const resolvedAppUrl = appUrl.value();
 
         const session = await stripe.billingPortal.sessions.create({
             customer: stripeCustomerId,
-            return_url: `${appUrl}/app/settings`,
+            return_url: `${resolvedAppUrl}/app/settings`,
         });
 
         return { url: session.url };

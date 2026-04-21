@@ -57,7 +57,7 @@ export function SurveyRespondentPage({ surveyId }: SurveyRespondentPageProps) {
       try {
         const data = await getSurveyPublic(surveyId);
         if (cancelled) return;
-        if (!data || data.status !== 'active' || data.deletedAt) {
+        if (!data || data.status !== 'active') {
           setNotFound(true);
         } else {
           setSurvey(data);

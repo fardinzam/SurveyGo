@@ -51,9 +51,6 @@ export async function createSurvey(
 
 /**
  * Get all surveys owned by the given user, ordered by most recently updated.
- *
- * If the composite index (createdBy + updatedAt) has not been created yet,
- * we fall back to a simple where-only query with client-side sorting.
  */
 export async function getSurveys(uid: string): Promise<SurveyClient[]> {
     try {
@@ -64,9 +61,7 @@ export async function getSurveys(uid: string): Promise<SurveyClient[]> {
             orderBy('updatedAt', 'desc')
         );
         const snap = await getDocs(q);
-        return snap.docs.map((d) =>
-            toSurveyClient({ id: d.id, ...d.data() } as Survey)
-        );
+        return snap.docs.map((d) => toSurveyClient({ id: d.id, ...d.data() } as Survey));
     } catch (err: unknown) {
         // Firestore missing-index errors contain a URL to create it
         const msg = err instanceof Error ? err.message : String(err);
@@ -85,10 +80,7 @@ export async function getSurveys(uid: string): Promise<SurveyClient[]> {
             where('createdBy', '==', uid)
         );
         const snap = await getDocs(fallback);
-        const surveys = snap.docs.map((d) =>
-            toSurveyClient({ id: d.id, ...d.data() } as Survey)
-        );
-        // Sort by updatedAt descending on the client
+        const surveys = snap.docs.map((d) => toSurveyClient({ id: d.id, ...d.data() } as Survey));
         return surveys.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
     }
 }
@@ -109,9 +101,7 @@ export function subscribeSurveys(
     return onSnapshot(
         q,
         (snap) => {
-            const surveys = snap.docs.map((d) =>
-                toSurveyClient({ id: d.id, ...d.data() } as Survey)
-            );
+            const surveys = snap.docs.map((d) => toSurveyClient({ id: d.id, ...d.data() } as Survey));
             surveys.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
             onData(surveys);
         },

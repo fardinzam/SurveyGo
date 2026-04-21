@@ -359,11 +359,10 @@ function NotificationsTab() {
     updatePrefs.mutate(updated);
   };
 
-  const items: { key: keyof UserPreferences['notifications']; label: string }[] = [
-    { key: 'emailNewResponses', label: 'Email notifications for new responses' },
-    { key: 'weeklySummary', label: 'Weekly summary report' },
-    { key: 'urgentAlerts', label: 'Alert for urgent issues' },
+  const items: { key: string; label: string }[] = [
+    { key: 'surveyUpdates', label: 'Email notifications for new responses' },
     { key: 'productUpdates', label: 'Product updates and news' },
+    { key: 'promotionalAnnouncements', label: 'Promotional announcements' },
   ];
 
   if (isLoading) {
@@ -386,8 +385,8 @@ function NotificationsTab() {
             <span className="text-foreground">{item.label}</span>
             <input
               type="checkbox"
-              checked={notifications[item.key]}
-              onChange={() => toggle(item.key)}
+              checked={!!notifications[item.key as keyof typeof notifications]}
+              onChange={() => toggle(item.key as keyof UserPreferences['notifications'])}
               className="w-5 h-5 rounded border-border text-primary focus:ring-primary"
             />
           </label>

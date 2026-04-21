@@ -1,771 +1,536 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Card } from './Card';
-import { Button } from './Button';
-import { Loader2, AlertCircle, Calendar, Clock, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
-import { getSurveyPublic } from '../../lib/firestore';
-import { SurveyThankYou } from './SurveyThankYou';
-import type { SurveyClient, Question, Answer, SurveySettings, LogicCondition } from '../../types/survey';
-import { DEFAULT_SURVEY_SETTINGS } from '../../types/survey';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AlertCircle, Calendar as CalendarIcon, CheckCircle2, ChevronDown, Clock, Loader2, Send, Star } from 'lucide-react';
 import { toast } from 'sonner';
+import { format, parse } from 'date-fns';
+import { getSurveyPublic } from '../../lib/firestore';
+import { Calendar } from './ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import type { Answer, LogicCondition, Question, SurveyClient } from '../../types/survey';
 
 interface SurveyRespondentPageProps {
-    surveyId: string;
+  surveyId: string;
 }
 
-// ── localStorage draft key ───────────────────────
 const draftKey = (surveyId: string) => `surveygo_draft_${surveyId}`;
+const SUBMIT_FUNCTION_URL = import.meta.env.VITE_SUBMIT_FUNCTION_URL ?? '';
 
-// ── Skip-logic evaluation engine ─────────────────────
+// ── Branching logic evaluation ───────────────────────────────────────────────
 
 function evaluateCondition(cond: LogicCondition, answers: Record<string, unknown>): boolean {
-    const val = answers[cond.questionId];
-    switch (cond.operator) {
-        case 'equals':
-            return String(val) === String(cond.value);
-        case 'not_equals':
-            return String(val) !== String(cond.value);
-        case 'contains':
-            return Array.isArray(val) && val.includes(cond.value as string);
-        case 'not_contains':
-            return !Array.isArray(val) || !val.includes(cond.value as string);
-        case 'is_answered':
-            return val !== undefined && val !== '' && (!Array.isArray(val) || val.length > 0);
-        case 'is_not_answered':
-            return val === undefined || val === '' || (Array.isArray(val) && val.length === 0);
-        default:
-            return true;
-    }
+  const val = answers[cond.questionId];
+  switch (cond.operator) {
+    case 'equals': return String(val) === String(cond.value);
+    case 'not_equals': return String(val) !== String(cond.value);
+    case 'contains': return Array.isArray(val) && val.includes(cond.value as string);
+    case 'not_contains': return !Array.isArray(val) || !val.includes(cond.value as string);
+    case 'is_answered': return val !== undefined && val !== '' && (!Array.isArray(val) || val.length > 0);
+    case 'is_not_answered': return val === undefined || val === '' || (Array.isArray(val) && val.length === 0);
+    default: return true;
+  }
 }
 
 function isQuestionVisible(question: Question, answers: Record<string, unknown>): boolean {
-    if (!question.logic || question.logic.conditions.length === 0) return true;
-    const { action, conjunction, conditions } = question.logic;
-    const results = conditions.map((c) => evaluateCondition(c, answers));
-    const match = conjunction === 'and' ? results.every(Boolean) : results.some(Boolean);
-    return action === 'show' ? match : !match;
+  if (!question.logic || question.logic.conditions.length === 0) return true;
+  const { action, conjunction, conditions } = question.logic;
+  const results = conditions.map((c) => evaluateCondition(c, answers));
+  const match = conjunction === 'and' ? results.every(Boolean) : results.some(Boolean);
+  return action === 'show' ? match : !match;
 }
 
-const SUBMIT_FUNCTION_URL = import.meta.env.VITE_SUBMIT_FUNCTION_URL ?? '';
+// ── Root ─────────────────────────────────────────────────────────────────────
 
 export function SurveyRespondentPage({ surveyId }: SurveyRespondentPageProps) {
-    const [survey, setSurvey] = useState<SurveyClient | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [notFound, setNotFound] = useState(false);
-    const [answers, setAnswers] = useState<Record<string, any>>({});
-    const [submitting, setSubmitting] = useState(false);
-    const [submitted, setSubmitted] = useState(false);
-    const [errors, setErrors] = useState<Record<string, string>>({});
-    const [respondentEmail, setRespondentEmail] = useState('');
-    const draftRestored = useRef(false);
-    const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [survey, setSurvey] = useState<SurveyClient | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+  const [answers, setAnswers] = useState<Record<string, unknown>>({});
+  const [email, setEmail] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const draftLoaded = useRef(false);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    // Load the survey
-    useEffect(() => {
-        let cancelled = false;
-        (async () => {
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await getSurveyPublic(surveyId);
+        if (cancelled) return;
+        if (!data || data.status !== 'active' || data.deletedAt) {
+          setNotFound(true);
+        } else {
+          setSurvey(data);
+          // Restore draft
+          if (!draftLoaded.current) {
+            draftLoaded.current = true;
             try {
-                const data = await getSurveyPublic(surveyId);
-                if (cancelled) return;
-                if (!data) {
-                    setNotFound(true);
-                } else {
-                    setSurvey(data);
-                    // Restore draft from localStorage after survey loads
-                    if (!draftRestored.current) {
-                        draftRestored.current = true;
-                        try {
-                            const saved = localStorage.getItem(draftKey(surveyId));
-                            if (saved) {
-                                const draft = JSON.parse(saved);
-                                if (draft.answers && Object.keys(draft.answers).length > 0) {
-                                    setAnswers(draft.answers);
-                                    if (draft.email) setRespondentEmail(draft.email);
-                                    toast.info('Draft restored', { description: 'Your previous answers have been loaded.' });
-                                }
-                            }
-                        } catch { /* ignore corrupted draft */ }
-                    }
-                }
-            } catch (err) {
-                console.error('[SurveyGo] Error loading survey:', err);
-                setNotFound(true);
-            } finally {
-                if (!cancelled) setLoading(false);
-            }
-        })();
-        return () => { cancelled = true; };
-    }, [surveyId]);
-
-    // ── Auto-save draft to localStorage (debounced) ──
-    const saveDraft = useCallback(() => {
-        if (Object.keys(answers).length === 0 && !respondentEmail) return;
-        try {
-            localStorage.setItem(draftKey(surveyId), JSON.stringify({
-                answers,
-                email: respondentEmail,
-                savedAt: Date.now(),
-            }));
-        } catch { /* localStorage full — silently ignore */ }
-    }, [answers, respondentEmail, surveyId]);
-
-    useEffect(() => {
-        if (!survey || submitted) return;
-        if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-        saveTimerRef.current = setTimeout(saveDraft, 500);
-        return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
-    }, [answers, respondentEmail, survey, submitted, saveDraft]);
-
-    // Set an answer value
-    const setAnswer = (questionId: string, value: any) => {
-        setAnswers((prev) => ({ ...prev, [questionId]: value }));
-        if (errors[questionId]) {
-            setErrors((prev) => { const next = { ...prev }; delete next[questionId]; return next; });
+              const saved = localStorage.getItem(draftKey(surveyId));
+              if (saved) {
+                const d = JSON.parse(saved);
+                if (d.answers) setAnswers(d.answers);
+                if (d.email) setEmail(d.email);
+              }
+            } catch { /* ignore */ }
+          }
         }
-    };
+      } catch (err) {
+        console.error('[SurveyGo] Error loading survey:', err);
+        if (!cancelled) setNotFound(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [surveyId]);
 
-    // Toggle a checkbox value
-    const toggleCheckbox = (questionId: string, choice: string) => {
-        setAnswers((prev) => {
-            const current = (prev[questionId] as string[]) || [];
-            return {
-                ...prev,
-                [questionId]: current.includes(choice)
-                    ? current.filter((c: string) => c !== choice)
-                    : [...current, choice],
-            };
-        });
-        if (errors[questionId]) {
-            setErrors((prev) => { const next = { ...prev }; delete next[questionId]; return next; });
-        }
-    };
+  // Auto-save draft
+  useEffect(() => {
+    if (!survey || submitted) return;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      try {
+        localStorage.setItem(draftKey(surveyId), JSON.stringify({ answers, email }));
+      } catch { /* ignore */ }
+    }, 500);
+    return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
+  }, [answers, email, survey, surveyId, submitted]);
 
-    // Set grid answer
-    const setGridAnswer = (questionId: string, rowLabel: string, value: string | string[], isCheckbox: boolean) => {
-        setAnswers((prev) => {
-            const grid = { ...(prev[questionId] as Record<string, any> || {}) };
-            if (isCheckbox) {
-                const current = (grid[rowLabel] as string[]) || [];
-                const choice = value as string;
-                grid[rowLabel] = current.includes(choice)
-                    ? current.filter((c: string) => c !== choice)
-                    : [...current, choice];
-            } else {
-                grid[rowLabel] = value;
-            }
-            return { ...prev, [questionId]: grid };
-        });
-        if (errors[questionId]) {
-            setErrors((prev) => { const next = { ...prev }; delete next[questionId]; return next; });
-        }
-    };
+  const visibleQuestions = useMemo(() => {
+    if (!survey) return [];
+    return survey.questions.filter(q => isQuestionVisible(q, answers));
+  }, [survey, answers]);
 
-    // Validate required fields
-    const validate = (): boolean => {
-        if (!survey) return false;
-        const newErrors: Record<string, string> = {};
-        for (const q of survey.questions) {
-            // Skip validation for hidden questions
-            if (!isQuestionVisible(q, answers)) continue;
-            if (!q.required) continue;
-            const val = answers[q.id];
-            if (val === undefined || val === '' || (Array.isArray(val) && val.length === 0)) {
-                newErrors[q.id] = 'This question is required';
-            }
-            // Grid validation
-            if ((q.type === 'grid_multiple' || q.type === 'grid_checkbox') && q.options?.rows) {
-                const grid = val as Record<string, any> || {};
-                const unanswered = q.options.rows.some((row) => !grid[row] || (Array.isArray(grid[row]) && grid[row].length === 0));
-                if (unanswered) {
-                    newErrors[q.id] = 'Please answer all rows';
-                }
-            }
-        }
-        setErrors(newErrors);
+  const progress = useMemo(() => {
+    if (!visibleQuestions.length) return 0;
+    const answered = visibleQuestions.filter(q => {
+      const a = answers[q.id];
+      if (a === undefined || a === '' || a === null) return false;
+      if (Array.isArray(a) && a.length === 0) return false;
+      return true;
+    }).length;
+    return Math.round((answered / visibleQuestions.length) * 100);
+  }, [visibleQuestions, answers]);
 
-        // Email validation
-        if (survey.settings?.collectEmail === 'required' && !respondentEmail.trim()) {
-            newErrors['__email'] = 'Email is required';
-        } else if (respondentEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(respondentEmail)) {
-            newErrors['__email'] = 'Please enter a valid email';
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
-
-    // Submit the response via Cloud Function
-    const handleSubmit = async () => {
-        if (!survey || !validate()) return;
-        setSubmitting(true);
-        try {
-            const formattedAnswers: Answer[] = survey.questions
-                .filter((q) => isQuestionVisible(q, answers) && answers[q.id] !== undefined && answers[q.id] !== '')
-                .map((q) => ({
-                    questionId: q.id,
-                    value: answers[q.id],
-                }));
-
-            const res = await fetch(SUBMIT_FUNCTION_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    surveyId,
-                    answers: formattedAnswers,
-                    ...(respondentEmail.trim() ? { respondentEmail: respondentEmail.trim() } : {}),
-                }),
-            });
-
-            if (!res.ok) {
-                const body = await res.json().catch(() => ({}));
-                throw new Error((body as { error?: string }).error ?? `HTTP ${res.status}`);
-            }
-
-            localStorage.removeItem(draftKey(surveyId));
-            setSubmitted(true);
-        } catch (err) {
-            console.error('[SurveyGo] Error submitting response:', err);
-            alert('Failed to submit response. Please try again.');
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
-    // --- States ---
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-background">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            </div>
-        );
-    }
-
-    if (notFound) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-background px-4">
-                <Card className="max-w-md w-full p-10 text-center">
-                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <AlertCircle className="w-8 h-8 text-red-500" />
-                    </div>
-                    <h1 className="text-2xl font-bold text-foreground mb-3">Survey Not Found</h1>
-                    <p className="text-muted-foreground">
-                        This survey doesn't exist or is no longer available.
-                    </p>
-                </Card>
-            </div>
-        );
-    }
-
-    if (survey?.status === 'closed') {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-background px-4">
-                <Card className="max-w-md w-full p-10 text-center">
-                    <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <AlertCircle className="w-8 h-8 text-orange-500" />
-                    </div>
-                    <h1 className="text-2xl font-bold text-foreground mb-3">Form Closed</h1>
-                    <p className="text-muted-foreground">
-                        The form <span className="font-semibold text-foreground">{survey.title}</span> is no longer accepting responses.
-                    </p>
-                    <p className="text-muted-foreground text-sm mt-3">
-                        Try contacting the owner of the form if you think this is a mistake.
-                    </p>
-                </Card>
-            </div>
-        );
-    }
-
-    if (submitted) {
-        const accentColor = survey?.settings?.accentColor || '#E2F380';
-        return <SurveyThankYou surveyTitle={survey?.title} accentColor={accentColor} />;
-    }
-
-    if (!survey) return null;
-
-    const settings: SurveySettings = { ...DEFAULT_SURVEY_SETTINGS, ...survey.settings };
-    const visibleQuestions = survey.questions.filter((q) => isQuestionVisible(q, answers));
-    const answeredCount = visibleQuestions.filter(q => answers[q.id] !== undefined && answers[q.id] !== '' && answers[q.id] !== null).length;
-    const progressPct = visibleQuestions.length > 0 ? (answeredCount / visibleQuestions.length) * 100 : 0;
-
-    // Load Google Font
-    const fontLink = document.querySelector('link[data-survey-font]') as HTMLLinkElement;
-    const fontUrl = `https://fonts.googleapis.com/css2?family=${settings.fontFamily.replace(/ /g, '+')}:wght@400;500;600;700&display=swap`;
-    if (!fontLink) {
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = fontUrl;
-        link.setAttribute('data-survey-font', 'true');
-        document.head.appendChild(link);
-    } else if (fontLink.href !== fontUrl) {
-        fontLink.href = fontUrl;
-    }
-
-    return (
-        <div
-            className="min-h-screen py-12 px-4"
-            style={{
-                fontFamily: `'${settings.fontFamily}', sans-serif`,
-                backgroundColor: settings.background.startsWith('#') ? settings.background : undefined,
-                '--primary': settings.accentColor,
-                '--ring': settings.accentColor,
-            } as React.CSSProperties}
-        >
-            {/* Sticky Progress Bar */}
-            {settings.showProgressBar && (
-                <div
-                    className="fixed top-0 left-0 right-0 z-10 px-4 pt-3 pb-2"
-                    style={{ backgroundColor: settings.background.startsWith('#') ? settings.background : '#fff' }}
-                >
-                    <div className="max-w-2xl mx-auto">
-                        <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs text-muted-foreground">{answeredCount} of {visibleQuestions.length} answered</span>
-                            <span className="text-xs text-muted-foreground">{Math.round(progressPct)}%</span>
-                        </div>
-                        <div className="h-2 bg-muted rounded-full overflow-hidden">
-                            <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${progressPct}%` }} />
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            <div className={`max-w-2xl mx-auto ${settings.showProgressBar ? 'mt-8' : ''}`}>
-
-                {/* Header Image */}
-                {survey.headerImageUrl && (
-                    <div className="mb-6 rounded-xl overflow-hidden">
-                        <img src={survey.headerImageUrl} alt="" className="w-full h-48 object-cover" />
-                    </div>
-                )}
-
-                {/* Survey Header */}
-                <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-foreground mb-3">{survey.title}</h1>
-                    {survey.description && (
-                        <p className="text-muted-foreground text-lg">{survey.description}</p>
-                    )}
-                </div>
-
-                {/* Email collection */}
-                {(settings.collectEmail === 'required' || settings.collectEmail === 'optional') && (
-                    <div className="mb-6">
-                        <label className="block text-sm font-medium text-foreground mb-1">
-                            Email address{settings.collectEmail === 'required' && <span className="text-red-500 ml-1">*</span>}
-                        </label>
-                        <input
-                            type="email"
-                            value={respondentEmail}
-                            onChange={(e) => { setRespondentEmail(e.target.value); if (errors['__email']) { setErrors((prev) => { const next = { ...prev }; delete next['__email']; return next; }); } }}
-                            placeholder="Enter your email"
-                            className="w-full px-4 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all"
-                        />
-                        {errors['__email'] && (
-                            <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
-                                <AlertCircle className="w-3.5 h-3.5" />
-                                {errors['__email']}
-                            </p>
-                        )}
-                    </div>
-                )}
-
-                {/* Questions — only visible ones */}
-                <div className="space-y-6">
-                    {visibleQuestions.map((question, idx) => (
-                        <Card key={question.id} className="p-6">
-                            <div className="mb-4">
-                                <div className="flex items-start gap-3">
-                                    <span className="text-sm font-medium text-muted-foreground leading-6 flex-shrink-0">{idx + 1}.</span>
-                                    <div className="flex-1 min-w-0">
-                                        {question.options?.imageUrl && (
-                                            <img src={question.options.imageUrl} alt="" className="w-full h-40 object-cover rounded-lg mb-3" />
-                                        )}
-                                        <h3 className="font-medium text-foreground break-words">
-                                            {question.text}
-                                            {question.required && (
-                                                <span className="text-red-500 ml-1">*</span>
-                                            )}
-                                        </h3>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <QuestionInput
-                                question={question}
-                                value={answers[question.id]}
-                                onChange={(val) => setAnswer(question.id, val)}
-                                onToggleCheckbox={(choice) => toggleCheckbox(question.id, choice)}
-                                onGridChange={(row, val, isCb) => setGridAnswer(question.id, row, val, isCb)}
-                            />
-
-                            {errors[question.id] && (
-                                <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
-                                    <AlertCircle className="w-3.5 h-3.5" />
-                                    {errors[question.id]}
-                                </p>
-                            )}
-                        </Card>
-                    ))}
-                </div>
-
-                {/* Submit */}
-                <div className="mt-8 flex justify-center">
-                    <button
-                        className="px-12 py-3 bg-primary rounded-lg font-medium text-sm gap-2 inline-flex items-center transition-all hover:opacity-90 disabled:opacity-50"
-                        onClick={handleSubmit}
-                        disabled={submitting}
-                    >
-                        {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
-                        {submitting ? 'Submitting...' : 'Submit Response'}
-                    </button>
-                </div>
-
-                {/* Branding */}
-                <div className="mt-12 text-center">
-                    <p className="text-xs text-muted-foreground">
-                        Powered by <span className="font-semibold text-foreground">SurveyGo</span>
-                    </p>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// ── Question Input Renderer ─────────────────────
-
-interface QuestionInputProps {
-    question: Question;
-    value: any;
-    onChange: (value: any) => void;
-    onToggleCheckbox: (choice: string) => void;
-    onGridChange: (row: string, value: string | string[], isCheckbox: boolean) => void;
-}
-
-function QuestionInput({ question, value, onChange, onToggleCheckbox, onGridChange }: QuestionInputProps) {
-    switch (question.type) {
-        case 'short': {
-            const charLimit = question.options?.charLimit;
-            const strVal = (value as string) || '';
-            return (
-                <div>
-                    <input
-                        type="text"
-                        value={strVal}
-                        onChange={(e) => onChange(e.target.value)}
-                        maxLength={charLimit || undefined}
-                        placeholder="Your answer..."
-                        className="w-full px-4 py-3 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all"
-                    />
-                    {charLimit && (
-                        <p className="text-xs text-muted-foreground mt-1 text-right">{strVal.length} / {charLimit}</p>
-                    )}
-                </div>
-            );
-        }
-
-        case 'long': {
-            const charLimit = question.options?.charLimit;
-            const strVal = (value as string) || '';
-            return (
-                <div>
-                    <textarea
-                        value={strVal}
-                        onChange={(e) => onChange(e.target.value)}
-                        maxLength={charLimit || undefined}
-                        placeholder="Your answer..."
-                        rows={4}
-                        className="w-full px-4 py-3 border border-border rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-primary transition-all"
-                    />
-                    {charLimit && (
-                        <p className="text-xs text-muted-foreground mt-1 text-right">{strVal.length} / {charLimit}</p>
-                    )}
-                </div>
-            );
-        }
-
-        case 'rating': {
-            const scale = question.options?.scale || 5;
-            const currentRating = (value as number) || 0;
-            const lowLabel = question.options?.lowLabel || '';
-            const highLabel = question.options?.highLabel || '';
-            const displayVal = currentRating || Math.ceil(scale / 2);
-            const pct = scale > 1 ? ((displayVal - 1) / (scale - 1)) * 100 : 0;
-            return (
-                <div className="space-y-1">
-                    <div className="text-center text-sm font-medium text-muted-foreground">{currentRating > 0 ? currentRating : '\u00A0'}</div>
-                    <div className="relative h-3 rounded-full bg-muted overflow-hidden">
-                        <div className="absolute left-0 top-0 bottom-0 rounded-full bg-primary transition-all" style={{ width: `${currentRating > 0 ? pct : 0}%` }} />
-                        <input
-                            type="range" min={1} max={scale} step={1}
-                            value={currentRating || Math.ceil(scale / 2)}
-                            onChange={(e) => onChange(Number(e.target.value))}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        />
-                    </div>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>{lowLabel || 1}</span>
-                        <span>{highLabel || scale}</span>
-                    </div>
-                </div>
-            );
-        }
-
-        case 'multiple': {
-            const choices = question.options?.choices || [];
-            return (
-                <div className="space-y-2">
-                    {choices.map((choice) => (
-                        <label
-                            key={choice}
-                            onClick={() => onChange(choice)}
-                            className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${value === choice
-                                ? 'border-primary bg-primary/5'
-                                : 'border-border hover:border-border'
-                                }`}
-                        >
-                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${value === choice ? 'border-primary' : 'border-border'}`}>
-                                {value === choice && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
-                            </div>
-                            <span className="text-sm text-foreground">{choice}</span>
-                        </label>
-                    ))}
-                </div>
-            );
-        }
-
-        case 'checkbox': {
-            const choices = question.options?.choices || [];
-            const selected = (value as string[]) || [];
-            return (
-                <div className="space-y-2">
-                    {choices.map((choice) => {
-                        const checked = selected.includes(choice);
-                        return (
-                            <label
-                                key={choice}
-                                onClick={() => onToggleCheckbox(choice)}
-                                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${checked
-                                    ? 'border-primary bg-primary/5'
-                                    : 'border-border hover:border-border'
-                                    }`}
-                            >
-                                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${checked ? 'border-primary bg-primary' : 'border-border'}`}>
-                                    {checked && (
-                                        <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none">
-                                            <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
-                                    )}
-                                </div>
-                                <span className="text-sm text-foreground">{choice}</span>
-                            </label>
-                        );
-                    })}
-                </div>
-            );
-        }
-
-        case 'dropdown': {
-            const choices = question.options?.choices || [];
-            return (
-                <DropdownInput
-                    choices={choices}
-                    value={(value as string) || ''}
-                    onChange={onChange}
-                />
-            );
-        }
-
-        case 'grid_multiple':
-        case 'grid_checkbox': {
-            const rows = question.options?.rows || [];
-            const columns = question.options?.columns || [];
-            const grid = (value as Record<string, any>) || {};
-            const isCheckbox = question.type === 'grid_checkbox';
-            return (
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr>
-                                <th className="p-2 text-left text-muted-foreground font-medium"></th>
-                                {columns.map((col, i) => (
-                                    <th key={i} className="p-2 text-center text-muted-foreground font-medium text-xs">{col}</th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {rows.map((row, ri) => (
-                                <tr key={ri} className="border-t border-border">
-                                    <td className="p-2 text-foreground font-medium">{row}</td>
-                                    {columns.map((col, ci) => {
-                                        if (isCheckbox) {
-                                            const selected = (grid[row] as string[]) || [];
-                                            const checked = selected.includes(col);
-                                            return (
-                                                <td key={ci} className="p-2 text-center">
-                                                    <button
-                                                        onClick={() => onGridChange(row, col, true)}
-                                                        className={`w-5 h-5 mx-auto rounded border-2 flex items-center justify-center transition-colors ${checked ? 'border-primary bg-primary' : 'border-border'}`}
-                                                    >
-                                                        {checked && (
-                                                            <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none">
-                                                                <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                                            </svg>
-                                                        )}
-                                                    </button>
-                                                </td>
-                                            );
-                                        } else {
-                                            const selected = grid[row] === col;
-                                            return (
-                                                <td key={ci} className="p-2 text-center">
-                                                    <button
-                                                        onClick={() => onGridChange(row, col, false)}
-                                                        className={`w-5 h-5 mx-auto rounded-full border-2 flex items-center justify-center transition-colors ${selected ? 'border-primary' : 'border-border'}`}
-                                                    >
-                                                        {selected && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
-                                                    </button>
-                                                </td>
-                                            );
-                                        }
-                                    })}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            );
-        }
-
-        case 'date': {
-            return (
-                <DateInput value={(value as string) || ''} onChange={onChange} />
-            );
-        }
-
-        case 'time': {
-            return (
-                <div className="max-w-xs">
-                    <input
-                        type="time"
-                        value={(value as string) || ''}
-                        onChange={(e) => onChange(e.target.value)}
-                        className="w-full px-4 py-3 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all"
-                    />
-                </div>
-            );
-        }
-
-        default:
-            return <p className="text-muted-foreground text-sm">Unsupported question type</p>;
-    }
-}
-
-// ── Extracted components (hooks must be at top level) ─────────
-
-function DropdownInput({ choices, value, onChange }: { choices: string[]; value: string; onChange: (v: string) => void }) {
-    const [isOpen, setIsOpen] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        function handleClickOutside(e: MouseEvent) {
-            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-                setIsOpen(false);
-            }
-        }
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
-    return (
-        <div ref={dropdownRef} className="relative max-w-sm">
-            <button
-                type="button"
-                onClick={() => setIsOpen(!isOpen)}
-                className="w-full flex items-center justify-between px-4 py-3 border border-border rounded-lg text-sm bg-card hover:border-border focus:outline-none focus:ring-2 focus:ring-primary transition-all"
-            >
-                <span className={value ? 'text-foreground' : 'text-muted-foreground'}>
-                    {value || 'Choose an option...'}
-                </span>
-                <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-            </button>
-            {isOpen && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-30 py-1 max-h-60 overflow-y-auto">
-                    {choices.map((c, i) => (
-                        <button
-                            key={i}
-                            onClick={() => { onChange(c); setIsOpen(false); }}
-                            className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${value === c ? 'bg-primary/10 text-foreground font-medium' : 'text-foreground hover:bg-muted'}`}
-                        >
-                            {c}
-                        </button>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-}
-
-function DateInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-    const [showCalendar, setShowCalendar] = useState(false);
-    const [calendarDate, setCalendarDate] = useState(() => {
-        if (value) return new Date(value);
-        return new Date();
+  const setAnswer = useCallback((id: string, value: unknown) => {
+    setAnswers(prev => ({ ...prev, [id]: value }));
+    setErrors(prev => {
+      if (!prev[id]) return prev;
+      const n = { ...prev }; delete n[id]; return n;
     });
+  }, []);
 
-    const daysInMonth = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 0).getDate();
-    const firstDay = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 1).getDay();
-    const monthName = calendarDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+  const handleSubmit = async () => {
+    if (!survey || submitting) return;
+    const settings = survey.settings;
+    const collectEmail = settings?.collectEmail ?? 'none';
 
+    const newErrors: Record<string, string> = {};
+    for (const q of visibleQuestions) {
+      if (q.required) {
+        const a = answers[q.id];
+        if (a === undefined || a === '' || a === null || (Array.isArray(a) && a.length === 0)) {
+          newErrors[q.id] = 'This field is required';
+        }
+      }
+    }
+    if (collectEmail === 'required' && !email.trim()) {
+      newErrors.__email = 'Email is required';
+    }
+    if (email.trim() && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) {
+      newErrors.__email = 'Enter a valid email';
+    }
+    if (Object.keys(newErrors).length) {
+      setErrors(newErrors);
+      toast.error('Please fix the errors before submitting');
+      const firstBadId = Object.keys(newErrors)[0];
+      if (firstBadId !== '__email') {
+        document.getElementById(`q-${firstBadId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const answerList: Answer[] = Object.entries(answers).map(([questionId, value]) => ({
+        questionId,
+        value: value as Answer['value'],
+      }));
+
+      const res = await fetch(SUBMIT_FUNCTION_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          surveyId,
+          answers: answerList,
+          respondentEmail: email.trim() || undefined,
+        }),
+      });
+
+      if (!res.ok) {
+        const msg = await res.text();
+        throw new Error(msg || 'Submission failed');
+      }
+
+      try { localStorage.removeItem(draftKey(surveyId)); } catch { /* ignore */ }
+      setSubmitted(true);
+    } catch (err) {
+      console.error('[SurveyGo] Submit error:', err);
+      toast.error('Could not submit response. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
     return (
-        <div className="relative max-w-xs">
-            <div className="relative">
-                <input
-                    type="text"
-                    value={value}
-                    onChange={(e) => onChange(e.target.value)}
-                    placeholder="mm/dd/yyyy"
-                    className="w-full px-4 py-3 pr-10 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all"
-                />
-                <button
-                    onClick={() => setShowCalendar(!showCalendar)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                    <Calendar className="w-4 h-4" />
-                </button>
-            </div>
-            {showCalendar && (
-                <div className="absolute top-full mt-2 bg-card border border-border rounded-lg shadow-lg p-4 z-10 w-72">
-                    <div className="flex items-center justify-between mb-3">
-                        <button onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1))} className="p-1 hover:bg-muted rounded">
-                            <ChevronLeft className="w-4 h-4" />
-                        </button>
-                        <span className="text-sm font-medium">{monthName}</span>
-                        <button onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1))} className="p-1 hover:bg-muted rounded">
-                            <ChevronRight className="w-4 h-4" />
-                        </button>
-                    </div>
-                    <div className="grid grid-cols-7 gap-1 text-center text-xs">
-                        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
-                            <div key={d} className="text-muted-foreground font-medium py-1">{d}</div>
-                        ))}
-                        {Array.from({ length: firstDay }).map((_, i) => (
-                            <div key={`empty-${i}`} />
-                        ))}
-                        {Array.from({ length: daysInMonth }, (_, i) => {
-                            const day = i + 1;
-                            const dateStr = `${String(calendarDate.getMonth() + 1).padStart(2, '0')}/${String(day).padStart(2, '0')}/${calendarDate.getFullYear()}`;
-                            const isSelected = value === dateStr;
-                            return (
-                                <button
-                                    key={day}
-                                    onClick={() => { onChange(dateStr); setShowCalendar(false); }}
-                                    className={`py-1.5 rounded text-sm transition-all ${isSelected ? 'bg-primary text-foreground font-medium' : 'hover:bg-muted text-foreground'}`}
-                                >
-                                    {day}
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-            )}
-        </div>
+      <div className="min-h-screen bg-brand-ghost flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-brand-black/40" />
+      </div>
     );
+  }
+
+  if (notFound) {
+    return (
+      <div className="min-h-screen bg-brand-ghost flex items-center justify-center p-6">
+        <div className="bg-white rounded-2xl border border-black/5 shadow-sm p-8 text-center max-w-md">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-red-50 flex items-center justify-center">
+            <AlertCircle className="w-6 h-6 text-red-500" />
+          </div>
+          <h1 className="text-xl font-display font-bold text-brand-black mb-2">Survey not available</h1>
+          <p className="text-sm text-brand-black/60">This survey may have been closed or removed.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (submitted) {
+    return (
+      <div className="min-h-screen bg-brand-ghost flex items-center justify-center p-6">
+        <div className="bg-white rounded-2xl border border-black/5 shadow-sm p-10 text-center max-w-md">
+          <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-brand-honeydew flex items-center justify-center">
+            <CheckCircle2 className="w-7 h-7 text-green-700" />
+          </div>
+          <h1 className="text-2xl font-display font-bold text-brand-black mb-2">Thanks for your response!</h1>
+          <p className="text-sm text-brand-black/60">
+            {survey?.settings?.confirmationMessage || 'Your answers have been submitted.'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!survey) return null;
+
+  const showProgress = survey.settings?.showProgressBar !== false;
+  const collectEmail = survey.settings?.collectEmail ?? 'none';
+
+  return (
+    <div className="min-h-screen bg-brand-ghost font-sans text-brand-black">
+      <main className="max-w-2xl mx-auto px-6 py-8 space-y-5">
+        {showProgress && (
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-1.5 bg-black/5 rounded-full overflow-hidden">
+              <div className="h-full bg-brand-black transition-all" style={{ width: `${progress}%` }} />
+            </div>
+            <span className="text-xs font-semibold text-brand-black/60 tabular-nums">{progress}%</span>
+          </div>
+        )}
+
+        {survey.headerImageUrl && (
+          <img src={survey.headerImageUrl} alt="" className="w-full rounded-2xl object-cover max-h-48" />
+        )}
+        <div>
+          <h1 className="text-3xl md:text-4xl font-display font-bold text-brand-black tracking-tight">{survey.title || 'Untitled Survey'}</h1>
+          {survey.description && (
+            <p className="text-base text-brand-black/60 mt-2 leading-relaxed whitespace-pre-wrap">{survey.description}</p>
+          )}
+        </div>
+
+        {visibleQuestions.map((q, idx) => (
+          <QuestionCard
+            key={q.id}
+            question={q}
+            index={idx}
+            answer={answers[q.id]}
+            error={errors[q.id]}
+            onChange={(v) => setAnswer(q.id, v)}
+          />
+        ))}
+
+        {collectEmail !== 'none' && (
+          <div className="bg-white rounded-2xl border border-black/5 shadow-sm p-6">
+            <label className="block text-sm font-semibold text-brand-black mb-2">
+              Your email {collectEmail === 'required' && <span className="text-red-500">*</span>}
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              className={`w-full bg-brand-ghost/50 border rounded-lg px-3 py-2.5 text-sm outline-none focus:bg-white focus:border-brand-black/20 ${errors.__email ? 'border-red-300' : 'border-black/10'}`}
+            />
+            {errors.__email && <p className="text-xs text-red-500 mt-1.5">{errors.__email}</p>}
+          </div>
+        )}
+
+        <div className="pt-4">
+          <button
+            onClick={handleSubmit}
+            disabled={submitting}
+            className="w-full bg-brand-black text-white py-3.5 rounded-xl font-semibold text-base hover:bg-black/90 transition-all shadow-lg shadow-black/10 active:scale-[0.99] disabled:opacity-60 flex items-center justify-center gap-2"
+          >
+            {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            {submitting ? 'Submitting...' : 'Submit response'}
+          </button>
+        </div>
+      </main>
+
+      <footer className="max-w-2xl mx-auto px-6 py-8 text-center">
+        <p className="text-xs text-brand-black/40">Powered by SurveyGo</p>
+      </footer>
+    </div>
+  );
 }
 
+// ── Question renderers ───────────────────────────────────────────────────────
+
+interface QuestionCardProps {
+  question: Question;
+  index: number;
+  answer: unknown;
+  error?: string;
+  onChange: (v: unknown) => void;
+}
+
+function QuestionCard({ question, index, answer, error, onChange }: QuestionCardProps) {
+  return (
+    <div id={`q-${question.id}`} className="bg-white rounded-2xl border border-black/5 shadow-sm p-6">
+      <div className="mb-4">
+        <p className="text-xs font-bold text-brand-black/40 uppercase tracking-wider mb-1">
+          Question {index + 1}
+          {question.required && <span className="text-red-500 ml-1">*</span>}
+        </p>
+        <h3 className="text-lg font-semibold text-brand-black leading-snug">
+          {question.text || 'Untitled question'}
+        </h3>
+      </div>
+      <QuestionInput question={question} answer={answer} onChange={onChange} />
+      {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
+    </div>
+  );
+}
+
+function QuestionInput({ question, answer, onChange }: { question: Question; answer: unknown; onChange: (v: unknown) => void }) {
+  switch (question.type) {
+    case 'short':
+      return (
+        <input
+          type="text"
+          value={(answer as string) ?? ''}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full bg-brand-ghost/50 border border-black/10 rounded-lg px-3 py-2.5 text-sm outline-none focus:bg-white focus:border-brand-black/20"
+        />
+      );
+    case 'long':
+      return (
+        <textarea
+          rows={4}
+          value={(answer as string) ?? ''}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full bg-brand-ghost/50 border border-black/10 rounded-lg px-3 py-2.5 text-sm outline-none focus:bg-white focus:border-brand-black/20 resize-y"
+        />
+      );
+    case 'multiple':
+      return (
+        <div className="space-y-2">
+          {(question.options?.choices ?? []).map((c, i) => (
+            <label key={i} className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-brand-ghost/40 transition-colors">
+              <input
+                type="radio"
+                name={question.id}
+                checked={answer === c}
+                onChange={() => onChange(c)}
+                className="w-4 h-4 accent-brand-black"
+              />
+              <span className="text-sm text-brand-black">{c}</span>
+            </label>
+          ))}
+        </div>
+      );
+    case 'checkbox':
+      return (
+        <div className="space-y-2">
+          {(question.options?.choices ?? []).map((c, i) => {
+            const values = (answer as string[]) ?? [];
+            const checked = values.includes(c);
+            return (
+              <label key={i} className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-brand-ghost/40 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={(e) => {
+                    if (e.target.checked) onChange([...values, c]);
+                    else onChange(values.filter(v => v !== c));
+                  }}
+                  className="w-4 h-4 accent-brand-black rounded"
+                />
+                <span className="text-sm text-brand-black">{c}</span>
+              </label>
+            );
+          })}
+        </div>
+      );
+    case 'dropdown':
+      return (
+        <select
+          value={(answer as string) ?? ''}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full bg-brand-ghost/50 border border-black/10 rounded-lg px-3 py-2.5 text-sm outline-none focus:bg-white focus:border-brand-black/20"
+        >
+          <option value="">Select an option</option>
+          {(question.options?.choices ?? []).map((c, i) => <option key={i} value={c}>{c}</option>)}
+        </select>
+      );
+    case 'rating': {
+      const ratingLow = question.options?.ratingLow ?? 1;
+      const ratingHigh = question.options?.ratingHigh ?? (question.options?.scale ?? 5);
+      const ratingNums = Array.from({ length: ratingHigh - ratingLow + 1 }, (_, i) => i + ratingLow);
+      const value = typeof answer === 'number' ? answer : NaN;
+      const isStar = question.options?.ratingStyle === 'star';
+      return (
+        <div className="flex flex-col items-center w-full">
+          <div className="flex items-center justify-center gap-2 w-full flex-wrap">
+            {ratingNums.map(n => isStar ? (
+              <button key={n} type="button" onClick={() => onChange(n)} className="transition-transform hover:scale-110">
+                <Star className={`w-8 h-8 transition-colors ${value >= n ? 'fill-brand-vanilla text-brand-black/50' : 'fill-none text-brand-black/20 hover:text-brand-black/40'}`} />
+              </button>
+            ) : (
+              <button key={n} type="button" onClick={() => onChange(n)}
+                className={`flex-1 min-w-[40px] max-w-[56px] h-10 rounded-lg border text-sm font-medium transition-colors ${
+                  value === n ? 'bg-brand-black text-white border-brand-black' : 'bg-brand-ghost/50 border-black/10 text-brand-black/70 hover:bg-white'
+                }`}>{n}</button>
+            ))}
+          </div>
+          {(question.options?.lowLabel || question.options?.midLabel || question.options?.highLabel) && (
+            <div className="flex w-full mt-2">
+              <span className="text-xs text-brand-black/50 flex-1 text-left">{question.options?.lowLabel ?? ''}</span>
+              {question.options?.midLabel && <span className="text-xs text-brand-black/50 flex-1 text-center">{question.options.midLabel}</span>}
+              <span className="text-xs text-brand-black/50 flex-1 text-right">{question.options?.highLabel ?? ''}</span>
+            </div>
+          )}
+        </div>
+      );
+    }
+    case 'date': {
+      const dateVal = (answer as string) ?? '';
+      const parsed = dateVal ? parse(dateVal, 'yyyy-MM-dd', new Date()) : undefined;
+      return (
+        <Popover>
+          <PopoverTrigger asChild>
+            <button type="button" className={`flex items-center gap-2 bg-brand-ghost/50 border border-black/10 rounded-lg px-3 py-2.5 text-sm outline-none hover:bg-white hover:border-brand-black/20 transition-colors min-w-[200px] text-left ${dateVal ? 'text-brand-black' : 'text-brand-black/40'}`}>
+              <CalendarIcon className="w-4 h-4 shrink-0 text-brand-black/40" />
+              {dateVal && parsed ? format(parsed, 'PPP') : 'Select a date'}
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0 bg-white rounded-xl border border-black/5 shadow-lg" align="start">
+            <Calendar mode="single" selected={parsed} onSelect={(day) => { if (day) onChange(format(day, 'yyyy-MM-dd')); }} initialFocus />
+          </PopoverContent>
+        </Popover>
+      );
+    }
+    case 'time': {
+      const timeVal = (answer as string) ?? '';
+      const [rawH, rawM] = timeVal ? timeVal.split(':').map(Number) : [NaN, NaN];
+      const h12 = !isNaN(rawH) ? ((rawH % 12) || 12) : '';
+      const min = !isNaN(rawM) ? String(rawM).padStart(2, '0') : '';
+      const ampm = !isNaN(rawH) ? (rawH >= 12 ? 'PM' : 'AM') : 'AM';
+      const updateTime = (hour: string, minute: string, period: string) => {
+        if (!hour || !minute) return;
+        let h24 = parseInt(hour);
+        if (period === 'PM' && h24 !== 12) h24 += 12;
+        if (period === 'AM' && h24 === 12) h24 = 0;
+        onChange(`${String(h24).padStart(2, '0')}:${minute}`);
+      };
+      const selCls = "appearance-none bg-brand-ghost/50 border border-black/10 rounded-lg px-3 py-2.5 text-sm text-brand-black outline-none hover:bg-white hover:border-brand-black/20 transition-colors cursor-pointer";
+      return (
+        <div className="flex items-center gap-2">
+          <Clock className="w-4 h-4 text-brand-black/40 shrink-0" />
+          <div className="relative">
+            <select value={h12} onChange={e => updateTime(e.target.value, min || '00', ampm)} className={selCls}>
+              <option value="" disabled>HH</option>
+              {Array.from({ length: 12 }, (_, i) => i + 1).map(h => <option key={h} value={h}>{h}</option>)}
+            </select>
+          </div>
+          <span className="text-brand-black/40 font-medium">:</span>
+          <div className="relative">
+            <select value={min} onChange={e => updateTime(String(h12 || 12), e.target.value, ampm)} className={selCls}>
+              <option value="" disabled>MM</option>
+              {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(m => <option key={m} value={m}>{m}</option>)}
+            </select>
+          </div>
+          <div className="flex rounded-lg border border-black/10 overflow-hidden">
+            {(['AM', 'PM'] as const).map(p => (
+              <button key={p} type="button" onClick={() => updateTime(String(h12 || 12), min || '00', p)}
+                className={`px-3 py-2 text-xs font-medium transition-colors ${ampm === p ? 'bg-brand-black text-white' : 'bg-brand-ghost/50 text-brand-black/60 hover:bg-white'}`}>{p}</button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    case 'grid_multiple':
+    case 'grid_checkbox': {
+      const rows = question.options?.rows ?? [];
+      const cols = question.options?.columns ?? [];
+      const grid = (answer as Record<string, string | string[]>) ?? {};
+      const multi = question.type === 'grid_checkbox';
+      return (
+        <div className="overflow-x-auto">
+          <table className="text-sm text-brand-black/80">
+            <thead>
+              <tr>
+                <th />
+                {cols.map((c, i) => <th key={i} className="px-3 py-2 font-medium text-xs text-brand-black/60">{c}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r, ri) => (
+                <tr key={ri}>
+                  <td className="pr-3 py-2 font-medium">{r}</td>
+                  {cols.map((c, ci) => {
+                    const current = grid[r];
+                    const selected = multi
+                      ? Array.isArray(current) && current.includes(c)
+                      : current === c;
+                    return (
+                      <td key={ci} className="px-3 py-2 text-center">
+                        <input
+                          type={multi ? 'checkbox' : 'radio'}
+                          name={`${question.id}-${r}`}
+                          checked={!!selected}
+                          onChange={() => {
+                            if (multi) {
+                              const arr = Array.isArray(current) ? [...current] : [];
+                              const idx = arr.indexOf(c);
+                              if (idx >= 0) arr.splice(idx, 1); else arr.push(c);
+                              onChange({ ...grid, [r]: arr });
+                            } else {
+                              onChange({ ...grid, [r]: c });
+                            }
+                          }}
+                          className="w-4 h-4 accent-brand-black"
+                        />
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+    default:
+      return null;
+  }
+}

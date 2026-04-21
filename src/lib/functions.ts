@@ -74,3 +74,10 @@ export const callAnalyzeSentiment = httpsCallable<AnalyzeSentimentRequest, Senti
     functions,
     'analyzeSentiment'
 );
+
+interface SendInvitationRequest { surveyId: string; recipients: string[]; subject: string; body: string; }
+interface SendInvitationResponse { sent: number; }
+export const callSendSurveyInvitation = httpsCallable<SendInvitationRequest, SendInvitationResponse>(
+    functions,
+    'sendSurveyInvitation'
+);

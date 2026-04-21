@@ -12,6 +12,7 @@ export const PLAN_LIMITS = {
         canBranching: false,
         canConnectApps: false,
         canAiSentiment: false,
+        canSendInvites: false,
     },
     standard: {
         maxSurveys: Infinity,
@@ -24,6 +25,7 @@ export const PLAN_LIMITS = {
         canBranching: true,
         canConnectApps: true, // up to 5 apps
         canAiSentiment: false,
+        canSendInvites: true,
     },
     professional: {
         maxSurveys: Infinity,
@@ -36,6 +38,7 @@ export const PLAN_LIMITS = {
         canBranching: true,
         canConnectApps: true,
         canAiSentiment: true,
+        canSendInvites: true,
     },
 } satisfies Record<PlanId, object>;
 

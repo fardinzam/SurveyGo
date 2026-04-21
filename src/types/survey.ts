@@ -16,6 +16,8 @@ export const QuestionTypeEnum = z.enum([
     'grid_checkbox',  // grid — checkbox (multi-select per row)
     'date',           // date picker
     'time',           // time picker
+    'welcome',        // welcome screen (always first)
+    'ending',         // ending screen (always last)
 ]);
 
 export type QuestionType = z.infer<typeof QuestionTypeEnum>;
@@ -62,14 +64,28 @@ export const QuestionSchema = z.object({
     required: z.boolean().default(false),
     options: z
         .object({
-            scale: z.number().optional(),              // for rating (default 5, max 10)
-            choices: z.array(z.string()).optional(),    // for multiple / checkbox / dropdown
-            charLimit: z.number().optional(),           // for short / long answer
-            rows: z.array(z.string()).optional(),       // for grid types (row labels)
-            columns: z.array(z.string()).optional(),    // for grid types (column labels)
-            imageUrl: z.string().optional(),            // optional image attachment
-            lowLabel: z.string().optional(),            // rating scale low endpoint label
-            highLabel: z.string().optional(),           // rating scale high endpoint label
+            scale: z.number().optional(),
+            choices: z.array(z.string()).optional(),
+            charLimit: z.number().optional(),
+            charLimitEnabled: z.boolean().optional(),
+            validationRegex: z.string().optional(),
+            validationEnabled: z.boolean().optional(),
+            randomize: z.boolean().optional(),
+            selectionLimit: z.enum(['unlimited', 'exact', 'range']).optional(),
+            selectionExact: z.number().optional(),
+            selectionMin: z.number().optional(),
+            selectionMax: z.number().optional(),
+            rows: z.array(z.string()).optional(),
+            columns: z.array(z.string()).optional(),
+            imageUrl: z.string().optional(),
+            lowLabel: z.string().optional(),
+            midLabel: z.string().optional(),
+            highLabel: z.string().optional(),
+            ratingLow: z.number().optional(),   // 0 or 1
+            ratingHigh: z.number().optional(),   // 2-10
+            ratingStyle: z.enum(['numeric', 'star']).optional(),
+            dateFormat: z.string().optional(),    // MMDDYYYY, DDMMYYYY, YYYYMMDD
+            dateDivider: z.string().optional(),   // slash, dash, period
         })
         .optional(),
     logic: LogicRuleSchema.optional(),                 // conditional display rule
@@ -95,6 +111,7 @@ export interface SurveySettings {
     allowEditing: boolean;           // let respondents edit after submit
     limitOneResponse: boolean;       // one response per person
     showProgressBar: boolean;        // display completion progress
+    showQuestionNumber: boolean;     // number each question
     confirmationMessage: string;     // custom message after submit
 }
 
@@ -109,6 +126,7 @@ export const DEFAULT_SURVEY_SETTINGS: SurveySettings = {
     allowEditing: false,
     limitOneResponse: true,
     showProgressBar: true,
+    showQuestionNumber: true,
     confirmationMessage: '',
 };
 
@@ -249,22 +267,34 @@ export interface SubmitResponseInput {
 // User preferences (notification settings)
 // ──────────────────────────────────────────
 
+export type SurveyUpdateFrequency = 'hourly' | 'daily' | 'weekly' | 'monthly';
+
+export interface SurveyUpdateConfig {
+    enabled: boolean;
+    frequency: SurveyUpdateFrequency;
+    hourlyInterval: number;   // 1-12
+    weeklyDay: number;        // 0=Sun, 1=Mon ... 6=Sat
+    monthlyDay: number;       // 1-28
+}
+
 export interface UserPreferences {
     notifications: {
-        emailNewResponses: boolean;
-        weeklySummary: boolean;
-        urgentAlerts: boolean;
-        teamActivity: boolean;
+        surveyUpdates: SurveyUpdateConfig;
         productUpdates: boolean;
+        promotionalAnnouncements: boolean;
     };
 }
 
 export const DEFAULT_USER_PREFERENCES: UserPreferences = {
     notifications: {
-        emailNewResponses: true,
-        weeklySummary: true,
-        urgentAlerts: true,
-        teamActivity: false,
-        productUpdates: false,
+        surveyUpdates: {
+            enabled: true,
+            frequency: 'daily',
+            hourlyInterval: 4,
+            weeklyDay: 1,
+            monthlyDay: 1,
+        },
+        productUpdates: true,
+        promotionalAnnouncements: false,
     },
 };

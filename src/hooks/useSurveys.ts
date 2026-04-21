@@ -12,32 +12,23 @@ import {
 } from '../lib/firestore';
 import type { CreateSurveyInput, UpdateSurveyInput } from '../types/survey';
 
-// ──────────────────────────────────────────
-// Query keys
-// ──────────────────────────────────────────
 export const surveyKeys = {
     all: ['surveys'] as const,
     list: () => [...surveyKeys.all, 'list'] as const,
     detail: (id: string) => [...surveyKeys.all, 'detail', id] as const,
 };
 
-// ──────────────────────────────────────────
-// Queries
-// ──────────────────────────────────────────
-
 /** Fetch all surveys for the current user with real-time updates. */
 export function useSurveys() {
     const { user } = useAuthContext();
     const queryClient = useQueryClient();
 
-    // Initial fetch via queryFn (provides loading/error states)
     const result = useQuery({
         queryKey: surveyKeys.list(),
         queryFn: () => getSurveys(user!.uid),
         enabled: !!user,
     });
 
-    // Real-time listener that pushes updates into the query cache
     useEffect(() => {
         if (!user) return;
         const unsub = subscribeSurveys(user.uid, (surveys) => {
@@ -49,7 +40,6 @@ export function useSurveys() {
     return result;
 }
 
-/** Fetch a single survey by id. */
 export function useSurvey(id: string | undefined) {
     return useQuery({
         queryKey: surveyKeys.detail(id ?? ''),
@@ -58,11 +48,10 @@ export function useSurvey(id: string | undefined) {
     });
 }
 
-// ──────────────────────────────────────────
-// Mutations
-// ──────────────────────────────────────────
+function invalidateAllLists(queryClient: ReturnType<typeof useQueryClient>) {
+    queryClient.invalidateQueries({ queryKey: surveyKeys.all });
+}
 
-/** Create a new survey and invalidate the list cache. */
 export function useCreateSurvey() {
     const queryClient = useQueryClient();
     const { user } = useAuthContext();
@@ -75,7 +64,6 @@ export function useCreateSurvey() {
     });
 }
 
-/** Update an existing survey. Invalidates both list and detail caches. */
 export function useUpdateSurvey() {
     const queryClient = useQueryClient();
 
@@ -91,19 +79,15 @@ export function useUpdateSurvey() {
     });
 }
 
-/** Delete a survey and remove it from cache. */
 export function useDeleteSurvey() {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: (id: string) => deleteSurvey(id),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: surveyKeys.list() });
-        },
+        onSuccess: () => invalidateAllLists(queryClient),
     });
 }
 
-/** Duplicate a survey and refresh the list. */
 export function useDuplicateSurvey() {
     const queryClient = useQueryClient();
     const { user } = useAuthContext();

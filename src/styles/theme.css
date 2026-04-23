@@ -81,6 +81,14 @@
 }
 
 @theme inline {
+  --color-brand-ghost: #F6F5FA;
+  --color-brand-black: #212121;
+  --color-brand-vanilla: #EFF0A3;
+  --color-brand-honeydew: #CFDECA;
+  --color-brand-blue: #D8DFE9;
+  --font-sans: 'Inter', sans-serif;
+  --font-display: 'Syne', sans-serif;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

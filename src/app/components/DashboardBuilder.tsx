@@ -678,7 +678,7 @@ export function DashboardBuilder({ surveyId }: DashboardBuilderProps) {
         </div>
       </header>
 
-      {activeTab==='Logic'&&<BuilderLogic questions={questions} />}
+      {activeTab==='Logic'&&<BuilderLogic questions={questions} onUpdateQuestion={updateQuestion} />}
       {activeTab==='Connect'&&<BuilderConnect />}
       {activeTab==='Share'&&<BuilderShare surveyId={surveyId} survey={survey} onPublish={handlePublish} publishing={publishing} />}
       {activeTab==='Results'&&isActive&&<BuilderResults surveyId={surveyId} />}

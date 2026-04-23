@@ -89,6 +89,16 @@ export const QuestionSchema = z.object({
         })
         .optional(),
     logic: LogicRuleSchema.optional(),                 // conditional display rule
+    branching: z.object({
+        rules: z.array(z.object({
+            conditions: z.array(z.object({
+                operator: z.enum(['is', 'is_not', 'is_equal_to', 'is_not_equal_to', 'contains', 'not_contains', 'is_answered', 'is_not_answered']),
+                value: z.string().optional(),
+            })),
+            targetQuestionId: z.string(),
+        })),
+        defaultTargetId: z.string().optional(),
+    }).optional(),
 });
 
 export type Question = z.infer<typeof QuestionSchema>;

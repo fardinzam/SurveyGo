@@ -37,6 +37,19 @@ function isQuestionVisible(question: Question, answers: Record<string, unknown>)
   return action === 'show' ? match : !match;
 }
 
+function evaluateBranchCondition(cond: { operator: string; value?: string }, answer: unknown): boolean {
+  const v = cond.value ?? '';
+  switch (cond.operator) {
+    case 'is': case 'is_equal_to': return String(answer) === v;
+    case 'is_not': case 'is_not_equal_to': return String(answer) !== v;
+    case 'contains': return Array.isArray(answer) && answer.includes(v);
+    case 'not_contains': return !Array.isArray(answer) || !answer.includes(v);
+    case 'is_answered': return answer !== undefined && answer !== '' && !(Array.isArray(answer) && answer.length === 0);
+    case 'is_not_answered': return answer === undefined || answer === '' || (Array.isArray(answer) && answer.length === 0);
+    default: return true;
+  }
+}
+
 // ── Root ─────────────────────────────────────────────────────────────────────
 
 export function SurveyRespondentPage({ surveyId }: SurveyRespondentPageProps) {
@@ -98,7 +111,32 @@ export function SurveyRespondentPage({ surveyId }: SurveyRespondentPageProps) {
 
   const visibleQuestions = useMemo(() => {
     if (!survey) return [];
-    return survey.questions.filter(q => isQuestionVisible(q, answers));
+    const qs = survey.questions;
+    const reachable: Question[] = [];
+    let i = 0;
+    while (i < qs.length) {
+      const q = qs[i];
+      if (!isQuestionVisible(q, answers)) { i++; continue; }
+      reachable.push(q);
+      if (q.branching && (q.branching.rules.length > 0 || q.branching.defaultTargetId)) {
+        const ans = answers[q.id];
+        let targetId: string | undefined;
+        if (ans !== undefined && ans !== '' && !(Array.isArray(ans) && ans.length === 0)) {
+          for (const rule of q.branching.rules) {
+            if (rule.conditions.every(c => evaluateBranchCondition(c, ans))) {
+              targetId = rule.targetQuestionId; break;
+            }
+          }
+        }
+        if (!targetId) targetId = q.branching.defaultTargetId;
+        if (targetId) {
+          const tIdx = qs.findIndex(qn => qn.id === targetId);
+          if (tIdx > i) { i = tIdx; continue; }
+        }
+      }
+      i++;
+    }
+    return reachable;
   }, [survey, answers]);
 
   const progress = useMemo(() => {

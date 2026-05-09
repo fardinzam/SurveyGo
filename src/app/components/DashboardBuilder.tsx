@@ -5,15 +5,14 @@ import {
   LayoutTemplate, Settings, X, Loader2, Send, MessageSquare, Type, AlignLeft,
   List, CheckSquare, ChevronsUpDown, Star, Calendar, Clock, Grid3x3,
   AlertTriangle, Monitor, Smartphone, Undo2, Redo2, Palette, Upload,
-  RotateCcw, SlidersHorizontal, Search, FileUp, Image as ImageIcon, Link2,
+  RotateCcw, SlidersHorizontal, Search, FileUp, Image as ImageIcon, Link2, Check, Save,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSurvey, useUpdateSurvey } from '../../hooks/useSurveys';
 import { useSubscription } from '../../hooks/useSubscription';
-import { canUseAI } from '../../lib/planLimits';
-import { callGenerateQuestions, type GeneratedQuestion } from '../../lib/functions';
 import type { Question, QuestionType, SurveyClient, SurveySettings } from '../../types/survey';
 import { DEFAULT_SURVEY_SETTINGS } from '../../types/survey';
+import { CustomDropdown } from './CustomDropdown';
 import { BuilderLogic } from './BuilderLogic';
 import { BuilderConnect } from './BuilderConnect';
 import { BuilderShare } from './BuilderShare';
@@ -62,23 +61,13 @@ function makeQuestion(type: QuestionType): Question {
     default: return b;
   }
 }
-function mapAiType(t: GeneratedQuestion['type']): QuestionType {
-  switch (t) { case 'multiple-choice': case 'yes-no': return 'multiple'; case 'checkbox': return 'checkbox'; case 'short-answer': return 'short'; case 'long-answer': return 'long'; case 'rating': return 'rating'; default: return 'short'; }
-}
-function aiToQuestion(g: GeneratedQuestion): Question {
-  const type = mapAiType(g.type);
-  const q: Question = { id: newId(), type, text: g.text, required: !!g.required };
-  if (g.type === 'yes-no' && !g.options?.length) q.options = { choices: ['Yes', 'No'] };
-  else if ((type === 'multiple' || type === 'checkbox') && g.options?.length) q.options = { choices: g.options };
-  else if (type === 'rating') q.options = { scale: 5 };
-  return q;
-}
+
 // ── Tooltip wrapper ──────────────────────────────────────────────────────────
-function Tooltip({ label, children }: { label: string; children: React.ReactNode }) {
+function Tooltip({ label, children, position = 'above' }: { label: string; children: React.ReactNode; position?: 'above' | 'below' }) {
   return (
     <div className="relative group/tip">
       {children}
-      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-brand-black text-white text-[10px] font-medium rounded-md whitespace-nowrap opacity-0 group-hover/tip:opacity-100 transition-opacity pointer-events-none z-20">
+      <div className={`absolute left-1/2 -translate-x-1/2 px-2 py-1 bg-brand-black text-white text-[10px] font-medium rounded-md whitespace-nowrap opacity-0 group-hover/tip:opacity-100 transition-opacity pointer-events-none z-20 ${position === 'below' ? 'top-full mt-1.5' : 'bottom-full mb-1.5'}`}>
         {label}
       </div>
     </div>
@@ -89,13 +78,18 @@ function Tooltip({ label, children }: { label: string; children: React.ReactNode
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (<button type="button" onClick={() => onChange(!checked)} className={`w-9 h-5 rounded-full p-0.5 transition-colors shrink-0 ${checked ? 'bg-brand-black' : 'bg-black/10'}`}><div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${checked ? 'translate-x-4' : 'translate-x-0'}`} /></button>);
 }
-function ColorSwatch({ color }: { color: string }) {
-  return (<div className="flex items-center gap-1 border border-border rounded-lg px-2 py-1.5 cursor-pointer hover:bg-brand-ghost transition-colors"><div className="w-4 h-4 rounded-full border border-black/15 shrink-0" style={{ background: color }} /><ChevronDown className="w-3 h-3 text-muted-foreground" /></div>);
+function ColorSwatch({ color, onChange }: { color: string; onChange?: (c: string) => void }) {
+  return (
+    <label className="flex items-center gap-1 border border-border rounded-lg px-2 py-1.5 cursor-pointer hover:bg-brand-ghost transition-colors relative">
+      <div className="w-4 h-4 rounded-full border border-black/15 shrink-0" style={{ background: color }} />
+      <ChevronDown className="w-3 h-3 text-muted-foreground" />
+      {onChange && <input type="color" value={color} onChange={e => onChange(e.target.value)} className="absolute inset-0 opacity-0 w-full h-full cursor-pointer" />}
+    </label>
+  );
 }
 
 // ── Survey Settings Modal ────────────────────────────────────────────────────
 function SurveySettingsModal({ settings, onChange, onClose }: { settings: SurveySettings; onChange: (s: SurveySettings) => void; onClose: () => void; }) {
-  const [tab, setTab] = useState<'general' | 'advanced'>('general');
   const set = <K extends keyof SurveySettings>(k: K, v: SurveySettings[K]) => onChange({ ...settings, [k]: v });
   return (
     <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
@@ -104,23 +98,34 @@ function SurveySettingsModal({ settings, onChange, onClose }: { settings: Survey
           <h2 className="text-lg font-display font-semibold text-brand-black">Survey Settings</h2>
           <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-brand-black hover:bg-brand-ghost transition-colors"><X className="w-4 h-4" /></button>
         </div>
-        <div className="flex gap-1 px-6 pt-4 shrink-0">
-          {(['general', 'advanced'] as const).map(t => (<button key={t} onClick={() => setTab(t)} className={`px-4 py-1.5 rounded-full text-sm font-medium capitalize transition-colors ${tab === t ? 'bg-brand-black text-white' : 'text-muted-foreground hover:text-brand-black'}`}>{t}</button>))}
-        </div>
         <div className="flex-1 overflow-y-auto scrollbar-minimal p-6 space-y-4 max-h-[60vh]">
-          {tab === 'general' ? (<>
-            <SR label="Collect email addresses" desc="Require respondents to enter their email"><select value={settings.collectEmail} onChange={e => set('collectEmail', e.target.value)} className="appearance-none bg-input-background border-none rounded-lg py-1.5 pl-3 pr-8 text-sm font-medium text-brand-black outline-none"><option value="none">None</option><option value="optional">Optional</option><option value="required">Required</option></select></SR>
+            <SR label="Collect email addresses" desc="Require respondents to enter their email"><CustomDropdown
+  value={settings.collectEmail}
+  onChange={v => set('collectEmail', v)}
+  options={[
+    { value: 'none', label: 'None' },
+    { value: 'optional', label: 'Optional' },
+    { value: 'required', label: 'Required' },
+  ]}
+  className="w-36"
+/></SR>
             <div className="h-px bg-border" />
-            <SR label="Send copy to responder" desc="Email a copy of their responses"><select value={settings.sendCopy} onChange={e => set('sendCopy', e.target.value)} className="appearance-none bg-input-background border-none rounded-lg py-1.5 pl-3 pr-8 text-sm font-medium text-brand-black outline-none"><option value="off">No</option><option value="always">Yes</option><option value="whenRequested">Upon request</option></select></SR>
-            <div className="h-px bg-border" />
-            <SR label="Allow response editing" desc="Let respondents change answers after submitting"><Toggle checked={settings.allowEditing} onChange={v => set('allowEditing', v)} /></SR>
+            <SR label="Send copy to responder" desc="Email a copy of their responses"><CustomDropdown
+  value={settings.sendCopy}
+  onChange={v => set('sendCopy', v)}
+  options={[
+    { value: 'off', label: 'No' },
+    { value: 'always', label: 'Yes' },
+    { value: 'whenRequested', label: 'Upon request' },
+  ]}
+  className="w-36"
+/></SR>
             <div className="h-px bg-border" />
             <SR label="Limit to 1 response" desc="Prevent the same person from responding twice"><Toggle checked={settings.limitOneResponse} onChange={v => set('limitOneResponse', v)} /></SR>
             <div className="h-px bg-border" />
             <SR label="Show progress bar" desc="Display completion progress to respondents"><Toggle checked={settings.showProgressBar} onChange={v => set('showProgressBar', v)} /></SR>
             <div className="h-px bg-border" />
             <SR label="Show question numbers" desc="Number each question in the survey"><Toggle checked={settings.showQuestionNumber ?? true} onChange={v => set('showQuestionNumber', v)} /></SR>
-          </>) : (<div className="flex flex-col items-center justify-center py-12 text-center"><div className="w-12 h-12 rounded-xl bg-brand-ghost flex items-center justify-center mb-4"><Settings className="w-5 h-5 text-muted-foreground" /></div><p className="text-sm font-medium text-muted-foreground">Coming soon</p></div>)}
         </div>
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border shrink-0">
           <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-brand-ghost transition-colors">Cancel</button>
@@ -217,7 +222,9 @@ function useAutoSave(surveyId: string, server: SurveyClient | null | undefined, 
   const update = useUpdateSurvey();
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [showSaved, setShowSaved] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const first = useRef(true);
   useEffect(() => {
     if (first.current) { first.current = false; return; }
@@ -225,11 +232,20 @@ function useAutoSave(surveyId: string, server: SurveyClient | null | undefined, 
     const changed = server.title !== local.title || server.description !== local.description || JSON.stringify(server.questions) !== JSON.stringify(local.questions) || JSON.stringify(server.settings ?? DEFAULT_SURVEY_SETTINGS) !== JSON.stringify(local.settings);
     if (!changed) return;
     if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(async () => { setSaving(true); try { await update.mutateAsync({ id: surveyId, data: { title: local.title, description: local.description, questions: local.questions, settings: local.settings } }); setLastSaved(new Date()); } catch { toast.error('Could not save'); } finally { setSaving(false); } }, 800);
+    timer.current = setTimeout(async () => {
+      setSaving(true);
+      try {
+        await update.mutateAsync({ id: surveyId, data: { title: local.title, description: local.description, questions: local.questions, settings: local.settings } });
+        setLastSaved(new Date());
+        setShowSaved(true);
+        if (savedTimer.current) clearTimeout(savedTimer.current);
+        savedTimer.current = setTimeout(() => setShowSaved(false), 2000);
+      } catch { toast.error('Could not save'); } finally { setSaving(false); }
+    }, 800);
     return () => { if (timer.current) clearTimeout(timer.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [local.title, local.description, local.questions, local.settings, server?.id]);
-  return { saving, lastSaved };
+  return { saving, lastSaved, showSaved };
 }
 
 // ── Undo/Redo ────────────────────────────────────────────────────────────────
@@ -259,35 +275,57 @@ function useUndoRedo<T>(initial: T) {
 
 // ── AI Chat ──────────────────────────────────────────────────────────────────
 interface ChatMsg { id: number; sender: 'user' | 'ai'; text: string; }
-function AIChatPanel({ survey, existingQuestions, onAppendQuestions }: { survey: SurveyClient | null; existingQuestions: Question[]; onAppendQuestions: (q: Question[]) => void; }) {
-  const { plan } = useSubscription();
+function AIChatPanel({ survey: _survey, existingQuestions: _eq, onAppendQuestions: _oaq }: { survey: SurveyClient | null; existingQuestions: Question[]; onAppendQuestions: (q: Question[]) => void; }) {
   const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [messages, setMessages] = useState<ChatMsg[]>([{ id: 1, sender: 'ai', text: "Hi! Describe what you'd like to add." }]);
-  const handleSend = async () => {
-    const text = input.trim(); if (!text || loading) return;
-    if (!canUseAI(plan)) { toast.error('AI features require a Standard or Professional plan.'); return; }
-    setMessages(p => [...p, { id: Date.now(), sender: 'user', text }]); setInput(''); setLoading(true);
-    try {
-      const result = await callGenerateQuestions({ surveyTitle: survey?.title ?? 'Untitled', surveyDescription: survey?.description ?? '', existingQuestions: existingQuestions.map(q => ({ text: q.text, type: q.type })), userPrompt: text });
-      const nq = (result.data.questions ?? []).map(aiToQuestion);
-      if (!nq.length) { setMessages(p => [...p, { id: Date.now()+1, sender: 'ai', text: "Couldn't generate. Try being more specific." }]); return; }
-      onAppendQuestions(nq);
-      setMessages(p => [...p, { id: Date.now()+1, sender: 'ai', text: `Added ${nq.length} question${nq.length===1?'':'s'}.` }]);
-    } catch (err) { const msg = (err as {message?:string})?.message??''; setMessages(p => [...p, { id: Date.now()+1, sender: 'ai', text: msg.toLowerCase().includes('plan') ? 'Requires paid plan.' : 'Error. Try again.' }]); }
-    finally { setLoading(false); }
+  const [messages, setMessages] = useState<ChatMsg[]>([
+    { id: 1, sender: 'ai', text: 'Hi! The AI Assistant is currently disabled.' },
+  ]);
+
+  const handleSend = () => {
+    const text = input.trim();
+    if (!text) return;
+    setMessages(p => [
+      ...p,
+      { id: Date.now(), sender: 'user', text },
+      { id: Date.now() + 1, sender: 'ai', text: 'This feature is currently disabled.' },
+    ]);
+    setInput('');
   };
+
   return (
     <div className="flex flex-col h-full bg-white">
       <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-minimal">
-        {messages.map(m => (<div key={m.id} className={`flex gap-2 ${m.sender==='user'?'flex-row-reverse':''}`}>{m.sender==='ai'&&<div className="w-6 h-6 rounded-full bg-brand-vanilla/40 flex items-center justify-center shrink-0 mt-0.5"><Sparkles className="w-3 h-3 text-brand-black" /></div>}<div className={`rounded-xl px-3 py-2 text-xs max-w-[85%] leading-relaxed ${m.sender==='user'?'bg-brand-black text-white':'bg-brand-ghost text-brand-black border border-border'}`}>{m.text}</div></div>))}
-        {loading&&<div className="flex gap-2"><div className="w-6 h-6 rounded-full bg-brand-vanilla/40 flex items-center justify-center shrink-0"><Loader2 className="w-3 h-3 text-brand-black animate-spin" /></div><div className="rounded-xl px-3 py-2 text-xs bg-brand-ghost text-muted-foreground border border-border">Thinking...</div></div>}
+        {messages.map(m => (
+          <div key={m.id} className={`flex gap-2 ${m.sender === 'user' ? 'flex-row-reverse' : ''}`}>
+            {m.sender === 'ai' && (
+              <div className="w-6 h-6 rounded-full bg-brand-vanilla/40 flex items-center justify-center shrink-0 mt-0.5">
+                <Sparkles className="w-3 h-3 text-brand-black" />
+              </div>
+            )}
+            <div className={`rounded-xl px-3 py-2 text-xs max-w-[85%] leading-relaxed ${m.sender === 'user' ? 'bg-brand-black text-white' : 'bg-brand-ghost text-brand-black border border-border'}`}>
+              {m.text}
+            </div>
+          </div>
+        ))}
       </div>
       <div className="p-3 border-t border-border shrink-0">
-        <div className="relative"><MessageSquare className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-          <input type="text" value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();handleSend();}}} placeholder={canUseAI(plan)?'Ask AI to help...':'Upgrade to use AI'} disabled={!canUseAI(plan)}
-            className="w-full bg-input-background border border-border rounded-lg py-2 pl-8 pr-9 text-xs placeholder:text-muted-foreground outline-none focus:border-brand-black/20" />
-          <button onClick={handleSend} disabled={loading||!input.trim()||!canUseAI(plan)} className="absolute right-1 top-1/2 -translate-y-1/2 w-6 h-6 rounded-lg bg-brand-black text-white flex items-center justify-center disabled:opacity-40 hover:bg-black/90">{loading?<Loader2 className="w-3 h-3 animate-spin" />:<Send className="w-3 h-3" />}</button>
+        <div className="relative">
+          <MessageSquare className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+          <input
+            type="text"
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+            placeholder="Message AI..."
+            className="w-full bg-input-background border border-border rounded-lg py-2 pl-8 pr-9 text-xs placeholder:text-muted-foreground outline-none focus:border-brand-black/20"
+          />
+          <button
+            onClick={handleSend}
+            disabled={!input.trim()}
+            className="absolute right-1 top-1/2 -translate-y-1/2 w-6 h-6 rounded-lg bg-brand-black text-white flex items-center justify-center disabled:opacity-40 hover:bg-black/90"
+          >
+            <Send className="w-3 h-3" />
+          </button>
         </div>
       </div>
     </div>
@@ -308,7 +346,12 @@ function QuestionEditor({ question, onChange }: { question: Question | null; onC
       {/* Question Type */}
       <div>
         <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block mb-1.5">Question Type</label>
-        <div className="relative"><select value={t} onChange={e=>{const nt=e.target.value as QuestionType;const r=makeQuestion(nt);onChange({...r,id:question.id,text:question.text,required:question.required});}} className="w-full appearance-none bg-input-background rounded-lg py-2 pl-3 pr-8 text-xs font-medium text-brand-black outline-none">{QUESTION_TYPES.map(x=><option key={x.type} value={x.type}>{x.label}</option>)}</select><ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" /></div>
+        <CustomDropdown
+          value={t}
+          onChange={v => { const nt = v as QuestionType; const r = makeQuestion(nt); onChange({ ...r, id: question.id, text: question.text, required: question.required }); }}
+          options={QUESTION_TYPES.map(qt => ({ value: qt.type, label: qt.label }))}
+          className="w-full"
+        />
       </div>
 
       {/* Settings */}
@@ -332,7 +375,15 @@ function QuestionEditor({ question, onChange }: { question: Question | null; onC
           <div className="h-px bg-border" />
           <label className="flex items-center justify-between cursor-pointer"><span className="text-xs text-brand-black">Selection limit</span><Toggle checked={selLimitOn} onChange={v=>setOpt({selectionLimit:v?'exact':'unlimited'})} /></label>
           {selLimitOn&&<>
-            <div className="relative"><select value={o.selectionLimit} onChange={e=>setOpt({selectionLimit:e.target.value as 'exact'|'range'})} className="w-full appearance-none bg-input-background rounded-lg py-2 pl-3 pr-8 text-xs font-medium text-brand-black outline-none"><option value="exact">Exact number</option><option value="range">Range</option></select><ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" /></div>
+            <CustomDropdown
+              value={o.selectionLimit ?? 'exact'}
+              onChange={v => setOpt({ selectionLimit: v as 'exact' | 'range' })}
+              options={[
+                { value: 'exact', label: 'Exact number' },
+                { value: 'range', label: 'Range' },
+              ]}
+              className="w-full"
+            />
             {o.selectionLimit==='exact'&&<input type="number" min={1} value={o.selectionExact??1} onChange={e=>setOpt({selectionExact:Math.max(1,parseInt(e.target.value)||1)})} className="w-full bg-input-background rounded-lg px-3 py-1.5 text-xs outline-none" placeholder="Number of selections" />}
             {o.selectionLimit==='range'&&<div className="flex gap-2"><input type="number" min={0} value={o.selectionMin??0} onChange={e=>setOpt({selectionMin:Math.max(0,parseInt(e.target.value)||0)})} className="flex-1 bg-input-background rounded-lg px-3 py-1.5 text-xs outline-none" placeholder="Min" /><input type="number" min={1} value={o.selectionMax??5} onChange={e=>setOpt({selectionMax:Math.max(1,parseInt(e.target.value)||1)})} className="flex-1 bg-input-background rounded-lg px-3 py-1.5 text-xs outline-none" placeholder="Max" /></div>}
           </>}
@@ -344,20 +395,61 @@ function QuestionEditor({ question, onChange }: { question: Question | null; onC
 
         {t==='rating'&&<>
           <div className="h-px bg-border" />
-          <div><span className="text-[10px] text-muted-foreground block mb-1">Display</span><div className="relative"><select value={o.ratingStyle??'numeric'} onChange={e=>setOpt({ratingStyle:e.target.value as 'numeric'|'star'})} className="w-full appearance-none bg-input-background rounded-lg py-2 pl-3 pr-8 text-xs font-medium text-brand-black outline-none"><option value="numeric">Numbers</option><option value="star">Stars</option></select><ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" /></div></div>
+          <div><span className="text-[10px] text-muted-foreground block mb-1">Display</span><CustomDropdown
+            value={o.ratingStyle ?? 'numeric'}
+            onChange={v => setOpt({ ratingStyle: v as 'numeric' | 'star' })}
+            options={[
+              { value: 'numeric', label: 'Numbers' },
+              { value: 'star', label: 'Stars' },
+            ]}
+            className="w-full"
+          /></div>
           <div className="flex gap-2">
-            <div className="flex-1"><span className="text-[10px] text-muted-foreground block mb-1">Lower</span><div className="relative"><select value={o.ratingLow??1} onChange={e=>setOpt({ratingLow:parseInt(e.target.value)})} className="w-full appearance-none bg-input-background rounded-lg py-2 pl-3 pr-8 text-xs font-medium text-brand-black outline-none"><option value={0}>0</option><option value={1}>1</option></select><ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" /></div></div>
-            <div className="flex-1"><span className="text-[10px] text-muted-foreground block mb-1">Upper</span><div className="relative"><select value={o.ratingHigh??5} onChange={e=>setOpt({ratingHigh:parseInt(e.target.value)})} className="w-full appearance-none bg-input-background rounded-lg py-2 pl-3 pr-8 text-xs font-medium text-brand-black outline-none">{Array.from({length:9},(_,i)=>i+2).map(n=><option key={n} value={n}>{n}</option>)}</select><ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" /></div></div>
+            <div className="flex-1"><span className="text-[10px] text-muted-foreground block mb-1">Lower</span><CustomDropdown
+              value={String(o.ratingLow ?? 1)}
+              onChange={v => setOpt({ ratingLow: parseInt(v) })}
+              options={[
+                { value: '0', label: '0' },
+                { value: '1', label: '1' },
+              ]}
+              className="w-full"
+            /></div>
+            <div className="flex-1"><span className="text-[10px] text-muted-foreground block mb-1">Upper</span><CustomDropdown
+              value={String(o.ratingHigh ?? 5)}
+              onChange={v => setOpt({ ratingHigh: parseInt(v) })}
+              options={Array.from({ length: 9 }, (_, i) => ({
+                value: String(i + 2),
+                label: String(i + 2),
+              }))}
+              className="w-full"
+            /></div>
           </div>
           <input type="text" value={o.lowLabel??''} onChange={e=>setOpt({lowLabel:e.target.value})} placeholder="Min label" className="w-full bg-input-background rounded-lg px-3 py-1.5 text-xs outline-none" />
-          <input type="text" value={o.midLabel??''} onChange={e=>setOpt({midLabel:e.target.value})} placeholder="Mid label" className="w-full bg-input-background rounded-lg px-3 py-1.5 text-xs outline-none" />
           <input type="text" value={o.highLabel??''} onChange={e=>setOpt({highLabel:e.target.value})} placeholder="Max label" className="w-full bg-input-background rounded-lg px-3 py-1.5 text-xs outline-none" />
         </>}
 
         {t==='date'&&<>
           <div className="h-px bg-border" />
-          <div><span className="text-xs text-brand-black block mb-1.5">Date format</span><div className="relative"><select value={o.dateFormat??'MMDDYYYY'} onChange={e=>setOpt({dateFormat:e.target.value})} className="w-full appearance-none bg-input-background rounded-lg py-2 pl-3 pr-8 text-xs font-medium text-brand-black outline-none"><option value="MMDDYYYY">MM/DD/YYYY</option><option value="DDMMYYYY">DD/MM/YYYY</option><option value="YYYYMMDD">YYYY/MM/DD</option></select><ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" /></div></div>
-          <div><span className="text-xs text-brand-black block mb-1.5">Divider</span><div className="relative"><select value={o.dateDivider??'slash'} onChange={e=>setOpt({dateDivider:e.target.value})} className="w-full appearance-none bg-input-background rounded-lg py-2 pl-3 pr-8 text-xs font-medium text-brand-black outline-none"><option value="slash">Slash (/)</option><option value="dash">Dash (-)</option><option value="period">Period (.)</option></select><ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" /></div></div>
+          <div><span className="text-xs text-brand-black block mb-1.5">Date format</span><CustomDropdown
+            value={o.dateFormat ?? 'MMDDYYYY'}
+            onChange={v => setOpt({ dateFormat: v })}
+            options={[
+              { value: 'MMDDYYYY', label: 'MM/DD/YYYY' },
+              { value: 'DDMMYYYY', label: 'DD/MM/YYYY' },
+              { value: 'YYYYMMDD', label: 'YYYY/MM/DD' },
+            ]}
+            className="w-full"
+          /></div>
+          <div><span className="text-xs text-brand-black block mb-1.5">Divider</span><CustomDropdown
+            value={o.dateDivider ?? 'slash'}
+            onChange={v => setOpt({ dateDivider: v })}
+            options={[
+              { value: 'slash', label: 'Slash (/)' },
+              { value: 'dash', label: 'Dash (-)' },
+              { value: 'period', label: 'Period (.)' },
+            ]}
+            className="w-full"
+          /></div>
         </>}
       </div>
 
@@ -402,7 +494,11 @@ function QuestionCard({ question, index, selected, showNumber, onSelect, onChang
 
   return (
     <div id={`question-${question.id}`} onMouseDown={sel}
-      className={`relative group bg-white rounded-xl p-5 border transition-all duration-200 ${selected ? 'border-brand-vanilla shadow-md ring-1 ring-brand-vanilla/40' : 'border-border shadow-sm hover:border-brand-black/15'}`}>
+      className={`relative group rounded-xl p-5 border transition-all duration-200 ${selected ? 'shadow-md' : 'border-border shadow-sm hover:border-brand-black/15'}`}
+      style={{
+        background: 'var(--survey-card)',
+        ...(selected ? { borderColor: 'var(--survey-accent)', boxShadow: `0 0 0 1px var(--survey-accent)40` } : {}),
+      }}>
       {/* Floating actions */}
       <div className="absolute -right-10 top-3 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1">
         <Tooltip label="Drag to reorder"><button onMouseDown={onDragStart} className="w-7 h-7 rounded-lg bg-white border border-border flex items-center justify-center text-muted-foreground hover:text-brand-black hover:bg-brand-ghost shadow-sm cursor-grab active:cursor-grabbing"><GripVertical className="w-3 h-3" /></button></Tooltip>
@@ -419,9 +515,9 @@ function QuestionCard({ question, index, selected, showNumber, onSelect, onChang
               ref={el=>{if(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';}}}
               onInput={e=>{const t=e.currentTarget;t.style.height='auto';t.style.height=t.scrollHeight+'px';}}
               placeholder={isScreen ? (question.type === 'welcome' ? 'Welcome title...' : 'Thank you message...') : 'Type your question here...'}
-              className={`w-full bg-transparent outline-none placeholder:text-muted-foreground/50 border-b border-transparent focus:border-brand-black/20 pb-0.5 transition-colors resize-none overflow-hidden ${isScreen ? 'text-lg font-display font-semibold text-brand-black' : 'text-sm font-medium text-brand-black'}`} />
+              className={`w-full bg-transparent outline-none placeholder:text-muted-foreground/50 border-b border-transparent focus:border-brand-black/20 pb-0.5 transition-colors resize-none overflow-hidden ${isScreen ? 'text-[1.125em] font-display font-semibold text-brand-black' : 'text-[0.875em] font-medium text-brand-black'}`} />
             {question.text.length > 400 && <p className="text-[10px] text-muted-foreground text-right">{500 - question.text.length} characters remaining</p>}
-            <textarea placeholder="Description (optional)" onClick={handleClick} onFocus={handleFocus} rows={1}
+            <textarea value={question.description??''} onChange={e=>onChange({...question,description:e.target.value||undefined})} placeholder="Description (optional)" onClick={handleClick} onFocus={handleFocus} rows={1}
               ref={el=>{if(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';}}}
               onInput={e=>{const t=e.currentTarget;t.style.height='auto';t.style.height=t.scrollHeight+'px';}}
               className="w-full text-xs text-muted-foreground bg-transparent outline-none placeholder:text-muted-foreground/40 mt-0.5 resize-none overflow-hidden" />
@@ -463,11 +559,10 @@ function QuestionCard({ question, index, selected, showNumber, onSelect, onChang
               ?<div key={n} className="flex-1 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"><Star className="w-6 h-6 text-brand-vanilla stroke-brand-black/40" style={{ fill: 'currentColor' }} /></div>
               :<div key={n} className="flex-1 h-8 rounded-lg border border-border flex items-center justify-center text-xs font-medium text-brand-black/60 hover:bg-brand-ghost transition-colors">{n}</div>))}
           </div>
-          {(o.lowLabel || o.midLabel || o.highLabel) && (
+          {(o.lowLabel || o.highLabel) && (
             <div className="flex w-full mt-1">
-              <span className="text-[10px] text-muted-foreground flex-1 text-left truncate">{o.lowLabel ?? ''}</span>
-              {o.midLabel && <span className="text-[10px] text-muted-foreground flex-1 text-center truncate">{o.midLabel}</span>}
-              <span className="text-[10px] text-muted-foreground flex-1 text-right truncate">{o.highLabel ?? ''}</span>
+              <span className="text-[10px] text-muted-foreground flex-1 text-left break-words">{o.lowLabel ?? ''}</span>
+              <span className="text-[10px] text-muted-foreground flex-1 text-right break-words">{o.highLabel ?? ''}</span>
             </div>
           )}
         </div>}
@@ -504,8 +599,12 @@ export function DashboardBuilder({ surveyId }: DashboardBuilderProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: survey, isLoading, error } = useSurvey(surveyId);
   const updateMut = useUpdateSurvey();
+  const { plan } = useSubscription();
 
-  const initialTab = (searchParams.get('tab') as BuilderTab) || 'Build';
+  const VALID_TABS: BuilderTab[] = ['Build', 'Logic', 'Connect', 'Share', 'Results'];
+  const rawTab = searchParams.get('tab');
+  const normalised = rawTab ? (rawTab.charAt(0).toUpperCase() + rawTab.slice(1)) as BuilderTab : 'Build';
+  const initialTab: BuilderTab = VALID_TABS.includes(normalised) ? normalised : 'Build';
   const [activeTab, setActiveTab] = useState<BuilderTab>(initialTab);
   const [activeRightTab, setActiveRightTab] = useState<RightTab>('Edit');
   const [title, setTitle] = useState('');
@@ -517,7 +616,7 @@ export function DashboardBuilder({ surveyId }: DashboardBuilderProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [deviceView, setDeviceView] = useState<'desktop'|'mobile'>('desktop');
-  const [designTab, setDesignTab] = useState<'logo'|'font'|'buttons'|'background'>('logo');
+  const [designTab, setDesignTab] = useState<'logo'|'colors'|'styles'>('logo');
   const [designHeight, setDesignHeight] = useState(250);
   const isDragging = useRef(false);
   const dragFromIdx = useRef<number|null>(null);
@@ -563,7 +662,21 @@ export function DashboardBuilder({ surveyId }: DashboardBuilderProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
-  const { saving, lastSaved } = useAutoSave(surveyId, survey ?? null, { title, description, questions, settings: surveySettings });
+  const { saving, lastSaved, showSaved } = useAutoSave(surveyId, survey ?? null, { title, description, questions, settings: surveySettings });
+
+  useEffect(() => {
+    const font = surveySettings.fontFamily;
+    if (!font || font === 'Inter') return;
+    const id = `gfont-${font.replace(/\s+/g, '-')}`;
+    if (!document.getElementById(id)) {
+      const link = document.createElement('link');
+      link.id = id;
+      link.rel = 'stylesheet';
+      link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(font)}:wght@400;500;600;700&display=swap`;
+      document.head.appendChild(link);
+    }
+  }, [surveySettings.fontFamily]);
+
   const selectedQuestion = useMemo(() => questions.find(q => q.id === selectedQuestionId) ?? null, [questions, selectedQuestionId]);
   const updateQuestion = useCallback((q: Question) => setQuestions(questions.map(p => (p.id === q.id ? q : p))), [questions, setQuestions]);
 
@@ -649,8 +762,9 @@ export function DashboardBuilder({ surveyId }: DashboardBuilderProps) {
 
   const isActive = survey?.status === 'active';
   const showNum = surveySettings.showQuestionNumber ?? true;
-  const NAV = [{ label: 'Build' as BuilderTab, step: 1 }, { label: 'Logic' as BuilderTab, step: 2 }, { label: 'Connect' as BuilderTab, step: 3 }, { label: 'Share' as BuilderTab, step: 4 }, ...(isActive ? [{ label: 'Results' as BuilderTab, step: 5 }] : [])];
-  const DT = ['logo', 'font', 'buttons', 'background'] as const;
+  /* Connect tab hidden per product decision */
+  const NAV = [{ label: 'Build' as BuilderTab, step: 1 }, { label: 'Logic' as BuilderTab, step: 2 }, { label: 'Share' as BuilderTab, step: 3 }, ...(isActive ? [{ label: 'Results' as BuilderTab, step: 4 }] : [])];
+  const DT = ['logo', 'colors', 'styles'] as const;
 
   if (isLoading) return <div className="flex items-center justify-center h-screen bg-brand-ghost"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
   if (error || !survey) return (<div className="flex flex-col items-center justify-center h-screen bg-brand-ghost gap-3"><AlertTriangle className="w-8 h-8 text-destructive" /><p className="text-sm text-muted-foreground">Survey not found.</p><Link to="/dashboard" className="text-sm font-medium text-brand-black underline">Back</Link></div>);
@@ -658,21 +772,25 @@ export function DashboardBuilder({ surveyId }: DashboardBuilderProps) {
   return (
     <div className="flex flex-col h-screen bg-brand-ghost font-sans text-brand-black overflow-hidden">
       {/* Top Bar */}
-      <header className="h-14 bg-white border-b border-border flex items-center justify-between px-4 shrink-0 z-10">
+      <header className="h-14 bg-white dark:bg-neutral-900 border-b border-border flex items-center justify-between px-4 shrink-0 z-10">
         <div className="flex items-center gap-3 w-1/4 min-w-0">
           <Link to="/dashboard" className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-brand-ghost text-muted-foreground hover:text-brand-black transition-colors shrink-0"><ArrowLeft className="w-4 h-4" /></Link>
           <input type="text" value={title} onChange={e=>setTitle(e.target.value)} className="text-sm font-medium bg-transparent border border-transparent hover:border-border focus:border-brand-black/20 rounded-lg px-2 py-1 outline-none w-full max-w-[220px] truncate transition-colors" placeholder="Survey Title" />
-          <span className="text-[10px] text-muted-foreground whitespace-nowrap shrink-0 hidden md:block">{saving?'Saving...':lastSaved?`Saved ${lastSaved.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`:''}</span>
         </div>
         <nav className="flex items-center">
           {NAV.map((item, idx) => (<React.Fragment key={item.label}><button onClick={()=>setActiveTab(item.label)} className="flex items-center gap-1.5 group"><div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${activeTab===item.label?'bg-brand-black text-white':'bg-muted text-muted-foreground group-hover:bg-brand-black/15'}`}>{item.step}</div><span className={`text-xs font-medium transition-colors ${activeTab===item.label?'text-brand-black':'text-muted-foreground group-hover:text-brand-black/60'}`}>{item.label}</span></button>{idx<NAV.length-1&&<div className="mx-3 w-8 border-t-2 border-dashed border-border shrink-0" />}</React.Fragment>))}
         </nav>
         <div className="flex items-center justify-end gap-2 w-1/4">
+          <Tooltip position="below" label={saving ? 'Saving…' : lastSaved ? `Saved ${lastSaved.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}` : 'No changes yet'}>
+            <div className="w-7 h-7 flex items-center justify-center text-muted-foreground">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : showSaved ? <Check className="w-4 h-4 text-green-500" /> : <Save className="w-4 h-4 text-muted-foreground" />}
+            </div>
+          </Tooltip>
           {isActive ? (
             <button onClick={handleCopyLink} className="flex items-center gap-1.5 px-4 py-1.5 bg-brand-ghost text-brand-black border border-border text-xs font-medium rounded-lg hover:bg-white transition-colors"><Link2 className="w-3.5 h-3.5" />Share Link</button>
           ) : (<>
-            <Link to="/dashboard/pricing" className="px-4 py-1.5 bg-brand-vanilla text-brand-black text-xs font-medium rounded-lg hover:opacity-90 transition-colors shadow-sm">View Plans</Link>
-            <button onClick={handlePublish} disabled={publishing} className="px-4 py-1.5 bg-brand-black text-white text-xs font-medium rounded-lg hover:bg-black/90 transition-colors shadow-sm flex items-center gap-1.5 disabled:opacity-60">{publishing&&<Loader2 className="w-3 h-3 animate-spin" />}Publish</button>
+            {plan === 'basic' && <Link to="/dashboard/pricing" className="px-4 py-1.5 bg-brand-vanilla text-brand-black text-xs font-medium rounded-lg hover:opacity-90 transition-colors shadow-sm">View Plans</Link>}
+            <button onClick={handlePublish} disabled={publishing} className="px-4 py-1.5 bg-brand-black dark:bg-neutral-700 text-white text-xs font-medium rounded-lg hover:bg-black/90 dark:hover:bg-neutral-600 transition-colors shadow-sm flex items-center gap-1.5 disabled:opacity-60">{publishing&&<Loader2 className="w-3 h-3 animate-spin" />}Publish</button>
           </>)}
           <ProfileDropdown align="right" onOpenSettings={(s) => setAccountSettingsSection(s)} />
         </div>
@@ -681,19 +799,20 @@ export function DashboardBuilder({ surveyId }: DashboardBuilderProps) {
       {activeTab==='Logic'&&<BuilderLogic questions={questions} onUpdateQuestion={updateQuestion} />}
       {activeTab==='Connect'&&<BuilderConnect />}
       {activeTab==='Share'&&<BuilderShare surveyId={surveyId} survey={survey} onPublish={handlePublish} publishing={publishing} />}
-      {activeTab==='Results'&&isActive&&<BuilderResults surveyId={surveyId} />}
+      {activeTab==='Results'&&isActive&&<BuilderResults surveyId={surveyId} onNavigateToShare={() => setActiveTab('Share')} />}
 
       {activeTab==='Build'&&(
         <div className="flex flex-1 overflow-hidden p-3 gap-3">
           {/* Left */}
           <aside className="w-[260px] flex flex-col shrink-0 gap-1.5">
-            <div className="flex-1 bg-white rounded-xl border border-border shadow-sm flex flex-col overflow-hidden">
+            <div className="flex-1 bg-white dark:bg-neutral-900 rounded-xl border border-border shadow-sm flex flex-col overflow-hidden">
               <div className="px-4 py-3 border-b border-border flex items-center gap-2"><LayoutTemplate className="w-4 h-4 text-muted-foreground" /><span className="text-xs font-medium text-brand-black">Questions</span></div>
               <div ref={sidebarRef} className="flex-1 overflow-y-auto scrollbar-minimal p-2 space-y-0.5">
                 {questions.length===0?<div className="text-center py-8 px-3 text-xs text-muted-foreground">No questions yet.</div>:(()=>{let sNum=0;return questions.map((q,i)=>{const o=typeOption(q.type);const isScr=q.type==='welcome'||q.type==='ending';if(!isScr)sNum++;return(
                   <div key={q.id} data-sidx={i} className={`transition-opacity ${sidebarDragFrom.current===i?'opacity-40':''} ${sidebarDragVisualIdx===i&&sidebarDragFrom.current!==null&&sidebarDragFrom.current!==i?'border-t-2 border-brand-vanilla':''}`}>
                     <button onClick={()=>handleSelectQuestion(q.id)} className={`w-full flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs text-left transition-colors ${selectedQuestionId===q.id?'bg-brand-vanilla/40 text-brand-black font-medium':'text-brand-black/70 hover:bg-brand-ghost'}`}>
                       <GripVertical onMouseDown={e=>handleSidebarDragStart(i,e)} className="w-3 h-3 text-muted-foreground/40 hover:text-muted-foreground cursor-grab active:cursor-grabbing shrink-0" />
+                      {q.required && <span className="text-destructive text-[9px] font-bold shrink-0">*</span>}
                       <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold ${o.color} text-brand-black/70 shrink-0`}>{isScr?(q.type==='welcome'?'W':'E'):sNum}</div>
                       <span className="truncate flex-1">{q.text||'Untitled'}</span>
                     </button>
@@ -701,24 +820,44 @@ export function DashboardBuilder({ surveyId }: DashboardBuilderProps) {
               </div>
             </div>
             <div className="h-1.5 cursor-ns-resize flex items-center justify-center group -my-0.5 z-10" onMouseDown={e=>{isDragging.current=true;document.body.style.cursor='ns-resize';e.preventDefault();}}><div className="w-8 h-0.5 bg-border rounded-full group-hover:bg-brand-black/30 transition-colors" /></div>
-            <div style={{height:designHeight}} className="bg-white rounded-xl border border-border shadow-sm flex flex-col overflow-hidden shrink-0">
+            <div style={{height:designHeight}} className="bg-white dark:bg-neutral-900 rounded-xl border border-border shadow-sm flex flex-col overflow-hidden shrink-0">
               <div className="px-3 pt-3 border-b border-border shrink-0">
-                <div className="flex items-center justify-between mb-2 px-0.5"><span className="text-xs font-medium text-brand-black flex items-center gap-1.5"><Palette className="w-3.5 h-3.5 text-muted-foreground" />Design</span><button className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-brand-black transition-colors"><RotateCcw className="w-3 h-3" />Revert</button></div>
+                <div className="flex items-center justify-between mb-2 px-0.5"><span className="text-xs font-medium text-brand-black flex items-center gap-1.5"><Palette className="w-3.5 h-3.5 text-muted-foreground" />Design</span><button onClick={()=>setSurveySettings(DEFAULT_SURVEY_SETTINGS)} className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-brand-black transition-colors"><RotateCcw className="w-3 h-3" />Revert</button></div>
                 <div className="flex">{DT.map(t=>(<button key={t} onClick={()=>setDesignTab(t)} className={`flex-1 py-1.5 text-[10px] font-medium capitalize transition-colors border-b-2 ${designTab===t?'text-brand-black border-brand-black':'text-muted-foreground border-transparent hover:text-brand-black/60'}`}>{t}</button>))}</div>
               </div>
               <div className="flex-1 overflow-y-auto scrollbar-minimal">
                 {designTab==='logo'&&<div className="p-3 space-y-2"><button className="w-full h-16 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center gap-1 text-muted-foreground hover:bg-brand-ghost/40 transition-colors"><Upload className="w-4 h-4" /><span className="text-[10px] font-medium">Upload logo</span></button><p className="text-[10px] text-muted-foreground text-center">PNG, SVG or JPG · up to 2 MB</p></div>}
-                {designTab==='font'&&<div className="p-3 space-y-3"><div><p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1.5">Font</p><select className="w-full appearance-none bg-input-background rounded-lg py-1.5 pl-2.5 pr-6 text-xs text-brand-black outline-none"><option>System font</option><option>Inter</option><option>Geist</option></select></div><div><p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1.5">Color</p><div className="flex items-center justify-between"><span className="text-[11px] text-brand-black/70">Titles</span><ColorSwatch color="#111111" /></div></div></div>}
-                {designTab==='buttons'&&<div className="p-3 space-y-2"><p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1">Color</p><div className="flex items-center justify-between"><span className="text-[11px] text-brand-black/70">Buttons</span><ColorSwatch color="#111111" /></div><div className="flex items-center justify-between"><span className="text-[11px] text-brand-black/70">Text</span><ColorSwatch color="#ffffff" /></div></div>}
-                {designTab==='background'&&<div className="p-3 space-y-2"><p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1">Color</p><div className="flex items-center justify-between"><span className="text-[11px] text-brand-black/70">Background</span><ColorSwatch color="#F9F9FB" /></div></div>}
+                {designTab==='colors'&&<div className="p-3 space-y-2.5">
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1">Colors</p>
+                  <div className="flex items-center justify-between"><span className="text-[11px] text-brand-black/70">Accent</span><ColorSwatch color={surveySettings.accentColor} onChange={c=>setSurveySettings({...surveySettings,accentColor:c})} /></div>
+                  <div className="flex items-center justify-between"><span className="text-[11px] text-brand-black/70">Background</span><ColorSwatch color={surveySettings.background==='white'?'#FFFFFF':surveySettings.background==='lightGray'?'#F5F5F5':surveySettings.background} onChange={c=>setSurveySettings({...surveySettings,background:c})} /></div>
+                  <div className="flex items-center justify-between"><span className="text-[11px] text-brand-black/70">Card</span><ColorSwatch color={surveySettings.cardColor??'#ffffff'} onChange={c=>setSurveySettings({...surveySettings,cardColor:c})} /></div>
+                  <div className="flex items-center justify-between"><span className="text-[11px] text-brand-black/70">Input BG</span><ColorSwatch color={surveySettings.inputBackgroundColor??'#F6F5FA'} onChange={c=>setSurveySettings({...surveySettings,inputBackgroundColor:c})} /></div>
+                </div>}
+                {designTab==='styles'&&<div className="p-3 space-y-3">
+                  <div>
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1.5">Font</p>
+                    <select value={surveySettings.fontFamily} onChange={e=>setSurveySettings({...surveySettings,fontFamily:e.target.value})} className="w-full appearance-none bg-input-background rounded-lg py-1.5 pl-2.5 pr-6 text-xs text-brand-black outline-none border border-border" style={{fontFamily:surveySettings.fontFamily}}>
+                      {['Inter','Syne','Urbanist','DM Sans','Poppins','Lato','Roboto','Nunito','Work Sans','Source Sans 3','Raleway','Montserrat'].map(f=>(
+                        <option key={f} value={f} style={{fontFamily:f}}>{f}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1.5">Size</p>
+                    <div className="flex gap-1">{(['sm','md','lg'] as const).map(s=>(
+                      <button key={s} onClick={()=>setSurveySettings({...surveySettings,fontSize:s})} className={`flex-1 py-1 text-[10px] font-semibold rounded-lg border transition-colors uppercase ${surveySettings.fontSize===s?'bg-brand-vanilla text-brand-black border-brand-vanilla':'bg-input-background text-brand-black/60 border-border hover:bg-brand-ghost'}`}>{s}</button>
+                    ))}</div>
+                  </div>
+                </div>}
               </div>
             </div>
           </aside>
 
           {/* Center */}
-          <main className="flex-1 flex flex-col bg-white rounded-xl border border-border shadow-sm overflow-hidden relative">
-            <div className="h-12 border-b border-border bg-white flex items-center justify-between px-4 shrink-0 z-10">
-              <button onClick={()=>setIsAddModalOpen(true)} className="flex items-center gap-1.5 bg-brand-black text-white px-3.5 py-1.5 rounded-lg text-xs font-medium hover:bg-black/90 transition-colors shadow-sm"><Plus className="w-3.5 h-3.5" />Add Question</button>
+          <main className="flex-1 flex flex-col bg-white dark:bg-neutral-900 rounded-xl border border-border shadow-sm overflow-hidden relative">
+            <div className="h-12 border-b border-border bg-white dark:bg-neutral-900 flex items-center justify-between px-4 shrink-0 z-10">
+              <button onClick={()=>setIsAddModalOpen(true)} className="flex items-center gap-1.5 bg-brand-black dark:bg-neutral-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-medium hover:bg-black/90 dark:hover:bg-neutral-600 transition-colors shadow-sm"><Plus className="w-3.5 h-3.5" />Add Question</button>
               <div className="flex items-center gap-0.5 border border-border rounded-lg p-0.5 bg-brand-ghost">
                 <button onClick={()=>setDeviceView('desktop')} className={`p-1 rounded-md transition-colors ${deviceView==='desktop'?'bg-white text-brand-black shadow-sm':'text-muted-foreground hover:text-brand-black'}`}><Monitor className="w-3.5 h-3.5" /></button>
                 <button onClick={()=>setDeviceView('mobile')} className={`p-1 rounded-md transition-colors ${deviceView==='mobile'?'bg-white text-brand-black shadow-sm':'text-muted-foreground hover:text-brand-black'}`}><Smartphone className="w-3.5 h-3.5" /></button>
@@ -728,10 +867,10 @@ export function DashboardBuilder({ surveyId }: DashboardBuilderProps) {
                 <Tooltip label="Redo (⌘⇧Z)"><button onClick={redo} disabled={!canRedo} className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-brand-ghost text-muted-foreground hover:text-brand-black transition-colors disabled:opacity-30"><Redo2 className="w-3.5 h-3.5" /></button></Tooltip>
                 <div className="w-px h-4 bg-border mx-1" />
                 <Tooltip label="Survey settings"><button onClick={()=>setIsSettingsOpen(true)} className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-brand-ghost text-muted-foreground hover:text-brand-black transition-colors"><Settings className="w-3.5 h-3.5" /></button></Tooltip>
-                {isActive&&<><div className="w-px h-4 bg-border mx-1" /><Link to={`/s/${surveyId}`} target="_blank" className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-brand-black transition-colors px-2 py-1 rounded-lg hover:bg-brand-ghost"><Eye className="w-3.5 h-3.5" />Preview</Link></>}
+                {isActive&&<><div className="w-px h-4 bg-border mx-1" /><Link to={`/s/${surveyId}?preview=true`} target="_blank" className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-brand-black transition-colors px-2 py-1 rounded-lg hover:bg-brand-ghost"><Eye className="w-3.5 h-3.5" />Preview</Link></>}
               </div>
             </div>
-            <div ref={canvasRef} className="flex-1 overflow-y-auto scrollbar-minimal py-6 px-6 flex flex-col items-center bg-brand-ghost">
+            <div ref={canvasRef} className="flex-1 overflow-y-auto scrollbar-minimal py-6 px-6 flex flex-col items-center" style={{ fontFamily: surveySettings.fontFamily, background: surveySettings.background === 'white' ? '#FFFFFF' : surveySettings.background === 'lightGray' ? '#F5F5F5' : surveySettings.background || 'var(--brand-ghost)', '--survey-accent': surveySettings.accentColor, '--survey-card': surveySettings.cardColor ?? '#ffffff', '--survey-input-bg': surveySettings.inputBackgroundColor ?? '#F6F5FA', fontSize: surveySettings.fontSize === 'sm' ? '13px' : surveySettings.fontSize === 'lg' ? '17px' : '15px' } as React.CSSProperties}>
               <div className={`w-full transition-all duration-300 ${deviceView==='mobile'?'max-w-[375px]':'max-w-[640px]'}`}>
                 {questions.length===0?<div className="text-center py-20 text-muted-foreground"><MessageSquare className="w-6 h-6 mx-auto mb-3 text-muted-foreground/40" /><p className="text-sm">Add your first question.</p></div>
                 :(()=>{let qNum=0;return questions.map((q,idx)=>{const isScr=q.type==='welcome'||q.type==='ending';if(!isScr)qNum++;return(<React.Fragment key={q.id}>
@@ -747,7 +886,7 @@ export function DashboardBuilder({ surveyId }: DashboardBuilderProps) {
 
           {/* Right */}
           <aside className="w-[300px] flex flex-col shrink-0">
-            <div className="flex-1 bg-white rounded-xl border border-border shadow-sm flex flex-col overflow-hidden">
+            <div className="flex-1 bg-white dark:bg-neutral-900 rounded-xl border border-border shadow-sm flex flex-col overflow-hidden">
               <div className="flex p-2 border-b border-border shrink-0 gap-1.5 bg-brand-ghost/30">
                 <button onClick={()=>setActiveRightTab('Edit')} className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center justify-center gap-1.5 ${activeRightTab==='Edit'?'bg-white text-brand-black shadow-sm border border-border':'text-muted-foreground hover:text-brand-black border border-transparent'}`}><SlidersHorizontal className="w-3.5 h-3.5" />Edit</button>
                 <button onClick={()=>setActiveRightTab('AI')} className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center justify-center gap-1.5 ${activeRightTab==='AI'?'bg-brand-vanilla/20 text-brand-black shadow-sm border border-brand-vanilla/40':'text-muted-foreground hover:text-brand-black border border-transparent'}`}><Sparkles className="w-3.5 h-3.5" />AI Assistant</button>

@@ -43,9 +43,13 @@ service cloud.firestore {
       allow create: if isSignedIn()
                     && request.resource.data.createdBy == request.auth.uid;
 
-      // Only the survey owner can update or delete
+      // Owner can fully update or delete
       allow update, delete: if isSignedIn()
                             && resource.data.createdBy == request.auth.uid;
+
+      // Anyone can increment viewCount on active surveys (for analytics)
+      allow update: if resource.data.status == 'active'
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount']);
     }
 
     // ─── Responses collection ──────────────────

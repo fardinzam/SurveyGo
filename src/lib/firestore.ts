@@ -12,6 +12,7 @@ import {
     serverTimestamp,
     Timestamp,
     onSnapshot,
+    increment,
     type Unsubscribe,
 } from 'firebase/firestore';
 import { db } from './firebase';
@@ -44,6 +45,7 @@ export async function createSurvey(
         responseCount: 0,
         lastReadResponseCount: 0,
         headerImageUrl: input.headerImageUrl ?? '',
+        templateId: input.templateId ?? null,
         settings: input.settings ?? null,
     });
     return docRef.id;
@@ -270,4 +272,11 @@ export async function updateUserPreferences(uid: string, prefs: UserPreferences)
         preferences: prefs,
         updatedAt: serverTimestamp(),
     });
+}
+
+/**
+ * Increment the viewCount on a survey document by 1.
+ */
+export async function incrementSurveyViewCount(surveyId: string): Promise<void> {
+    await updateDoc(doc(db, 'surveys', surveyId), { viewCount: increment(1) });
 }

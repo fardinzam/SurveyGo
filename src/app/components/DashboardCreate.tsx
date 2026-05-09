@@ -119,6 +119,7 @@ export function DashboardCreate() {
         title: tpl.title,
         description: tpl.description,
         questions: tpl.questions,
+        templateId,
       });
       navigate(`/builder/${id}`);
     } catch {

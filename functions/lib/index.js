@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.billingKillSwitch = exports.analyzeSentiment = exports.generateQuestions = exports.weeklySummary = exports.submitSurveyResponse = exports.stripeWebhook = exports.createPortalSession = exports.createCheckoutSession = void 0;
+exports.billingKillSwitch = exports.sendSurveyInvitation = exports.analyzeSentiment = exports.generateQuestions = exports.weeklySummary = exports.submitSurveyResponse = exports.stripeWebhook = exports.createPortalSession = exports.createCheckoutSession = void 0;
 const app_1 = require("firebase-admin/app");
 (0, app_1.initializeApp)();
 // ── Stripe ──────────────────────────────────────────────────────────────────
@@ -21,6 +21,9 @@ var generateQuestions_1 = require("./ai/generateQuestions");
 Object.defineProperty(exports, "generateQuestions", { enumerable: true, get: function () { return generateQuestions_1.generateQuestions; } });
 var analyzeSentiment_1 = require("./ai/analyzeSentiment");
 Object.defineProperty(exports, "analyzeSentiment", { enumerable: true, get: function () { return analyzeSentiment_1.analyzeSentiment; } });
+// ── Invitations ──────────────────────────────────────────────────────────────
+var sendSurveyInvitation_1 = require("./invitations/sendSurveyInvitation");
+Object.defineProperty(exports, "sendSurveyInvitation", { enumerable: true, get: function () { return sendSurveyInvitation_1.sendSurveyInvitation; } });
 // ── Billing ──────────────────────────────────────────────────────────────────
 var killSwitch_1 = require("./billing/killSwitch");
 Object.defineProperty(exports, "billingKillSwitch", { enumerable: true, get: function () { return killSwitch_1.billingKillSwitch; } });

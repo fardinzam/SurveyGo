@@ -10,12 +10,15 @@ const firestore_1 = require("firebase-admin/firestore");
 const stripe_1 = __importDefault(require("stripe"));
 const stripeSecretKey = (0, params_1.defineSecret)('STRIPE_SECRET_KEY');
 const stripeWebhookSecret = (0, params_1.defineSecret)('STRIPE_WEBHOOK_SECRET');
-// Map Stripe price IDs back to plan names — keep in sync with createCheckoutSession.ts
+// Map Stripe price IDs → plan names. Keep in sync with createCheckoutSession.ts.
+// Replace these placeholder keys with your real Stripe price IDs (price_xxx, NOT prod_xxx).
+// Keys = Stripe price IDs (price_xxx from your Stripe dashboard, NOT prod_xxx)
+// Values = plan names in your app
 const PRICE_TO_PLAN = {
-    price_standard_monthly: 'standard',
-    price_standard_yearly: 'standard',
-    price_professional_monthly: 'professional',
-    price_professional_yearly: 'professional',
+    'price_1TTpne3lLNQTzVc8hko3890u': 'standard',
+    'price_1TTpqR3lLNQTzVc8MJfYM2cV': 'standard',
+    'price_1TTpo23lLNQTzVc8krHpy1wv': 'professional',
+    'price_1TTpqC3lLNQTzVc8pGBjXxh4': 'professional',
 };
 async function getUidByCustomerId(db, customerId) {
     const snap = await db
@@ -30,6 +33,7 @@ async function getUidByCustomerId(db, customerId) {
 exports.stripeWebhook = (0, https_1.onRequest)({ secrets: [stripeSecretKey, stripeWebhookSecret] }, async (req, res) => {
     const stripe = new stripe_1.default(stripeSecretKey.value());
     const sig = req.headers['stripe-signature'];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let event;
     try {
         event = stripe.webhooks.constructEvent(req.rawBody, sig, stripeWebhookSecret.value());
@@ -42,6 +46,7 @@ exports.stripeWebhook = (0, https_1.onRequest)({ secrets: [stripeSecretKey, stri
     const db = (0, firestore_1.getFirestore)();
     switch (event.type) {
         case 'checkout.session.completed': {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const session = event.data.object;
             if (session.mode !== 'subscription')
                 break;
@@ -69,6 +74,7 @@ exports.stripeWebhook = (0, https_1.onRequest)({ secrets: [stripeSecretKey, stri
             break;
         }
         case 'customer.subscription.updated': {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const subscription = event.data.object;
             const customerId = subscription.customer;
             const uid = subscription.metadata?.firebaseUid
@@ -77,7 +83,7 @@ exports.stripeWebhook = (0, https_1.onRequest)({ secrets: [stripeSecretKey, stri
                 console.error('subscription.updated: could not find uid for customer', customerId);
                 break;
             }
-            const priceId = subscription.items.data[0]?.price.id ?? '';
+            const priceId = subscription.items?.data[0]?.price?.id ?? '';
             const plan = PRICE_TO_PLAN[priceId] ?? 'basic';
             await db.collection('users').doc(uid).set({
                 subscription: {
@@ -90,6 +96,7 @@ exports.stripeWebhook = (0, https_1.onRequest)({ secrets: [stripeSecretKey, stri
             break;
         }
         case 'customer.subscription.deleted': {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const subscription = event.data.object;
             const customerId = subscription.customer;
             const uid = subscription.metadata?.firebaseUid
@@ -108,6 +115,7 @@ exports.stripeWebhook = (0, https_1.onRequest)({ secrets: [stripeSecretKey, stri
             break;
         }
         case 'invoice.payment_failed': {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const invoice = event.data.object;
             const customerId = invoice.customer;
             const uid = await getUidByCustomerId(db, customerId);

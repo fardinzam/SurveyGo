@@ -82,7 +82,7 @@ export function ProfileDropdown({ isOpen, onClose, onNavigate, collapsed }: Prof
       style={{
         bottom: '16px',
         left: collapsed ? '80px' : '260px',
-        width: '240px'
+        width: '208px'
       }}
     >
       <Card className="overflow-hidden shadow-xl gap-2" style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}>
@@ -100,8 +100,8 @@ export function ProfileDropdown({ isOpen, onClose, onNavigate, collapsed }: Prof
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="font-semibold text-foreground text-sm truncate">{displayName}</div>
-              <div className="text-xs text-muted-foreground truncate">{email}</div>
+              <div className="font-semibold text-foreground text-xs truncate">{displayName}</div>
+              <div className="text-[11px] text-muted-foreground truncate">{email}</div>
             </div>
           </div>
         </button>
@@ -112,26 +112,26 @@ export function ProfileDropdown({ isOpen, onClose, onNavigate, collapsed }: Prof
         <div className="py-1">
           <button
             onClick={() => { onNavigate('plans'); onClose(); }}
-            className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted transition-colors text-left"
+            className="w-full flex items-center gap-2.5 px-3 py-1.5 hover:bg-muted transition-colors text-left"
           >
-            <Sparkles className="w-4 h-4 text-primary" />
-            <span className="font-medium text-foreground text-sm">Upgrade Plan</span>
+            <Sparkles className="w-3.5 h-3.5 text-primary" />
+            <span className="font-medium text-foreground text-xs">View Plans</span>
           </button>
 
           <button
             onClick={(e) => { e.stopPropagation(); setTheme(nextThemeMap[currentTheme] || 'light'); }}
-            className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted transition-colors text-left"
+            className="w-full flex items-center gap-2.5 px-3 py-1.5 hover:bg-muted transition-colors text-left"
           >
-            <ThemeIcon className="w-4 h-4 text-muted-foreground" />
-            <span className="text-foreground text-sm">{getThemeLabel(currentTheme)}</span>
+            <ThemeIcon className="w-3.5 h-3.5 text-muted-foreground" />
+            <span className="text-foreground text-xs">{getThemeLabel(currentTheme)}</span>
           </button>
 
           <button
             onClick={() => { onNavigate('settings'); onClose(); }}
-            className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted transition-colors text-left"
+            className="w-full flex items-center gap-2.5 px-3 py-1.5 hover:bg-muted transition-colors text-left"
           >
-            <Settings className="w-4 h-4 text-muted-foreground" />
-            <span className="text-foreground text-sm">Settings</span>
+            <Settings className="w-3.5 h-3.5 text-muted-foreground" />
+            <span className="text-foreground text-xs">Settings</span>
           </button>
         </div>
 
@@ -145,10 +145,10 @@ export function ProfileDropdown({ isOpen, onClose, onNavigate, collapsed }: Prof
               await signOut();
               navigate('/auth/login');
             }}
-            className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors text-left"
+            className="w-full flex items-center gap-2.5 px-3 py-1.5 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors text-left"
           >
-            <LogOut className="w-4 h-4 text-red-500" />
-            <span className="text-red-600 dark:text-red-400 font-medium text-sm">Log Out</span>
+            <LogOut className="w-3.5 h-3.5 text-red-500" />
+            <span className="text-red-600 dark:text-red-400 font-medium text-xs">Log Out</span>
           </button>
         </div>
       </Card>

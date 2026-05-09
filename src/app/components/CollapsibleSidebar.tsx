@@ -136,8 +136,8 @@ export function CollapsibleSidebar({
                   {!collapsed && <span>{item.label}</span>}
                 </button>
 
-                {/* Fixed-position tooltip for collapsed state — escapes overflow-x-hidden */}
-                {collapsed && <FixedTooltip label={item.label} />}
+                {/* Fixed-position tooltip — always shown on hover */}
+                <FixedTooltip label={item.label} />
               </li>
             );
           })}
@@ -168,10 +168,10 @@ export function CollapsibleSidebar({
         <div className="px-2 pb-2">
           <button
             onClick={() => onNavigate('plans')}
-            className="w-full flex justify-center p-2.5 rounded-lg bg-gradient-to-br from-primary/10 to-secondary/20 hover:from-primary/20 hover:to-secondary/30 transition-all group relative"
-            title="Upgrade Plan"
+            className="w-full flex justify-center p-2.5 rounded-lg bg-[#EFF0A3] hover:bg-[#d4d47a] transition-all group relative"
+            title="View Plans"
           >
-            <Sparkles className="w-5 h-5 text-primary" />
+            <Sparkles className="w-5 h-5 text-brand-black" />
             <div className="absolute left-full ml-2 px-3 py-1.5 bg-gray-900 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap pointer-events-none z-50">
               Upgrade Plan
             </div>

@@ -1,6 +1,6 @@
 import { onRequest } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { getFirestore, FieldValue, Firestore } from 'firebase-admin/firestore';
 import Stripe from 'stripe';
 
 const stripeSecretKey = defineSecret('STRIPE_SECRET_KEY');
@@ -8,15 +8,18 @@ const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET');
 
 type PlanId = 'basic' | 'standard' | 'professional';
 
-// Map Stripe price IDs back to plan names — keep in sync with createCheckoutSession.ts
+// Map Stripe price IDs → plan names. Keep in sync with createCheckoutSession.ts.
+// Replace these placeholder keys with your real Stripe price IDs (price_xxx, NOT prod_xxx).
+// Keys = Stripe price IDs (price_xxx from your Stripe dashboard, NOT prod_xxx)
+// Values = plan names in your app
 const PRICE_TO_PLAN: Record<string, PlanId> = {
-    price_standard_monthly: 'standard',
-    price_standard_yearly: 'standard',
-    price_professional_monthly: 'professional',
-    price_professional_yearly: 'professional',
+    'price_1TTpne3lLNQTzVc8hko3890u': 'standard',
+    'price_1TTpqR3lLNQTzVc8MJfYM2cV': 'standard',
+    'price_1TTpo23lLNQTzVc8krHpy1wv': 'professional',
+    'price_1TTpqC3lLNQTzVc8pGBjXxh4': 'professional',
 };
 
-async function getUidByCustomerId(db: FirebaseFirestore.Firestore, customerId: string): Promise<string | null> {
+async function getUidByCustomerId(db: Firestore, customerId: string): Promise<string | null> {
     const snap = await db
         .collection('users')
         .where('subscription.stripeCustomerId', '==', customerId)
@@ -32,7 +35,8 @@ export const stripeWebhook = onRequest(
         const stripe = new Stripe(stripeSecretKey.value());
         const sig = req.headers['stripe-signature'] as string;
 
-        let event: Stripe.Event;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let event: any;
         try {
             event = stripe.webhooks.constructEvent(req.rawBody, sig, stripeWebhookSecret.value());
         } catch (err) {
@@ -43,14 +47,15 @@ export const stripeWebhook = onRequest(
 
         const db = getFirestore();
 
-        switch (event.type) {
+        switch (event.type as string) {
             case 'checkout.session.completed': {
-                const session = event.data.object as Stripe.Checkout.Session;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const session = event.data.object as any;
                 if (session.mode !== 'subscription') break;
 
                 const customerId = session.customer as string;
                 const subscriptionId = session.subscription as string;
-                const uid = session.metadata?.firebaseUid
+                const uid: string | null = session.metadata?.firebaseUid
                     ?? await getUidByCustomerId(db, customerId);
 
                 if (!uid) {
@@ -68,7 +73,7 @@ export const stripeWebhook = onRequest(
                         status: subscription.status,
                         stripeCustomerId: customerId,
                         stripeSubscriptionId: subscriptionId,
-                        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+                        currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
                         cancelAtPeriodEnd: subscription.cancel_at_period_end,
                     },
                 }, { merge: true });
@@ -77,9 +82,10 @@ export const stripeWebhook = onRequest(
             }
 
             case 'customer.subscription.updated': {
-                const subscription = event.data.object as Stripe.Subscription;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const subscription = event.data.object as any;
                 const customerId = subscription.customer as string;
-                const uid = subscription.metadata?.firebaseUid
+                const uid: string | null = subscription.metadata?.firebaseUid
                     ?? await getUidByCustomerId(db, customerId);
 
                 if (!uid) {
@@ -87,7 +93,7 @@ export const stripeWebhook = onRequest(
                     break;
                 }
 
-                const priceId = subscription.items.data[0]?.price.id ?? '';
+                const priceId = subscription.items?.data[0]?.price?.id ?? '';
                 const plan: PlanId = PRICE_TO_PLAN[priceId] ?? 'basic';
 
                 await db.collection('users').doc(uid).set({
@@ -103,9 +109,10 @@ export const stripeWebhook = onRequest(
             }
 
             case 'customer.subscription.deleted': {
-                const subscription = event.data.object as Stripe.Subscription;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const subscription = event.data.object as any;
                 const customerId = subscription.customer as string;
-                const uid = subscription.metadata?.firebaseUid
+                const uid: string | null = subscription.metadata?.firebaseUid
                     ?? await getUidByCustomerId(db, customerId);
 
                 if (!uid) break;
@@ -124,7 +131,8 @@ export const stripeWebhook = onRequest(
             }
 
             case 'invoice.payment_failed': {
-                const invoice = event.data.object as Stripe.Invoice;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const invoice = event.data.object as any;
                 const customerId = invoice.customer as string;
                 const uid = await getUidByCustomerId(db, customerId);
                 if (!uid) break;

@@ -10,12 +10,12 @@ const appUrl = defineString('APP_URL', { default: 'https://surveygo-effcc.web.ap
 // and update the values here (or move to Firebase config/secrets)
 const PRICE_IDS: Record<string, Record<string, string>> = {
     standard: {
-        monthly: 'price_standard_monthly', // replace with real Stripe price ID
-        yearly: 'price_standard_yearly',
+        monthly: 'price_1TTpne3lLNQTzVc8hko3890u',
+        yearly: 'price_1TTpqR3lLNQTzVc8MJfYM2cV',
     },
     professional: {
-        monthly: 'price_professional_monthly',
-        yearly: 'price_professional_yearly',
+        monthly: 'price_1TTpo23lLNQTzVc8krHpy1wv',
+        yearly: 'price_1TTpqC3lLNQTzVc8pGBjXxh4',
     },
 };
 

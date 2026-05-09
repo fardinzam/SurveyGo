@@ -14,12 +14,12 @@ const appUrl = (0, params_1.defineString)('APP_URL', { default: 'https://surveyg
 // and update the values here (or move to Firebase config/secrets)
 const PRICE_IDS = {
     standard: {
-        monthly: 'price_standard_monthly', // replace with real Stripe price ID
-        yearly: 'price_standard_yearly',
+        monthly: 'price_1TTpne3lLNQTzVc8hko3890u',
+        yearly: 'price_1TTpqR3lLNQTzVc8MJfYM2cV',
     },
     professional: {
-        monthly: 'price_professional_monthly',
-        yearly: 'price_professional_yearly',
+        monthly: 'price_1TTpo23lLNQTzVc8krHpy1wv',
+        yearly: 'price_1TTpqC3lLNQTzVc8pGBjXxh4',
     },
 };
 exports.createCheckoutSession = (0, https_1.onCall)({ secrets: [stripeSecretKey], cors: true, invoker: 'public' }, async (request) => {

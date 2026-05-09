@@ -6,17 +6,24 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendNewResponseEmail = sendNewResponseEmail;
 exports.sendMilestoneEmail = sendMilestoneEmail;
 exports.sendWeeklySummaryEmail = sendWeeklySummaryEmail;
+exports.sendInvitationEmail = sendInvitationEmail;
 const params_1 = require("firebase-functions/params");
 const mail_1 = __importDefault(require("@sendgrid/mail"));
 const templates_1 = require("./templates");
 const sendgridApiKey = (0, params_1.defineSecret)('SENDGRID_API_KEY');
 const FROM_EMAIL = 'notifications@surveygo.app'; // must match verified sender in SendGrid
 const FROM_NAME = 'SurveyGo';
+// Set to false to re-enable real SendGrid sends (requires valid API key + verified sender).
+const STUB_EMAILS = true;
 function getSgMail() {
     mail_1.default.setApiKey(sendgridApiKey.value());
     return mail_1.default;
 }
 async function sendNewResponseEmail(params) {
+    if (STUB_EMAILS) {
+        console.log('[stub email] new-response skipped', { to: params.toEmail });
+        return;
+    }
     const mail = getSgMail();
     const { html, text } = (0, templates_1.newResponseTemplate)(params);
     await mail.send({
@@ -28,6 +35,10 @@ async function sendNewResponseEmail(params) {
     });
 }
 async function sendMilestoneEmail(params) {
+    if (STUB_EMAILS) {
+        console.log('[stub email] milestone skipped', { to: params.toEmail });
+        return;
+    }
     const mail = getSgMail();
     const { html, text } = (0, templates_1.milestoneTemplate)(params);
     await mail.send({
@@ -39,6 +50,10 @@ async function sendMilestoneEmail(params) {
     });
 }
 async function sendWeeklySummaryEmail(params) {
+    if (STUB_EMAILS) {
+        console.log('[stub email] weekly-summary skipped', { to: params.toEmail });
+        return;
+    }
     const mail = getSgMail();
     const { html, text } = (0, templates_1.weeklySummaryTemplate)(params);
     await mail.send({
@@ -47,6 +62,20 @@ async function sendWeeklySummaryEmail(params) {
         subject: `Your SurveyGo weekly summary — ${params.weekLabel}`,
         html,
         text,
+    });
+}
+async function sendInvitationEmail(params) {
+    if (STUB_EMAILS) {
+        console.log('[stub email] invitation skipped', { to: params.toEmail });
+        return;
+    }
+    const mail = getSgMail();
+    await mail.send({
+        to: params.toEmail,
+        from: { email: FROM_EMAIL, name: FROM_NAME },
+        subject: params.subject,
+        html: `<p>${params.body.replace(/\n/g, '<br>')}</p>`,
+        text: params.body,
     });
 }
 //# sourceMappingURL=sendEmail.js.map

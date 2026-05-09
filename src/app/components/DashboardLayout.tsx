@@ -15,21 +15,21 @@ import {
   Palette,
   Settings,
   LogOut,
-  UserPlus,
   Check,
   Pencil,
   Sun,
   Moon,
   Monitor,
   Clock,
-  Inbox,
   X,
+  CreditCard,
 } from 'lucide-react';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { signOut } from '../../lib/auth';
 import { useSurveys } from '../../hooks/useSurveys';
 import type { SurveyClient } from '../../types/survey';
 import { SettingsModal } from './SettingsModal';
+import { surveyIcon } from './DashboardHome';
 
 type NotifTab = 'all' | 'requests' | 'unread';
 type ThemeMode = 'light' | 'dark' | 'system';
@@ -97,8 +97,8 @@ export function ProfileDropdown({ align = 'left', onOpenSettings }: { align?: 'l
     ? <img src={user.photoURL} alt={displayName} className="w-7 h-7 rounded-full object-cover border border-black/5 shrink-0" />
     : <div className="w-7 h-7 rounded-full bg-brand-vanilla flex items-center justify-center text-brand-black font-bold text-xs border border-black/5 shrink-0">{initials}</div>;
   const AvatarLg = user?.photoURL
-    ? <img src={user.photoURL} alt={displayName} className="w-14 h-14 rounded-full object-cover border border-black/5" />
-    : <div className="w-14 h-14 rounded-full bg-brand-vanilla flex items-center justify-center text-brand-black font-bold text-xl border border-black/5">{initials}</div>;
+    ? <img src={user.photoURL} alt={displayName} className="w-10 h-10 rounded-full object-cover border border-black/5" />
+    : <div className="w-10 h-10 rounded-full bg-brand-vanilla flex items-center justify-center text-brand-black font-bold text-base border border-black/5">{initials}</div>;
 
   return (
     <div ref={ref} className="relative">
@@ -107,27 +107,27 @@ export function ProfileDropdown({ align = 'left', onOpenSettings }: { align?: 'l
         {AvatarSm}
       </button>
       {isOpen && (
-        <div className={`absolute ${align === 'right' ? 'right-0' : 'left-0'} top-full mt-2 w-64 bg-white rounded-2xl shadow-xl border border-black/5 z-50 py-2`}>
+        <div className={`absolute ${align === 'right' ? 'right-0' : 'left-0'} top-full mt-2 w-52 bg-white rounded-2xl shadow-xl border border-black/5 z-50 py-2`}>
           <div className="px-4 pt-3 pb-3 flex flex-col items-center text-center border-b border-black/5">
             <div className="relative mb-2">
               {AvatarLg}
-              <button onClick={() => openSettings('profile')} className="absolute bottom-0 right-0 w-5 h-5 bg-white border border-black/10 rounded-full flex items-center justify-center shadow-sm">
+              <button onClick={() => openSettings('profile')} className="absolute bottom-0 right-0 w-5 h-5 bg-white border border-black/10 rounded-full flex items-center justify-center shadow-sm hover:bg-brand-ghost hover:border-brand-black/20 transition-colors">
                 <Pencil className="w-2.5 h-2.5 text-brand-black/60" />
               </button>
             </div>
-            <p className="font-semibold text-sm text-brand-black">{displayName}</p>
-            <p className="text-xs text-brand-black/50 mt-0.5 truncate max-w-full">{user?.email}</p>
+            <p className="text-xs font-semibold text-brand-black">{displayName}</p>
+            <p className="text-[11px] text-brand-black/50 mt-0.5 truncate max-w-full">{user?.email}</p>
           </div>
           <div className="py-1 relative">
             <div className="relative" onMouseEnter={() => setThemeHovered(true)} onMouseLeave={() => setThemeHovered(false)}>
-              <button className="w-full flex items-center gap-2.5 px-4 py-2 text-sm font-medium text-brand-black/80 hover:bg-brand-ghost transition-colors">
-                <Palette className="w-4 h-4 text-brand-black/50 shrink-0" /><span className="flex-1 text-left">Theme</span><ChevronRight className="w-3.5 h-3.5 text-brand-black/40" />
+              <button className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs font-medium text-brand-black/80 hover:bg-brand-ghost transition-colors">
+                <Palette className="w-3.5 h-3.5 text-brand-black/50 shrink-0" /><span className="flex-1 text-left">Theme</span><ChevronRight className="w-3.5 h-3.5 text-brand-black/40" />
               </button>
               {themeHovered && (
-                <div className={`absolute ${align === 'right' ? 'right-full mr-1' : 'left-full ml-1'} top-0 w-44 bg-white rounded-xl shadow-lg border border-black/5 py-1 z-10`}>
+                <div className={`absolute ${align === 'right' ? 'right-full mr-1' : 'left-full ml-1'} top-0 w-44 bg-white dark:bg-neutral-800 rounded-xl shadow-lg border border-black/5 dark:border-white/10 py-1 z-10`}>
                   {themeOptions.map(opt => {
                     const Icon = opt.icon;
-                    return (<button key={opt.value} onClick={() => setTheme(opt.value)} className="w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-brand-black/80 hover:bg-brand-ghost transition-colors">
+                    return (<button key={opt.value} onClick={() => setTheme(opt.value)} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-brand-black/80 hover:bg-brand-ghost transition-colors">
                       {theme === opt.value ? <Check className="w-3.5 h-3.5 text-brand-black shrink-0" /> : <span className="w-3.5 shrink-0" />}
                       <Icon className="w-3.5 h-3.5 text-brand-black/50 shrink-0" />{opt.label}
                     </button>);
@@ -135,26 +135,17 @@ export function ProfileDropdown({ align = 'left', onOpenSettings }: { align?: 'l
                 </div>
               )}
             </div>
-            <button onClick={() => openSettings('profile')} className="w-full flex items-center gap-2.5 px-4 py-2 text-sm font-medium text-brand-black/80 hover:bg-brand-ghost transition-colors">
-              <Settings className="w-4 h-4 text-brand-black/50 shrink-0" />Settings
+            <button onClick={() => openSettings('billing')} className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs font-medium text-brand-black/80 hover:bg-brand-ghost transition-colors">
+              <CreditCard className="w-3.5 h-3.5 text-brand-black/50 shrink-0" />View Plans
+            </button>
+            <button onClick={() => openSettings('profile')} className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs font-medium text-brand-black/80 hover:bg-brand-ghost transition-colors">
+              <Settings className="w-3.5 h-3.5 text-brand-black/50 shrink-0" />Settings
             </button>
           </div>
           <div className="h-px bg-black/5 mx-2" />
           <div className="py-1">
-            <p className="px-4 py-1.5 text-xs font-semibold text-brand-black/40">Switch account</p>
-            <button className="w-full flex items-center gap-3 px-4 py-2 hover:bg-brand-ghost transition-colors">
-              {AvatarSm}
-              <div className="flex-1 min-w-0 text-left"><p className="text-sm font-medium text-brand-black truncate">{displayName}</p><p className="text-xs text-brand-black/50 truncate">{user?.email}</p></div>
-              <Check className="w-3.5 h-3.5 text-brand-black/60 shrink-0" />
-            </button>
-            <button onClick={() => { setIsOpen(false); toast.info('Add account coming soon'); }} className="w-full flex items-center gap-2.5 px-4 py-2 text-sm font-medium text-brand-black/70 hover:bg-brand-ghost transition-colors">
-              <UserPlus className="w-4 h-4 text-brand-black/50 shrink-0" />Add account
-            </button>
-          </div>
-          <div className="h-px bg-black/5 mx-2" />
-          <div className="py-1">
-            <button onClick={handleLogout} className="w-full flex items-center gap-2.5 px-4 py-2 text-sm font-medium text-brand-black/80 hover:bg-brand-ghost transition-colors">
-              <LogOut className="w-4 h-4 text-brand-black/50 shrink-0" />Log out
+            <button onClick={handleLogout} className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs font-medium text-brand-black/80 hover:bg-brand-ghost transition-colors">
+              <LogOut className="w-3.5 h-3.5 text-brand-black/50 shrink-0" />Log out
             </button>
           </div>
         </div>
@@ -222,9 +213,11 @@ function SearchModal({ onClose, surveys }: { onClose: () => void; surveys: Surve
                 onClick={onClose}
                 className="flex items-center gap-3 px-4 py-2.5 hover:bg-brand-ghost transition-colors"
               >
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#9b51e0] to-[#7f3db5] flex items-center justify-center text-white shrink-0">
-                  <Inbox className="w-4 h-4 opacity-80" />
-                </div>
+                {(() => { const { Icon, color } = surveyIcon(s); return (
+                  <div className="w-9 h-9 rounded-xl bg-brand-ghost flex items-center justify-center shrink-0">
+                    <Icon className={`w-4 h-4 ${color}`} />
+                  </div>
+                ); })()}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-brand-black truncate">{s.title || 'Untitled'}</p>
                   <p className="text-xs text-brand-black/40 flex items-center gap-1 mt-0.5">
@@ -326,7 +319,20 @@ export function DashboardLayout() {
   const [settingsSection, setSettingsSection] = useState<SettingsSection | null>(null);
   const [notifTab, setNotifTab] = useState<NotifTab>('all');
   const [themeHovered, setThemeHovered] = useState(false);
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem('surveygo:dismissed-notifs');
+      return stored ? new Set<string>(JSON.parse(stored)) : new Set<string>();
+    } catch { return new Set<string>(); }
+  });
   const { theme, setTheme } = useTheme();
+
+  const dismissNotification = (id: string) =>
+    setDismissedIds(prev => {
+      const next = new Set([...prev, id]);
+      try { localStorage.setItem('surveygo:dismissed-notifs', JSON.stringify([...next])); } catch {}
+      return next;
+    });
 
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -342,10 +348,11 @@ export function DashboardLayout() {
   useEscapeKey(isNotifOpen, useCallback(() => setIsNotifOpen(false), []));
   useEscapeKey(isProfileOpen, useCallback(() => { setIsProfileOpen(false); setThemeHovered(false); }, []));
 
-  const unreadCount = notifications.filter(n => n.isUnread).length;
-  const visibleNotifs = notifTab === 'unread'
+  const unreadCount = notifications.filter(n => n.isUnread && !dismissedIds.has(n.id)).length;
+  const visibleNotifs = (notifTab === 'unread'
     ? notifications.filter(n => n.isUnread)
-    : notifTab === 'requests' ? [] : notifications;
+    : notifTab === 'requests' ? [] : notifications
+  ).filter(n => !dismissedIds.has(n.id));
 
   const notifGroups = ['Today', 'Yesterday', 'Older'];
 
@@ -387,9 +394,9 @@ export function DashboardLayout() {
   );
 
   const AvatarLarge = user?.photoURL ? (
-    <img src={user.photoURL} alt={displayName} className="w-14 h-14 rounded-full object-cover border border-black/5" />
+    <img src={user.photoURL} alt={displayName} className="w-10 h-10 rounded-full object-cover border border-black/5" />
   ) : (
-    <div className="w-14 h-14 rounded-full bg-brand-vanilla flex items-center justify-center text-brand-black font-bold text-lg border border-black/5">
+    <div className="w-10 h-10 rounded-full bg-brand-vanilla flex items-center justify-center text-brand-black font-bold text-base border border-black/5">
       {initials}
     </div>
   );
@@ -405,13 +412,13 @@ export function DashboardLayout() {
 
       {/* Sidebar */}
       <aside
-        className={`relative bg-white border-r border-black/5 transition-all duration-300 ease-in-out flex flex-col ${
+        className={`relative bg-white dark:bg-neutral-900 border-r border-black/5 dark:border-white/10 transition-all duration-300 ease-in-out flex flex-col ${
           isCollapsed ? 'w-20' : 'w-64'
         }`}
       >
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-3.5 top-8 w-7 h-7 bg-white border border-black/5 rounded-full flex items-center justify-center text-brand-black/40 hover:text-brand-black hover:shadow-sm transition-all z-10"
+          className="absolute -right-3.5 top-8 w-7 h-7 bg-white dark:bg-neutral-900 border border-black/5 dark:border-white/10 rounded-full flex items-center justify-center text-brand-black/40 hover:text-brand-black hover:shadow-sm transition-all z-10"
         >
           {isCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
         </button>
@@ -436,20 +443,20 @@ export function DashboardLayout() {
 
             {/* Profile Dropdown */}
             {isProfileOpen && (
-              <div className="absolute left-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-xl border border-black/5 z-50 py-2">
+              <div className="absolute left-0 top-full mt-2 w-52 bg-white dark:bg-neutral-800 rounded-2xl shadow-xl border border-black/5 dark:border-white/10 z-50 py-2">
                 {/* User card */}
                 <div className="px-4 pt-3 pb-3 flex flex-col items-center text-center border-b border-black/5">
                   <div className="relative mb-2">
                     {AvatarLarge}
                     <button
                       onClick={() => openSettings('profile')}
-                      className="absolute bottom-0 right-0 w-5 h-5 bg-white border border-black/10 rounded-full flex items-center justify-center shadow-sm"
+                      className="absolute bottom-0 right-0 w-5 h-5 bg-white border border-black/10 rounded-full flex items-center justify-center shadow-sm hover:bg-brand-ghost hover:border-brand-black/20 transition-colors"
                     >
                       <Pencil className="w-2.5 h-2.5 text-brand-black/60" />
                     </button>
                   </div>
-                  <p className="font-semibold text-sm text-brand-black">{displayName}</p>
-                  <p className="text-xs text-brand-black/50 mt-0.5 truncate max-w-full">{user?.email}</p>
+                  <p className="text-xs font-semibold text-brand-black">{displayName}</p>
+                  <p className="text-[11px] text-brand-black/50 mt-0.5 truncate max-w-full">{user?.email}</p>
                 </div>
 
                 {/* Menu items */}
@@ -460,21 +467,21 @@ export function DashboardLayout() {
                     onMouseEnter={() => setThemeHovered(true)}
                     onMouseLeave={() => setThemeHovered(false)}
                   >
-                    <button className="w-full flex items-center gap-2.5 px-4 py-2 text-sm font-medium text-brand-black/80 hover:bg-brand-ghost transition-colors">
-                      <Palette className="w-4 h-4 text-brand-black/50 shrink-0" />
+                    <button className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs font-medium text-brand-black/80 hover:bg-brand-ghost transition-colors">
+                      <Palette className="w-3.5 h-3.5 text-brand-black/50 shrink-0" />
                       <span className="flex-1 text-left">Theme</span>
                       <ChevronRight className="w-3.5 h-3.5 text-brand-black/40" />
                     </button>
 
                     {themeHovered && (
-                      <div className="absolute left-full top-0 ml-1 w-44 bg-white rounded-xl shadow-lg border border-black/5 py-1 z-10">
+                      <div className="absolute left-full top-0 ml-1 w-44 bg-white dark:bg-neutral-800 rounded-xl shadow-lg border border-black/5 dark:border-white/10 py-1 z-10">
                         {themeOptions.map(opt => {
                           const Icon = opt.icon;
                           return (
                             <button
                               key={opt.value}
                               onClick={() => setTheme(opt.value)}
-                              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-brand-black/80 hover:bg-brand-ghost transition-colors"
+                              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-brand-black/80 hover:bg-brand-ghost transition-colors"
                             >
                               {theme === opt.value
                                 ? <Check className="w-3.5 h-3.5 text-brand-black shrink-0" />
@@ -491,32 +498,10 @@ export function DashboardLayout() {
                   {/* Settings */}
                   <button
                     onClick={() => openSettings('profile')}
-                    className="w-full flex items-center gap-2.5 px-4 py-2 text-sm font-medium text-brand-black/80 hover:bg-brand-ghost transition-colors"
+                    className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs font-medium text-brand-black/80 hover:bg-brand-ghost transition-colors"
                   >
-                    <Settings className="w-4 h-4 text-brand-black/50 shrink-0" />
+                    <Settings className="w-3.5 h-3.5 text-brand-black/50 shrink-0" />
                     Settings
-                  </button>
-                </div>
-
-                <div className="h-px bg-black/5 mx-2" />
-
-                {/* Switch account */}
-                <div className="py-1">
-                  <p className="px-4 py-1.5 text-xs font-semibold text-brand-black/40">Switch account</p>
-                  <button className="w-full flex items-center gap-3 px-4 py-2 hover:bg-brand-ghost transition-colors">
-                    {AvatarSmall}
-                    <div className="flex-1 min-w-0 text-left">
-                      <p className="text-sm font-medium text-brand-black truncate">{displayName}</p>
-                      <p className="text-xs text-brand-black/50 truncate">{user?.email}</p>
-                    </div>
-                    <Check className="w-3.5 h-3.5 text-brand-black/60 shrink-0" />
-                  </button>
-                  <button
-                    onClick={() => { setIsProfileOpen(false); toast.info('Add account coming soon'); }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2 text-sm font-medium text-brand-black/70 hover:bg-brand-ghost transition-colors"
-                  >
-                    <UserPlus className="w-4 h-4 text-brand-black/50 shrink-0" />
-                    Add account
                   </button>
                 </div>
 
@@ -525,9 +510,9 @@ export function DashboardLayout() {
                 <div className="py-1">
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-2.5 px-4 py-2 text-sm font-medium text-brand-black/80 hover:bg-brand-ghost transition-colors"
+                    className="w-full flex items-center gap-2.5 px-4 py-1.5 text-xs font-medium text-brand-black/80 hover:bg-brand-ghost transition-colors"
                   >
-                    <LogOut className="w-4 h-4 text-brand-black/50 shrink-0" />
+                    <LogOut className="w-3.5 h-3.5 text-brand-black/50 shrink-0" />
                     Log out
                   </button>
                 </div>
@@ -552,7 +537,7 @@ export function DashboardLayout() {
             </button>
 
             {isNotifOpen && (
-              <div className="absolute left-full top-0 ml-4 w-80 bg-white rounded-2xl shadow-xl border border-black/5 z-50 overflow-hidden">
+              <div className="absolute left-full top-0 ml-4 w-80 bg-white dark:bg-neutral-900 rounded-2xl shadow-xl border border-black/5 dark:border-white/10 z-50 overflow-hidden">
                 <div className="flex items-center justify-between px-4 pt-4 pb-3">
                   <span className="font-semibold text-sm text-brand-black">All notifications</span>
                   <button
@@ -593,23 +578,31 @@ export function DashboardLayout() {
                         <div key={group}>
                           <p className="px-4 pt-3 pb-1 text-xs font-semibold text-brand-black/40">{group}</p>
                           {items.map(n => (
-                            <button
-                              key={n.id}
-                              onClick={() => {
-                                if (n.href) navigate(n.href);
-                                setIsNotifOpen(false);
-                              }}
-                              className="w-full flex items-start gap-3 px-4 py-2.5 hover:bg-brand-ghost/50 transition-colors text-left"
-                            >
-                              <div className={`w-8 h-8 rounded-full ${n.avatarBg} flex items-center justify-center text-brand-black text-xs font-bold shrink-0 mt-0.5`}>
-                                {n.avatar}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-semibold text-brand-black truncate">{n.title}</p>
-                                <p className="text-xs text-brand-black/50 truncate">{n.action}</p>
-                              </div>
-                              <span className="text-xs text-brand-black/40 shrink-0 mt-0.5">{n.date}</span>
-                            </button>
+                            <div key={n.id} className="group relative">
+                              <button
+                                onClick={() => {
+                                  if (n.href) navigate(n.href);
+                                  setIsNotifOpen(false);
+                                }}
+                                className="w-full flex items-start gap-3 px-4 py-2.5 hover:bg-brand-ghost/50 transition-colors text-left"
+                              >
+                                <div className={`w-8 h-8 rounded-full ${n.avatarBg} flex items-center justify-center text-brand-black text-xs font-bold shrink-0 mt-0.5`}>
+                                  {n.avatar}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-semibold text-brand-black truncate">{n.title}</p>
+                                  <p className="text-xs text-brand-black/50 truncate">{n.action}</p>
+                                </div>
+                                <span className="text-xs text-brand-black/40 shrink-0 mt-0.5 group-hover:invisible">{n.date}</span>
+                              </button>
+                              <button
+                                onClick={e => { e.stopPropagation(); dismissNotification(n.id); }}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-brand-black/30 hover:text-brand-black"
+                                aria-label="Dismiss notification"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           ))}
                         </div>
                       );
@@ -626,7 +619,7 @@ export function DashboardLayout() {
           {isCollapsed ? (
             <Link
               to="/dashboard/create"
-              className="w-12 h-12 mx-auto bg-brand-black text-white rounded-xl flex items-center justify-center hover:bg-black/90 transition-colors shadow-sm"
+              className="w-12 h-12 mx-auto bg-[#EFF0A3] text-brand-black rounded-xl flex items-center justify-center hover:bg-[#d4d47a] transition-colors shadow-sm"
               title="Create New Survey"
             >
               <Plus className="w-5 h-5" />
@@ -634,7 +627,7 @@ export function DashboardLayout() {
           ) : (
             <Link
               to="/dashboard/create"
-              className="w-full bg-brand-black text-white py-3 px-4 rounded-xl font-medium text-sm flex items-center justify-center gap-2 hover:bg-black/90 transition-colors shadow-sm"
+              className="w-full bg-[#EFF0A3] text-brand-black py-3 px-4 rounded-xl font-medium text-sm flex items-center justify-center gap-2 hover:bg-[#d4d47a] transition-colors shadow-sm"
             >
               <Plus className="w-4 h-4" />
               Create New Survey
@@ -702,15 +695,15 @@ export function DashboardLayout() {
               <p className="text-xs font-medium text-brand-black/60 mb-3 leading-relaxed">
                 Ready to go beyond the free plan? Upgrade for premium features.
               </p>
-              <Link to="/dashboard/pricing" className="block w-full bg-brand-black hover:bg-black/90 text-white text-xs font-semibold py-2.5 rounded-xl transition-colors">
+              <Link to="/dashboard/pricing" className="block w-full bg-[#EFF0A3] hover:bg-[#d4d47a] text-brand-black text-xs font-semibold py-2.5 rounded-xl transition-colors">
                 View plans
               </Link>
             </div>
           ) : (
             <Link
               to="/dashboard/pricing"
-              className="w-10 h-10 mx-auto rounded-full border-2 border-brand-black/15 flex items-center justify-center text-brand-black/50 hover:text-brand-black transition-colors"
-              title="Upgrade"
+              className="w-10 h-10 mx-auto rounded-full bg-[#EFF0A3] hover:bg-[#d4d47a] flex items-center justify-center text-brand-black transition-colors"
+              title="View plans"
             >
               <ArrowUp className="w-4 h-4" />
             </Link>

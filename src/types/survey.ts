@@ -61,6 +61,7 @@ export const QuestionSchema = z.object({
     id: z.string(),
     type: QuestionTypeEnum,
     text: z.string(),
+    description: z.string().optional(),
     required: z.boolean().default(false),
     options: z
         .object({
@@ -110,15 +111,18 @@ export type Question = z.infer<typeof QuestionSchema>;
 export interface SurveySettings {
     // Style
     fontFamily: string;              // default 'Inter'
-    accentColor: string;             // default '#E2F380' (primary)
-    background: string;              // 'white' | 'lightGray' | 'pattern' | hex string
+    fontSize: 'sm' | 'md' | 'lg';   // default 'md'
+    accentColor: string;             // default '#EFF0A3' (brand vanilla)
+    cardColor: string;               // default '#ffffff' — question card background
+    inputBackgroundColor: string;    // default '#F6F5FA' — text input background
+    background: string;              // 'white' | 'lightGray' | hex string
     logoPlacement: string;           // 'topLeft' | 'topCenter' | 'topRight' | 'hidden'
     // Logic
     shuffleQuestions: boolean;       // randomize question order for respondents
     // Settings
     collectEmail: string;            // 'none' | 'required' | 'optional'
     sendCopy: string;                // 'off' | 'always' | 'whenRequested'
-    allowEditing: boolean;           // let respondents edit after submit
+    allowEditing: boolean;           // let respondents edit after submit (not yet surfaced in settings UI)
     limitOneResponse: boolean;       // one response per person
     showProgressBar: boolean;        // display completion progress
     showQuestionNumber: boolean;     // number each question
@@ -127,7 +131,10 @@ export interface SurveySettings {
 
 export const DEFAULT_SURVEY_SETTINGS: SurveySettings = {
     fontFamily: 'Inter',
-    accentColor: '#E2F380',
+    fontSize: 'md',
+    accentColor: '#EFF0A3',
+    cardColor: '#ffffff',
+    inputBackgroundColor: '#F6F5FA',
     background: 'white',
     logoPlacement: 'hidden',
     shuffleQuestions: false,
@@ -160,7 +167,9 @@ export interface Survey {
     publishedAt: Timestamp | null;
     responseCount: number;
     lastReadResponseCount: number;
+    viewCount?: number;
     headerImageUrl?: string;       // base64 data URL
+    templateId?: string;           // template used at creation, e.g. 'csat', 'nps'
     settings?: SurveySettings;
 }
 
@@ -177,7 +186,9 @@ export interface SurveyClient {
     publishedAt: Date | null;
     responseCount: number;
     lastReadResponseCount: number;
+    viewCount?: number;
     headerImageUrl?: string;
+    templateId?: string;
     settings?: SurveySettings;
 }
 
@@ -212,6 +223,7 @@ export const CreateSurveySchema = z.object({
     description: z.string().default(''),
     questions: z.array(QuestionSchema).default([]),
     headerImageUrl: z.string().optional(),
+    templateId: z.string().optional(),
     settings: z.any().optional(),
 });
 

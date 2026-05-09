@@ -6,7 +6,7 @@ import { useAuthContext } from '../../contexts/AuthContext';
 import { useSubscription } from '../../hooks/useSubscription';
 import { useUserPreferences, useUpdateUserPreferences } from '../../hooks/useUserPreferences';
 import { updateProfile, updatePassword, deleteAccount } from '../../lib/auth';
-import { callCreateCheckoutSession, callCreatePortalSession } from '../../lib/functions';
+import { callCreateCheckoutSession, callCreatePortalSession, callGetBillingData, type BillingDataResponse } from '../../lib/functions';
 import { DEFAULT_USER_PREFERENCES, type UserPreferences, type SurveyUpdateFrequency } from '../../types/survey';
 import { PLAN_LIMITS, type PlanId } from '../../lib/planLimits';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
@@ -446,7 +446,19 @@ function BillingSection({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate();
   const { plan, status, currentPeriodEnd, stripeCustomerId, cancelAtPeriodEnd } = useSubscription();
   const [portalLoading, setPortalLoading] = useState(false);
+  const [billingData, setBillingData] = useState<BillingDataResponse | null>(null);
+  const [billingLoading, setBillingLoading] = useState(false);
+  const [billingError, setBillingError] = useState(false);
   const planInfo = PLAN_DISPLAY[plan as PlanId] ?? PLAN_DISPLAY.basic;
+
+  useEffect(() => {
+    if (!stripeCustomerId) return;
+    setBillingLoading(true);
+    callGetBillingData()
+      .then(res => { setBillingData(res.data); })
+      .catch(() => setBillingError(true))
+      .finally(() => setBillingLoading(false));
+  }, [stripeCustomerId]);
 
   const handlePortal = async () => {
     setPortalLoading(true);
@@ -458,6 +470,18 @@ function BillingSection({ onClose }: { onClose: () => void }) {
       setPortalLoading(false);
     }
   };
+
+  const retryBilling = () => {
+    setBillingError(false);
+    setBillingLoading(true);
+    callGetBillingData()
+      .then(r => setBillingData(r.data))
+      .catch(() => setBillingError(true))
+      .finally(() => setBillingLoading(false));
+  };
+
+  const pm = billingData?.paymentMethod;
+  const invoices = billingData?.invoices ?? [];
 
   return (
     <div className="space-y-8 max-w-lg">
@@ -505,34 +529,79 @@ function BillingSection({ onClose }: { onClose: () => void }) {
       {/* Section 2: Payment methods */}
       <div>
         <SectionHeader title="Payment methods" />
-        {stripeCustomerId ? (
-          <div className="mt-3">
-            <p className="text-sm text-brand-black/60 mb-3">Manage your payment methods via the billing portal.</p>
+        {!stripeCustomerId ? (
+          <p className="text-sm text-brand-black/50 mt-3">No payment method on file. Upgrade to add one.</p>
+        ) : billingLoading ? (
+          <div className="mt-3 h-14 bg-brand-ghost animate-pulse rounded-xl" />
+        ) : billingError ? (
+          <div className="mt-3 flex items-center justify-between">
+            <p className="text-sm text-brand-black/50">Could not load payment info.</p>
+            <button onClick={retryBilling} className="text-xs text-brand-black underline">Retry</button>
+          </div>
+        ) : pm ? (
+          <div className="mt-3 bg-brand-ghost rounded-xl p-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-brand-black capitalize">{pm.brand} •••• {pm.last4}</p>
+              {pm.name && <p className="text-xs text-brand-black/50 mt-0.5">{pm.name}</p>}
+              <p className="text-xs text-brand-black/50 mt-0.5">Expires {String(pm.expMonth).padStart(2, '0')}/{pm.expYear}</p>
+            </div>
             <button onClick={handlePortal} disabled={portalLoading}
-              className="px-4 py-2 bg-brand-ghost border border-black/10 text-brand-black rounded-lg text-sm font-semibold hover:bg-white transition-colors disabled:opacity-60 flex items-center gap-2">
-              {portalLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-              Manage payment methods
+              className="text-xs font-medium text-brand-black/70 hover:text-brand-black underline transition-colors flex items-center gap-1">
+              {portalLoading && <Loader2 className="w-3 h-3 animate-spin" />}
+              Manage →
             </button>
           </div>
         ) : (
-          <p className="text-sm text-brand-black/50 mt-3">No payment method on file. Upgrade to add one.</p>
+          <div className="mt-3 flex items-center justify-between">
+            <p className="text-sm text-brand-black/50">No payment method on file.</p>
+            <button onClick={handlePortal} disabled={portalLoading}
+              className="text-xs font-medium text-brand-black/70 hover:text-brand-black underline transition-colors flex items-center gap-1">
+              {portalLoading && <Loader2 className="w-3 h-3 animate-spin" />}
+              Add payment method →
+            </button>
+          </div>
         )}
       </div>
 
       {/* Section 3: Transaction history */}
       <div>
         <SectionHeader title="Transaction history" />
-        {stripeCustomerId ? (
+        {!stripeCustomerId ? (
+          <p className="text-sm text-brand-black/50 mt-3">No transactions yet.</p>
+        ) : billingLoading ? (
+          <div className="mt-3 space-y-2">
+            {[1, 2, 3].map(i => <div key={i} className="h-8 bg-brand-ghost animate-pulse rounded-lg" />)}
+          </div>
+        ) : billingError ? null : invoices.length === 0 ? (
+          <p className="text-sm text-brand-black/50 mt-3">No transactions yet.</p>
+        ) : (
           <div className="mt-3">
-            <p className="text-sm text-brand-black/60 mb-3">View invoices and past payments in the billing portal.</p>
+            <div className="divide-y divide-black/5 rounded-xl border border-black/5 overflow-hidden">
+              {invoices.map(inv => (
+                <div key={inv.id} className="flex items-center justify-between px-4 py-2.5 bg-white text-sm">
+                  <div className="min-w-0">
+                    <p className="text-brand-black/80 truncate">{inv.description ?? 'Subscription'}</p>
+                    <p className="text-xs text-brand-black/40">{new Date(inv.date * 1000).toLocaleDateString()}</p>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0 ml-4">
+                    <span className="text-sm font-medium text-brand-black">
+                      {(inv.amount / 100).toLocaleString('en-US', { style: 'currency', currency: inv.currency.toUpperCase() })}
+                    </span>
+                    <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${
+                      inv.status === 'paid' ? 'bg-green-50 text-green-700' :
+                      inv.status === 'open' ? 'bg-amber-50 text-amber-700' :
+                      'bg-gray-100 text-gray-600'
+                    }`}>{inv.status}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
             <button onClick={handlePortal} disabled={portalLoading}
-              className="px-4 py-2 bg-brand-ghost border border-black/10 text-brand-black rounded-lg text-sm font-semibold hover:bg-white transition-colors disabled:opacity-60 flex items-center gap-2">
-              {portalLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-              View transaction history
+              className="mt-3 text-xs font-medium text-brand-black/70 hover:text-brand-black underline transition-colors flex items-center gap-1">
+              {portalLoading && <Loader2 className="w-3 h-3 animate-spin" />}
+              View full history →
             </button>
           </div>
-        ) : (
-          <p className="text-sm text-brand-black/50 mt-3">No transactions yet.</p>
         )}
       </div>
     </div>

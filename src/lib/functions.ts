@@ -53,6 +53,28 @@ export interface SentimentResult {
     responseCount: number;
 }
 
+export interface BillingPaymentMethod {
+    brand: string;
+    last4: string;
+    expMonth: number;
+    expYear: number;
+    name: string | null;
+}
+
+export interface BillingInvoice {
+    id: string;
+    date: number;
+    amount: number;
+    currency: string;
+    status: string;
+    description: string | null;
+}
+
+export interface BillingDataResponse {
+    paymentMethod: BillingPaymentMethod | null;
+    invoices: BillingInvoice[];
+}
+
 // ── Callable wrappers ──────────────────────────────────────────────────────
 
 export const callCreateCheckoutSession = httpsCallable<CheckoutSessionRequest, CheckoutSessionResponse>(
@@ -80,4 +102,9 @@ interface SendInvitationResponse { sent: number; }
 export const callSendSurveyInvitation = httpsCallable<SendInvitationRequest, SendInvitationResponse>(
     functions,
     'sendSurveyInvitation'
+);
+
+export const callGetBillingData = httpsCallable<void, BillingDataResponse>(
+    functions,
+    'getBillingData'
 );

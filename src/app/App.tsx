@@ -7,15 +7,18 @@ import { ProtectedRoute } from '../components/ProtectedRoute';
 import { GuestRoute } from '../components/GuestRoute';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { Toaster } from './components/ui/sonner';
-import { LoginPage } from './components/LoginPage';
-import { SignUpPage } from './components/SignUpPage';
 import { LandingPage } from './components/LandingPage';
+import { AuthPage } from './components/AuthPage';
+import { ForgotPasswordPage } from './components/ForgotPasswordPage';
 import { DashboardLayout } from './components/DashboardLayout';
 import { DashboardHome } from './components/DashboardHome';
 import { DashboardCreate } from './components/DashboardCreate';
 import { DashboardPricing } from './components/DashboardPricing';
 import { DashboardBuilder } from './components/DashboardBuilder';
 import { SurveyRespondentPage } from './components/SurveyRespondentPage';
+import { AboutPage } from './components/AboutPage';
+import { PrivacyPage } from './components/PrivacyPage';
+import { TermsPage } from './components/TermsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,7 +33,7 @@ function useOnNavigate() {
   const navigate = useNavigate();
   return (pageId: string) => {
     const routes: Record<string, string> = {
-      landing: '/', login: '/auth/login', signup: '/auth/signup',
+      landing: '/', login: '/auth', signup: '/auth',
       dashboard: '/dashboard', create: '/dashboard/create', pricing: '/dashboard/pricing',
     };
     navigate(routes[pageId] ?? '/dashboard');
@@ -48,9 +51,7 @@ function RespondentRoute() {
   return <SurveyRespondentPage surveyId={id!} />;
 }
 
-function LandingRoute() { const nav = useOnNavigate(); return <LandingPage onNavigate={nav} />; }
-function LoginRoute() { const nav = useOnNavigate(); return <LoginPage onNavigate={nav} />; }
-function SignUpRoute() { const nav = useOnNavigate(); return <SignUpPage onNavigate={nav} />; }
+function LandingRoute() { return <LandingPage />; }
 
 function App() {
   return (
@@ -62,8 +63,8 @@ function App() {
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<LandingRoute />} />
-                <Route path="/auth/login" element={<GuestRoute><LoginRoute /></GuestRoute>} />
-                <Route path="/auth/signup" element={<GuestRoute><SignUpRoute /></GuestRoute>} />
+                <Route path="/auth" element={<GuestRoute><AuthPage /></GuestRoute>} />
+                <Route path="/forgot-password" element={<GuestRoute><ForgotPasswordPage /></GuestRoute>} />
 
                 <Route path="/s/:id" element={<RespondentRoute />} />
 
@@ -74,6 +75,10 @@ function App() {
                   <Route path="create" element={<DashboardCreate />} />
                   <Route path="pricing" element={<DashboardPricing />} />
                 </Route>
+
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="/privacy" element={<PrivacyPage />} />
+                <Route path="/terms" element={<TermsPage />} />
 
                 <Route path="/app/*" element={<Navigate to="/dashboard" replace />} />
                 <Route path="*" element={<Navigate to="/" replace />} />

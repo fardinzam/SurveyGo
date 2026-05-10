@@ -7,7 +7,25 @@ import {
   Loader2,
   FileUp,
   ChevronDown,
+  Users,
+  Briefcase,
+  BarChart2,
+  GraduationCap,
+  Globe,
+  Calendar,
+  Heart,
 } from 'lucide-react';
+import type { ElementType } from 'react';
+
+const CATEGORY_ICON: Record<string, { Icon: ElementType; color: string }> = {
+  'Customers':              { Icon: Users,          color: 'text-blue-500' },
+  'Employees':              { Icon: Briefcase,      color: 'text-amber-500' },
+  'Markets':                { Icon: BarChart2,      color: 'text-green-500' },
+  'Students':               { Icon: GraduationCap, color: 'text-purple-500' },
+  'Website / App Visitors': { Icon: Globe,          color: 'text-cyan-500' },
+  'Events & Scheduling':    { Icon: Calendar,       color: 'text-rose-500' },
+  'Community':              { Icon: Heart,          color: 'text-pink-500' },
+};
 import { toast } from 'sonner';
 import { useCreateSurvey } from '../../hooks/useSurveys';
 import { useSubscription } from '../../hooks/useSubscription';
@@ -275,9 +293,14 @@ export function DashboardCreate() {
                 key={template.id}
                 className="group relative bg-brand-ghost/30 border border-black/5 rounded-2xl p-6 hover:bg-white hover:shadow-xl hover:shadow-black/5 hover:-translate-y-1 transition-all duration-300 flex flex-col h-full"
               >
-                <div className="w-12 h-12 rounded-xl bg-brand-ghost flex items-center justify-center mb-6 group-hover:bg-brand-blue/20 transition-colors">
-                  <FileText className="w-6 h-6 text-brand-black/40 group-hover:text-brand-blue" />
-                </div>
+                {(() => {
+                  const { Icon, color } = CATEGORY_ICON[template.category] ?? { Icon: FileText, color: 'text-brand-black/40' };
+                  return (
+                    <div className="w-12 h-12 rounded-xl bg-brand-ghost flex items-center justify-center mb-6 group-hover:bg-brand-blue/20 transition-colors">
+                      <Icon className={`w-6 h-6 ${color} group-hover:text-brand-blue transition-colors`} />
+                    </div>
+                  );
+                })()}
 
                 <h3 className="text-lg font-bold text-brand-black mb-2">{template.title}</h3>
                 <p className="text-brand-black/60 text-sm font-medium mb-8 leading-relaxed flex-1">

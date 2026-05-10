@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.billingKillSwitch = exports.sendSurveyInvitation = exports.analyzeSentiment = exports.generateQuestions = exports.weeklySummary = exports.submitSurveyResponse = exports.stripeWebhook = exports.createPortalSession = exports.createCheckoutSession = void 0;
+exports.billingKillSwitch = exports.sendSurveyInvitation = exports.analyzeSentiment = exports.generateQuestions = exports.weeklySummary = exports.submitSurveyResponse = exports.stripeWebhook = exports.getBillingData = exports.createPortalSession = exports.createCheckoutSession = void 0;
 const app_1 = require("firebase-admin/app");
 (0, app_1.initializeApp)();
 // ── Stripe ──────────────────────────────────────────────────────────────────
@@ -8,6 +8,8 @@ var createCheckoutSession_1 = require("./stripe/createCheckoutSession");
 Object.defineProperty(exports, "createCheckoutSession", { enumerable: true, get: function () { return createCheckoutSession_1.createCheckoutSession; } });
 var createPortalSession_1 = require("./stripe/createPortalSession");
 Object.defineProperty(exports, "createPortalSession", { enumerable: true, get: function () { return createPortalSession_1.createPortalSession; } });
+var getBillingData_1 = require("./stripe/getBillingData");
+Object.defineProperty(exports, "getBillingData", { enumerable: true, get: function () { return getBillingData_1.getBillingData; } });
 var webhookHandler_1 = require("./stripe/webhookHandler");
 Object.defineProperty(exports, "stripeWebhook", { enumerable: true, get: function () { return webhookHandler_1.stripeWebhook; } });
 // ── Responses ────────────────────────────────────────────────────────────────

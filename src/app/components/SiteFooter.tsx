@@ -140,9 +140,6 @@ export function SiteFooter() {
         </div>
       </div>
 
-      {/* Full-width wordmark */}
-      <Wordmark />
-
       {/* Copyright */}
       <div className="border-t border-white/5 px-6 py-5">
         <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between items-center text-white/25 text-xs">

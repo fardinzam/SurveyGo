@@ -99,7 +99,7 @@ export function SiteFooter() {
 
         {/* Right: link columns + wordmark */}
         <div className="flex flex-col gap-8">
-          <div className="grid grid-cols-2 gap-8 lg:pt-1">
+          <div className="grid grid-cols-2 gap-8">
             <div>
               <h4 className="font-bold text-white/30 uppercase tracking-wider text-[10px] mb-5">Product</h4>
               <ul className="space-y-3.5 text-sm text-white/50">

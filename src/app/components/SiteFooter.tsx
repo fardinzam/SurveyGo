@@ -2,32 +2,25 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router';
 
 function Wordmark() {
-  const spanRef = useRef<HTMLSpanElement>(null);
-
-  useEffect(() => {
-    const fit = () => {
-      const el = spanRef.current;
-      if (!el) return;
-      el.style.fontSize = '16px';
-      const ratio = document.documentElement.clientWidth / el.scrollWidth;
-      el.style.fontSize = Math.floor(16 * ratio) + 'px';
-    };
-
-    fit();
-    const ro = new ResizeObserver(fit);
-    ro.observe(document.documentElement);
-    return () => ro.disconnect();
-  }, []);
-
   return (
-    <div className="overflow-hidden w-full py-12 lg:py-16">
-      <span
-        ref={spanRef}
-        className="block font-display font-bold text-white/10 leading-[0.85] tracking-tight whitespace-nowrap select-none"
+    <svg
+      viewBox="0 0 100 18"
+      preserveAspectRatio="xMidYMid meet"
+      className="block w-full select-none"
+      aria-hidden="true"
+    >
+      <text
+        x="0"
+        y="15"
+        textLength="100"
+        lengthAdjust="spacingAndGlyphs"
+        className="font-display font-bold"
+        fill="rgba(255,255,255,0.1)"
+        style={{ fontSize: '16px' }}
       >
         SurveyGo
-      </span>
-    </div>
+      </text>
+    </svg>
   );
 }
 

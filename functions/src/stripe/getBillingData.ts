@@ -6,7 +6,7 @@ import Stripe from 'stripe';
 const stripeSecretKey = defineSecret('STRIPE_SECRET_KEY');
 
 export const getBillingData = onCall(
-  { secrets: [stripeSecretKey], cors: true, invoker: 'private' },
+  { secrets: [stripeSecretKey], cors: true, invoker: 'public' },
   async (request) => {
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'Must be signed in.');

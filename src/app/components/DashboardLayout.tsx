@@ -330,7 +330,7 @@ export function DashboardLayout() {
   const dismissNotification = (id: string) =>
     setDismissedIds(prev => {
       const next = new Set([...prev, id]);
-      try { localStorage.setItem('surveygo:dismissed-notifs', JSON.stringify([...next])); } catch {}
+      try { localStorage.setItem('surveygo:dismissed-notifs', JSON.stringify([...next])); } catch { /* ignore */ }
       return next;
     });
 
